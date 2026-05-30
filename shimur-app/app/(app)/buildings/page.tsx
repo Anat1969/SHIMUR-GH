@@ -7,28 +7,50 @@ async function getActivity(): Promise<Record<string, { date: string; note: strin
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
     const admin = getAdminClient();
 
-    // Get latest chapter update per building
-    const { data: chapters } = await admin
-      .from('chapters')
-      .select('updated_at, title, documentation_files(building_id, buildings(city_registry_id))')
-      .order('updated_at', { ascending: false });
+    // Step 1: get all buildings from Supabase to map id → city_registry_id
+    const { data: dbBuildings } = await admin
+      .from('buildings')
+      .select('id, city_registry_id');
+    if (!dbBuildings?.length) return {};
 
-    // Get latest finding per building
-    const { data: findings } = await admin
-      .from('findings')
-      .select('created_at, location_desc, documentation_files(building_id, buildings(city_registry_id))')
-      .order('created_at', { ascending: false });
+    const idToReg: Record<string, string> = {};
+    dbBuildings.forEach(b => { idToReg[b.id] = b.city_registry_id; });
+
+    // Step 2: get all documentation_files to map file_id → building_id
+    const { data: files } = await admin
+      .from('documentation_files')
+      .select('id, building_id');
+    if (!files?.length) return {};
+
+    const fileToBuilding: Record<string, string> = {};
+    files.forEach(f => { fileToBuilding[f.id] = f.building_id; });
 
     const activity: Record<string, { date: string; note: string }> = {};
 
-    (chapters || []).forEach((c: any) => {
-      const regId = c.documentation_files?.buildings?.city_registry_id;
+    // Step 3: latest chapter per file
+    const { data: chapters } = await admin
+      .from('chapters')
+      .select('file_id, updated_at, title')
+      .order('updated_at', { ascending: false })
+      .limit(100);
+
+    (chapters || []).forEach(c => {
+      const buildingId = fileToBuilding[c.file_id];
+      const regId = buildingId ? idToReg[buildingId] : null;
       if (!regId || activity[regId]) return;
-      activity[regId] = { date: c.updated_at, note: `עודכן פרק: ${c.title}` };
+      activity[regId] = { date: c.updated_at, note: `עודכן: ${c.title}` };
     });
 
-    (findings || []).forEach((f: any) => {
-      const regId = f.documentation_files?.buildings?.city_registry_id;
+    // Step 4: latest finding per file
+    const { data: findings } = await admin
+      .from('findings')
+      .select('file_id, created_at, location_desc')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    (findings || []).forEach(f => {
+      const buildingId = fileToBuilding[f.file_id];
+      const regId = buildingId ? idToReg[buildingId] : null;
       if (!regId) return;
       const existing = activity[regId];
       if (!existing || new Date(f.created_at) > new Date(existing.date)) {

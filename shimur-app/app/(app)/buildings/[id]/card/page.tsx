@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { PrintButton } from '@/components/PrintButton';
 
 async function loadCardData(cityRegistryId: string) {
   try {
@@ -95,10 +96,7 @@ export default async function CardPage({ params }: Props) {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem', direction: 'rtl' }}>
         {/* Controls */}
         <div className="no-print" style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-          <button onClick={() => window.print()}
-            style={{ padding: '0.6rem 1.5rem', backgroundColor: '#4A5C45', color: 'white', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-            הדפס מצגת (Landscape)
-          </button>
+          <PrintButton label="הדפס מצגת (Landscape)" />
           <Link href={`/buildings/${id}`}
             style={{ padding: '0.6rem 1.5rem', border: '1px solid #C8B89A', borderRadius: 6, color: '#8B7355', textDecoration: 'none' }}>
             ← חזרה למבנה

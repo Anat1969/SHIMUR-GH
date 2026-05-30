@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { PrintButton } from '@/components/PrintButton';
 
 const ALL_CHAPTERS = [
   { id: 'aleph', letter: 'א', title: 'פרטים מינהליים' },
@@ -56,16 +58,10 @@ export default async function PrintPage({ params }: Props) {
       <div className="print-page" style={{ backgroundColor: '#F7F0E3', minHeight: '100vh' }}>
         {/* Controls */}
         <div className="no-print flex gap-3 mb-8 p-4 bg-white rounded-lg border border-stone-light">
-          <button
-            onClick={() => window.print()}
-            className="px-6 py-2 text-white rounded-md text-sm font-medium"
-            style={{ backgroundColor: '#4A5C45' }}
-          >
-            הדפס / שמור PDF
-          </button>
-          <a href={`/buildings/${id}/file`} className="px-6 py-2 rounded-md text-sm font-medium border" style={{ color: '#8B7355', borderColor: '#C8B89A' }}>
+          <PrintButton label="הדפס / שמור PDF" />
+          <Link href={`/buildings/${id}/file`} className="px-6 py-2 rounded-md text-sm font-medium border" style={{ color: '#8B7355', borderColor: '#C8B89A' }}>
             ← חזרה לתיק
-          </a>
+          </Link>
         </div>
 
         {/* Cover */}
