@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* SHIMUR Color Palette */
+  --stone: #C8B89A;
+  --stone-dark: #8B7355;
+  --stone-light: #EDE0CC;
+  
+  --ink: #1A1410;
+  --ink-soft: #3D3228;
+  
+  --parchment: #F7F0E3;
+  --parchment-deep: #EDE3D0;
+  
+  --rust: #8B3A1E;
+  --rust-light: #C4582A;
+  
+  --sage: #4A5C45;
+  --sage-light: #7A9174;
+
+  /* Status Colors */
+  --status-not-started: var(--stone-dark);
+  --status-in-progress: var(--rust-light);
+  --status-submitted: var(--sage);
+  --status-approved: var(--ink);
+  --status-returned: var(--rust);
+}
+
+@font-face {
+  font-family: 'Heebo';
+  src: url('https://fonts.gstatic.com/s/heebo/v25/NGS6v5_NC0k9P8HVW5Wve_-cXHxOc-Q.woff2') format('woff2');
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: 'Heebo';
+  src: url('https://fonts.gstatic.com/s/heebo/v25/NGS8v5_NC0k9P8HVW5Wve9u8XHxOc-Q.woff2') format('woff2');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Heebo';
+  src: url('https://fonts.gstatic.com/s/heebo/v25/NGS6v5_NC0k9P8HVW5Wve_-cXHxOc-Q.woff2') format('woff2');
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'Heebo';
+  src: url('https://fonts.gstatic.com/s/heebo/v25/NGS8v5_NC0k9P8HVW5Wve9u8XHxOc-Q.woff2') format('woff2');
+  font-weight: 700;
+}
+
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] * {
+  direction: rtl;
+}
+
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] * {
+  direction: rtl;
+}
+
+body {
+  background-color: var(--parchment);
+  color: var(--ink);
+  font-weight: 400;
+  line-height: 1.6;
+}
