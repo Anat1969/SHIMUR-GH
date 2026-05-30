@@ -145,11 +145,28 @@ export async function GET(request: NextRequest) {
 
     const { data: findings } = await admin
       .from('findings')
-      .select('id, location_desc, notes, created_at')
+      .select('id, location_desc, notes, created_at, photo_ids')
       .eq('file_id', file.id)
       .order('created_at', { ascending: false });
 
-    return NextResponse.json({ findings: findings || [] });
+    // Enrich with photo URLs
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const enriched = await Promise.all((findings || []).map(async (f) => {
+      let photo_url: string | null = null;
+      if (f.photo_ids?.length > 0) {
+        const { data: photo } = await admin
+          .from('photos')
+          .select('storage_path')
+          .eq('id', f.photo_ids[0])
+          .maybeSingle();
+        if (photo) {
+          photo_url = `${supabaseUrl}/storage/v1/object/public/findings-photos/${photo.storage_path}`;
+        }
+      }
+      return { ...f, photo_url };
+    }));
+
+    return NextResponse.json({ findings: enriched });
   } catch {
     return NextResponse.json({ findings: [] });
   }
