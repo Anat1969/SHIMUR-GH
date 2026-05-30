@@ -1,56 +1,87 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import { Building } from '@/lib/types';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 
-interface FieldPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+interface Finding {
+  id: string;
+  location_desc: string;
+  notes: string;
+  created_at: string;
 }
 
-export default function FieldPage({ params }: FieldPageProps) {
-  const router = useRouter();
+export default function FieldPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [building, setBuilding] = useState<Building | null>(null);
-  const [findings, setFindings] = useState('');
-  const [findingPhoto, setFindingPhoto] = useState<File | null>(null);
+  const [locationDesc, setLocationDesc] = useState('');
+  const [notes, setNotes] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [savedFindings, setSavedFindings] = useState<Finding[]>([]);
 
   useEffect(() => {
-    // Find building from demo data
     const found = DEMO_BUILDINGS.find(b => b.id === id);
-    if (found) {
-      setBuilding(found);
-    }
+    if (found) setBuilding(found);
   }, [id]);
+
+  const loadFindings = useCallback(async (registryId: string) => {
+    const res = await fetch(`/api/findings?city_registry_id=${encodeURIComponent(registryId)}`);
+    const data = await res.json();
+    setSavedFindings(data.findings || []);
+  }, []);
+
+  useEffect(() => {
+    if (building) loadFindings(building.city_registry_id);
+  }, [building, loadFindings]);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setFindingPhoto(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotoPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    setPhoto(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmitFinding = async () => {
-    if (!findings.trim()) {
-      alert('אנא הכנס תיאור הממצא');
+  const handleSubmit = async () => {
+    if (!locationDesc.trim()) {
+      setError('אנא הכנס תיאור הממצא');
       return;
     }
+    if (!building) return;
 
-    // In demo mode, just show a success message
-    alert('ממצא נשמר (מצב ממחיז - לא שמור לשרת)');
-    setFindings('');
-    setFindingPhoto(null);
-    setPhotoPreview(null);
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const formData = new FormData();
+    formData.append('city_registry_id', building.city_registry_id);
+    formData.append('building_name', building.name);
+    formData.append('building_address', building.address);
+    formData.append('location_desc', locationDesc);
+    formData.append('notes', notes);
+    if (photo) formData.append('photo', photo);
+
+    const res = await fetch('/api/findings', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    setLoading(false);
+
+    if (data.error) {
+      setError(data.error);
+    } else {
+      setSuccess('הממצא נשמר בהצלחה');
+      setLocationDesc('');
+      setNotes('');
+      setPhoto(null);
+      setPhotoPreview(null);
+      loadFindings(building.city_registry_id);
+    }
   };
 
   if (!building) {
@@ -58,7 +89,7 @@ export default function FieldPage({ params }: FieldPageProps) {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-ink-soft">המבנה לא נמצא</p>
-          <Link href="/buildings" className="text-sm text-stone hover:text-stone-dark mt-4 inline-block">
+          <Link href="/buildings" className="text-sm mt-4 inline-block" style={{ color: '#8B7355' }}>
             ← חזרה לרשימה
           </Link>
         </div>
@@ -71,10 +102,7 @@ export default function FieldPage({ params }: FieldPageProps) {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-stone-light p-4">
         <div className="max-w-2xl mx-auto">
-          <Link
-            href="/buildings"
-            className="text-sm text-stone hover:text-stone-dark inline-flex items-center gap-2 mb-3"
-          >
+          <Link href="/buildings" className="text-sm inline-flex items-center gap-2 mb-3" style={{ color: '#8B7355' }}>
             ← חזרה
           </Link>
           <h1 className="text-2xl font-serif font-bold text-ink">{building.name}</h1>
@@ -82,66 +110,61 @@ export default function FieldPage({ params }: FieldPageProps) {
         </div>
       </div>
 
-      {/* Building Info Card */}
-      <div className="max-w-2xl mx-auto p-4">
-        <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4 mb-6">
-          <div className="grid grid-cols-2 gap-4">
+      <div className="max-w-2xl mx-auto p-4 space-y-4">
+        {/* Building info */}
+        <div className="bg-white rounded-lg border border-stone-light p-5">
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                מס׳ רישום
-              </label>
-              <p className="font-mono text-sm text-ink">{building.city_registry_id}</p>
+              <p className="text-xs font-semibold text-ink-soft uppercase mb-1">מס׳ רישום</p>
+              <p className="font-mono text-ink">{building.city_registry_id}</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                שנת בנייה
-              </label>
-              <p className="text-sm text-ink">{building.year_built || '—'}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                אדריכל
-              </label>
-              <p className="text-sm text-ink">{building.architect || '—'}</p>
+              <p className="text-xs font-semibold text-ink-soft uppercase mb-1">שנת בנייה</p>
+              <p className="text-ink">{building.year_built || '—'}</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                שכונה
-              </label>
-              <p className="text-sm text-ink">{building.neighborhood || '—'}</p>
+              <p className="text-xs font-semibold text-ink-soft uppercase mb-1">אדריכל</p>
+              <p className="text-ink">{building.architect || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-ink-soft uppercase mb-1">שכונה</p>
+              <p className="text-ink">{building.neighborhood || '—'}</p>
             </div>
           </div>
         </div>
 
-        {/* Findings Entry Section */}
+        {/* Finding form */}
         <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4">
-          <h2 className="text-lg font-serif font-bold text-ink">רישום ממצא</h2>
+          <h2 className="text-lg font-serif font-bold text-ink">רישום ממצא חדש</h2>
 
           <div>
-            <label className="block text-sm font-medium text-ink mb-2">
-              תיאור הממצא
-            </label>
-            <textarea
-              value={findings}
-              onChange={(e) => setFindings(e.target.value)}
-              placeholder="תאר את הממצא בשטח: חומר, נזק, מיקום, מידות..."
-              className="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2"
-              style={{
-                borderColor: '#EDE0CC',
-                '--tw-ring-color': '#C8B89A',
-              } as any}
-              rows={5}
+            <label className="block text-sm font-medium text-ink mb-2">מיקום הממצא *</label>
+            <input
+              type="text"
+              value={locationDesc}
+              onChange={e => setLocationDesc(e.target.value)}
+              placeholder="לדוגמה: חזית צפונית, קומה 2, פינה שמאלית"
+              className="w-full px-4 py-2 border rounded-md text-sm"
+              style={{ borderColor: '#EDE0CC' }}
             />
           </div>
 
-          {/* Photo Capture */}
           <div>
-            <label className="block text-sm font-medium text-ink mb-2">
-              צילום הממצא
-            </label>
-            <div className="border-2 border-dashed rounded-md p-6 text-center" style={{ borderColor: '#C8B89A' }}>
+            <label className="block text-sm font-medium text-ink mb-2">תיאור הממצא</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="תאר את הנזק: חומר, סוג פגיעה, מידות, דחיפות..."
+              className="w-full px-4 py-3 border rounded-md text-sm"
+              style={{ borderColor: '#EDE0CC' }}
+              rows={4}
+            />
+          </div>
+
+          {/* Photo */}
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">צילום</label>
+            <div className="border-2 border-dashed rounded-md p-5 text-center" style={{ borderColor: '#C8B89A' }}>
               <input
                 type="file"
                 accept="image/*"
@@ -150,44 +173,57 @@ export default function FieldPage({ params }: FieldPageProps) {
                 className="hidden"
                 id="photo-input"
               />
-              <label
-                htmlFor="photo-input"
-                className="cursor-pointer inline-block px-6 py-2 rounded-md text-white transition-colors"
-                style={{ backgroundColor: '#C8B89A' }}
-              >
+              <label htmlFor="photo-input" className="cursor-pointer inline-block px-6 py-2 rounded-md text-white text-sm" style={{ backgroundColor: '#C8B89A' }}>
                 צלם או בחר תמונה
               </label>
-              <p className="text-xs text-ink-soft mt-2">
-                {findingPhoto ? `בחר: ${findingPhoto.name}` : 'לחץ להוסיף תמונה'}
-              </p>
+              <p className="text-xs text-ink-soft mt-2">{photo ? photo.name : 'לא נבחרה תמונה'}</p>
             </div>
-
             {photoPreview && (
-              <div className="mt-4">
-                <img
-                  src={photoPreview}
-                  alt="preview"
-                  className="w-full h-48 object-cover rounded-md border border-stone-light"
-                />
-              </div>
+              <img src={photoPreview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-md border border-stone-light" />
             )}
           </div>
 
-          {/* Submit Button */}
-          <button
-            onClick={handleSubmitFinding}
-            className="w-full py-3 text-white font-medium rounded-md transition-colors"
-            style={{ backgroundColor: '#4A5C45' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3D4A36')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4A5C45')}
-          >
-            שמור ממצא
-          </button>
+          {/* Messages */}
+          {error && (
+            <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(139,58,30,0.1)', color: '#8B3A1E' }}>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(74,92,69,0.1)', color: '#4A5C45' }}>
+              ✓ {success}
+            </div>
+          )}
 
-          <p className="text-xs text-ink-soft text-center italic">
-            מצב ממחיז - הממצאים לא יישמרו לשרת
-          </p>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full py-3 text-white font-medium rounded-md transition-colors disabled:opacity-60"
+            style={{ backgroundColor: '#4A5C45' }}
+          >
+            {loading ? 'שומר...' : 'שמור ממצא'}
+          </button>
         </div>
+
+        {/* Saved findings */}
+        {savedFindings.length > 0 && (
+          <div className="bg-white rounded-lg border border-stone-light p-5">
+            <h3 className="text-sm font-semibold text-ink-soft uppercase mb-3">
+              ממצאים שנשמרו ({savedFindings.length})
+            </h3>
+            <div className="space-y-3">
+              {savedFindings.map(f => (
+                <div key={f.id} className="p-3 rounded-md text-sm" style={{ backgroundColor: '#F7F0E3' }}>
+                  <p className="font-medium text-ink">{f.location_desc}</p>
+                  {f.notes && <p className="text-ink-soft mt-1">{f.notes}</p>}
+                  <p className="text-xs text-ink-soft mt-1">
+                    {new Date(f.created_at).toLocaleString('he-IL')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
