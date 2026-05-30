@@ -101,19 +101,20 @@ export default async function BuildingDetailPage({ params }: Props) {
       )}
 
       <div className="flex gap-3 flex-wrap">
-        <Link
-          href={`/buildings/${building.id}/file`}
+        <Link href={`/buildings/${building.id}/file`}
           className="px-6 py-3 text-white font-medium rounded-md transition-colors text-sm"
-          style={{ backgroundColor: '#8B7355' }}
-        >
+          style={{ backgroundColor: '#8B7355' }}>
           פתח תיק תיעוד
         </Link>
-        <Link
-          href={`/field/${building.id}`}
+        <Link href={`/field/${building.id}`}
           className="px-6 py-3 font-medium rounded-md transition-colors text-sm border"
-          style={{ backgroundColor: 'white', color: '#4A5C45', borderColor: '#4A5C45' }}
-        >
+          style={{ backgroundColor: 'white', color: '#4A5C45', borderColor: '#4A5C45' }}>
           מצב שטח
+        </Link>
+        <Link href={`/buildings/${building.id}/card`}
+          className="px-6 py-3 font-medium rounded-md transition-colors text-sm border"
+          style={{ backgroundColor: 'white', color: '#8B3A1E', borderColor: '#8B3A1E' }}>
+          כרטסת תיק
         </Link>
       </div>
     </div>
