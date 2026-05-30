@@ -1,50 +1,23 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import { StatusBadge } from '@/components/buildings/StatusBadge';
 import { notFound } from 'next/navigation';
-import { isDemoMode, getDemoBuildingById } from '@/lib/demo/utils';
+import { StatusBadge } from '@/components/buildings/StatusBadge';
+import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 
-interface BuildingDetailPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-export default async function BuildingDetailPage({
-  params,
-}: BuildingDetailPageProps) {
+export default async function BuildingDetailPage({ params }: Props) {
   const { id } = await params;
-  const demoMode = await isDemoMode();
+  const building = DEMO_BUILDINGS.find(b => b.id === id);
 
-  let building = null;
-  let error = false;
-
-  if (demoMode) {
-    building = getDemoBuildingById(id);
-  } else {
-    const supabase = await createClient();
-    const { data, error: fetchError } = await supabase
-      .from('buildings')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      error = true;
-    } else {
-      building = data;
-    }
-  }
-
-  if (error || !building) {
-    notFound();
-  }
+  if (!building) notFound();
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <Link href="/buildings" className="text-sm text-stone hover:text-stone-dark mb-3 inline-block">
+          <Link href="/buildings" className="text-sm mb-3 inline-block transition-colors" style={{ color: '#8B7355' }}>
             ← חזרה לרשימה
           </Link>
           <h1 className="text-3xl font-serif font-bold text-ink">{building.name}</h1>
@@ -56,25 +29,31 @@ export default async function BuildingDetailPage({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-              מס׳ רישום בעיר
-            </label>
+            <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">מס׳ רישום בעיר</label>
             <p className="text-lg font-mono text-ink">{building.city_registry_id}</p>
           </div>
           {building.neighborhood && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                שכונה
-              </label>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">שכונה</label>
               <p className="text-ink">{building.neighborhood}</p>
             </div>
           )}
           {building.year_built && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                שנת בנייה
-              </label>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">שנת בנייה</label>
               <p className="text-ink">{building.year_built}</p>
+            </div>
+          )}
+          {building.floors && (
+            <div>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">קומות</label>
+              <p className="text-ink">{building.floors}</p>
+            </div>
+          )}
+          {building.total_built_area && (
+            <div>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">שטח בנוי</label>
+              <p className="text-ink">{building.total_built_area.toLocaleString()} מ"ר</p>
             </div>
           )}
         </div>
@@ -82,25 +61,25 @@ export default async function BuildingDetailPage({
         <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4">
           {building.architect && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                אדריכל
-              </label>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">אדריכל</label>
               <p className="text-ink">{building.architect}</p>
             </div>
           )}
           {building.protection_level && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                רמת שימור
-              </label>
-              <p className="text-lg font-semibold text-rust">{building.protection_level}</p>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">רמת שימור</label>
+              <p className="text-lg font-semibold" style={{ color: '#8B3A1E' }}>{building.protection_level}</p>
+            </div>
+          )}
+          {building.construction_type && (
+            <div>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">סוג בנייה</label>
+              <p className="text-ink">{building.construction_type}</p>
             </div>
           )}
           {building.is_complex && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">
-                סוג
-              </label>
+              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">סוג</label>
               <p className="text-ink">מתחם</p>
             </div>
           )}
@@ -109,20 +88,33 @@ export default async function BuildingDetailPage({
 
       {building.current_use && (
         <div className="bg-white rounded-lg border border-stone-light p-6">
-          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">
-            שימוש קיים
-          </label>
+          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">שימוש קיים</label>
           <p className="text-ink">{building.current_use}</p>
         </div>
       )}
 
-      <div className="flex gap-3">
-        <button className="px-4 py-2 bg-stone text-white rounded-md hover:bg-stone-dark transition-colors text-sm font-medium">
+      {building.documentation_reason && (
+        <div className="bg-white rounded-lg border border-stone-light p-6">
+          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">סיבת תיעוד</label>
+          <p className="text-ink">{building.documentation_reason}</p>
+        </div>
+      )}
+
+      <div className="flex gap-3 flex-wrap">
+        <Link
+          href={`/buildings/${building.id}/file`}
+          className="px-6 py-3 text-white font-medium rounded-md transition-colors text-sm"
+          style={{ backgroundColor: '#8B7355' }}
+        >
           פתח תיק תיעוד
-        </button>
-        <button className="px-4 py-2 bg-white text-stone border border-stone rounded-md hover:bg-stone-light transition-colors text-sm font-medium">
-          עדכן נתונים
-        </button>
+        </Link>
+        <Link
+          href={`/field/${building.id}`}
+          className="px-6 py-3 font-medium rounded-md transition-colors text-sm border"
+          style={{ backgroundColor: 'white', color: '#4A5C45', borderColor: '#4A5C45' }}
+        >
+          מצב שטח
+        </Link>
       </div>
     </div>
   );

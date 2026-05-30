@@ -1,11 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const NAV_LINKS = [
+  { href: '/map', label: 'מפה' },
+  { href: '/buildings', label: 'מבנים' },
+  { href: '/field', label: 'שטח' },
+];
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F7F0E3' }}>
       <nav className="bg-white border-b-2 shadow-sm sticky top-0 z-40" style={{ borderColor: '#EDE0CC' }}>
@@ -14,22 +16,17 @@ export default function AppLayout({
             SHIMUR.ASHDOD
           </Link>
 
-          <div className="flex gap-4 items-center">
-            <Link href="/map" className="text-sm transition-colors" style={{ color: '#1A1410' }}>
-              מפה
-            </Link>
-            <Link href="/buildings" className="text-sm transition-colors" style={{ color: '#1A1410' }}>
-              מבנים
-            </Link>
-            <form action="/api/auth/logout" method="post">
-              <button
-                type="submit"
-                className="text-sm transition-colors"
-                style={{ color: '#C4582A' }}
+          <div className="flex gap-6 items-center">
+            {NAV_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-sm font-medium transition-colors hover:text-stone-dark"
+                style={{ color: '#1A1410' }}
               >
-                התחברות חוזרת
-              </button>
-            </form>
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
       </nav>
