@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { StatusBadge } from './StatusBadge';
 import { Building } from '@/lib/types';
 
-type SortKey = 'name' | 'address' | 'neighborhood' | 'city_registry_id' | 'status' | 'lastActivity';
+type SortKey = 'city_registry_id' | 'name' | 'address' | 'neighborhood' | 'status' | 'lastActivity';
 type SortDir = 'asc' | 'desc';
 
 interface BuildingWithActivity extends Building {
@@ -13,7 +13,7 @@ interface BuildingWithActivity extends Building {
 }
 
 export function BuildingsTable({ buildings }: { buildings: BuildingWithActivity[] }) {
-  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortKey, setSortKey] = useState<SortKey>('city_registry_id');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const handleSort = (key: SortKey) => {
@@ -38,49 +38,45 @@ export function BuildingsTable({ buildings }: { buildings: BuildingWithActivity[
   const Arrow = ({ col }: { col: SortKey }) =>
     sortKey === col ? <span className="mr-1">{sortDir === 'asc' ? '↑' : '↓'}</span> : <span className="mr-1 opacity-20">↕</span>;
 
-  const Th = ({ col, label, center }: { col: SortKey; label: string; center?: boolean }) => (
-    <th
-      onClick={() => handleSort(col)}
-      className={`px-6 py-3 text-sm font-semibold text-ink cursor-pointer select-none hover:bg-parchment transition-colors ${center ? 'text-center' : 'text-right'}`}
-    >
+  const Th = ({ col, label }: { col: SortKey; label: string }) => (
+    <th onClick={() => handleSort(col)}
+      className="px-5 py-3 text-sm font-semibold text-ink cursor-pointer select-none hover:bg-parchment transition-colors text-right">
       <Arrow col={col} />{label}
     </th>
   );
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full bg-white rounded-lg border border-stone-light">
+    <div className="overflow-x-auto rounded-lg border border-stone-light">
+      <table className="w-full bg-white">
         <thead>
           <tr className="border-b border-stone-light bg-parchment-deep">
-            <Th col="name" label="שם" />
-            <Th col="address" label="כתובת" />
-            <Th col="neighborhood" label="שכונה" />
             <Th col="city_registry_id" label="מס׳ רישום" />
+            <Th col="name" label="שם האתר" />
+            <Th col="address" label="כתובת" />
+            <Th col="neighborhood" label="אזור" />
             <Th col="status" label="סטטוס" />
             <Th col="lastActivity" label="פעולה אחרונה" />
-            <th className="px-6 py-3 text-center text-sm font-semibold text-ink">פעולות</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-stone-light">
           {sorted.map((b) => (
             <tr key={b.id} className="hover:bg-parchment transition-colors">
-              <td className="px-6 py-4 text-sm font-medium text-ink">{b.name}</td>
-              <td className="px-6 py-4 text-sm text-ink-soft">{b.address}</td>
-              <td className="px-6 py-4 text-sm text-ink-soft">{b.neighborhood || '—'}</td>
-              <td className="px-6 py-4 text-sm text-ink-soft font-mono">{b.city_registry_id}</td>
-              <td className="px-6 py-4 text-sm"><StatusBadge status={b.status} /></td>
-              <td className="px-6 py-4 text-sm">
+              <td className="px-5 py-4 text-sm text-ink-soft font-mono">{b.city_registry_id}</td>
+              <td className="px-5 py-4 text-sm font-medium">
+                <Link href={`/buildings/${b.id}`} className="hover:underline" style={{ color: '#1A1410' }}>
+                  {b.name}
+                </Link>
+              </td>
+              <td className="px-5 py-4 text-sm text-ink-soft">{b.address}</td>
+              <td className="px-5 py-4 text-sm text-ink-soft">{b.neighborhood || '—'}</td>
+              <td className="px-5 py-4 text-sm"><StatusBadge status={b.status} /></td>
+              <td className="px-5 py-4 text-sm">
                 {b.lastActivity ? (
                   <div>
                     <p className="text-ink-soft text-xs">{new Date(b.lastActivity.date).toLocaleDateString('he-IL')}</p>
-                    <p className="text-ink text-xs mt-0.5 truncate max-w-[180px]" title={b.lastActivity.note}>{b.lastActivity.note}</p>
+                    <p className="text-ink text-xs mt-0.5 truncate max-w-[200px]" title={b.lastActivity.note}>{b.lastActivity.note}</p>
                   </div>
                 ) : <span className="text-ink-soft text-xs">—</span>}
-              </td>
-              <td className="px-6 py-4 text-center">
-                <Link href={`/buildings/${b.id}`} className="text-sm font-medium" style={{ color: '#8B7355' }}>
-                  פתח
-                </Link>
               </td>
             </tr>
           ))}

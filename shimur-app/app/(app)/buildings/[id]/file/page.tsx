@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 import { FileActions } from '@/components/file/FileActions';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { ConfigBanner } from '@/components/ConfigBanner';
 
 const CHAPTERS_SINGLE = [
   { id: 'aleph', letter: 'א', title: 'פרטים מינהליים' },
@@ -58,13 +59,14 @@ export default async function FilePage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <ConfigBanner type="file" />
       <div>
         <Link href={`/buildings/${id}`} className="text-sm mb-3 inline-block" style={{ color: '#8B7355' }}>
-          ← חזרה למבנה
+          ← חזרה לאתר
         </Link>
         <h1 className="text-3xl font-serif font-bold text-ink">{building!.name}</h1>
         <p className="text-ink-soft mt-1">
-          תיק תיעוד — {building!.is_complex ? 'מתחם' : 'מבנה'} | {chapters.length} פרקים
+          תיק תיעוד — {building!.is_complex ? 'מתחם' : 'אתר'} | {chapters.length} פרקים
         </p>
       </div>
 

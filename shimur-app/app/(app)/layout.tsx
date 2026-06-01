@@ -4,9 +4,11 @@ import Link from 'next/link';
 const NAV_LINKS = [
   { href: '/overview', label: 'סקירה כללית' },
   { href: '/map', label: 'מפה' },
+  { href: '/timeline', label: 'ציר זמן' },
   { href: '/buildings', label: 'ניהול רשומות' },
   { href: '/buildings/detail', label: 'פירוט אתרים' },
   { href: '/field', label: 'שטח' },
+  { href: '/documents', label: 'מסמכים' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
