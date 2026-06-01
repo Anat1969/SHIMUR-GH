@@ -53,6 +53,11 @@ export interface Building {
   surveyor_date?: string;
   statutory_plans?: any[];
   historical_maps?: any[];
+  // שדות נוספים לאתרי שימור אשדוד
+  building_type?: string;
+  preservation_reasons?: string[];
+  priority_level?: string;
+  full_description?: string;
   status: BuildingStatus;
   assigned_architect?: string;
   created_at: string;

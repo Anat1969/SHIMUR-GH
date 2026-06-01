@@ -3,7 +3,8 @@ import Link from 'next/link';
 
 const NAV_LINKS = [
   { href: '/map', label: 'מפה' },
-  { href: '/buildings', label: 'מבנים' },
+  { href: '/buildings', label: 'ניהול רשומות' },
+  { href: '/buildings/detail', label: 'פירוט מבנים' },
   { href: '/field', label: 'שטח' },
 ];
 
