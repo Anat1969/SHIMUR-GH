@@ -9,7 +9,7 @@ export default function FieldPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-serif font-bold text-ink mb-2">מצב שטח</h1>
-        <p className="text-ink-soft">בחר מבנה לתיעוד בשטח</p>
+        <p className="text-ink-soft">בחר אתר לתיעוד בשטח</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

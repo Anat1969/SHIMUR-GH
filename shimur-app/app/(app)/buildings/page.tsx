@@ -72,8 +72,8 @@ export default async function BuildingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-ink mb-2">רשימת מבנים</h1>
-        <p className="text-ink-soft">{buildings.length} מבנים במערכת</p>
+        <h1 className="text-3xl font-serif font-bold text-ink mb-2">ניהול רשומות — אתרי שימור</h1>
+        <p className="text-ink-soft">{buildings.length} אתרים במערכת</p>
       </div>
       <BuildingsTable buildings={buildings} />
     </div>

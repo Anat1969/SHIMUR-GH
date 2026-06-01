@@ -58,6 +58,9 @@ export interface Building {
   preservation_reasons?: string[];
   priority_level?: string;
   full_description?: string;
+  iaa_reference?: string;
+  gov_sources?: string[];
+  additional_info?: string;
   status: BuildingStatus;
   assigned_architect?: string;
   created_at: string;

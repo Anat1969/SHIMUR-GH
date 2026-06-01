@@ -2,9 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 
 const NAV_LINKS = [
+  { href: '/overview', label: 'סקירה כללית' },
   { href: '/map', label: 'מפה' },
   { href: '/buildings', label: 'ניהול רשומות' },
-  { href: '/buildings/detail', label: 'פירוט מבנים' },
+  { href: '/buildings/detail', label: 'פירוט אתרים' },
   { href: '/field', label: 'שטח' },
 ];
 

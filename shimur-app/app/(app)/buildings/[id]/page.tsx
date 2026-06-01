@@ -93,10 +93,30 @@ export default async function BuildingDetailPage({ params }: Props) {
         </div>
       )}
 
-      {building.documentation_reason && (
+      {building.full_description && (
         <div className="bg-white rounded-lg border border-stone-light p-6">
-          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">סיבת תיעוד</label>
-          <p className="text-ink">{building.documentation_reason}</p>
+          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">תיאור</label>
+          <p className="text-ink leading-relaxed">{building.full_description}</p>
+        </div>
+      )}
+
+      {building.additional_info && (
+        <div className="rounded-lg p-6" style={{ backgroundColor: '#EDE3D0', border: '1px solid #C8B89A' }}>
+          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: '#8B7355' }}>מידע נוסף</label>
+          <p className="text-ink-soft leading-relaxed text-sm">{building.additional_info}</p>
+          {building.iaa_reference && (
+            <p className="text-xs mt-2 font-mono" style={{ color: '#8B7355' }}>IAA: {building.iaa_reference}</p>
+          )}
+          {(building.gov_sources ?? []).length > 0 && (
+            <div className="mt-2 flex gap-2 flex-wrap">
+              {building.gov_sources!.map(url => (
+                <a key={url} href={url} target="_blank" rel="noopener noreferrer"
+                  className="text-xs underline" style={{ color: '#4A5C45' }}>
+                  מקור ממשלתי ↗
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
