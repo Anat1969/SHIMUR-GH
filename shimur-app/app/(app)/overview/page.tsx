@@ -40,18 +40,20 @@ export default function OverviewPage() {
   const maxPriority = Math.max(...Object.values(byPriority).map(a => a.length));
 
   const SelectedPanel = () => !selected ? null : (
-    <div className="bg-white rounded-xl border-2 p-5 space-y-3" style={{ borderColor: '#C8B89A' }}>
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-ink">{selected.label} — {selected.sites.length} אתרים</h3>
-        <button onClick={() => setSelected(null)} className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#EDE0CC', color: '#8B7355' }}>× סגור</button>
+    <div className="fixed right-0 top-0 w-96 h-screen bg-gradient-to-b from-stone-light to-parchment shadow-2xl z-40 p-6 overflow-y-auto flex flex-col gap-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-serif font-bold text-ink text-lg">{selected.label}</h3>
+        <button onClick={() => setSelected(null)} className="text-lg px-3 py-1 rounded hover:bg-white" style={{ backgroundColor: '#EDE0CC', color: '#8B7355' }}>×</button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <p className="text-xs text-ink-soft border-b border-stone pb-3 mb-2">{selected.sites.length} אתרים בחרו</p>
+      <div className="space-y-2 flex-1">
         {selected.sites.map(b => (
           <Link key={b.id} href={`/buildings/${b.id}`}
-            className="flex items-center gap-2 p-2 rounded hover:bg-parchment transition-colors"
-            style={{ border: '1px solid #EDE0CC' }}>
-            <span className="font-mono text-xs text-ink-soft">{b.city_registry_id}</span>
-            <span className="text-sm text-ink">{b.name}</span>
+            className="block p-3 rounded-lg hover:bg-white transition-colors border-r-4"
+            style={{ borderRightColor: '#C4582A', backgroundColor: '#FAFAF8' }}>
+            <span className="font-mono text-xs text-ink-soft block">{b.city_registry_id}</span>
+            <span className="text-sm text-ink font-medium block mt-1">{b.name}</span>
+            <span className="text-xs text-ink-soft block mt-1">{b.address}</span>
           </Link>
         ))}
       </div>
@@ -59,6 +61,8 @@ export default function OverviewPage() {
   );
 
   return (
+    <>
+    <div className={selected ? 'blur-sm pointer-events-none' : ''}>
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="text-center pt-4">
@@ -76,12 +80,17 @@ export default function OverviewPage() {
         {[
           { num: buildings.length, label: 'אתרים ברשימה', sites: buildings, color: '#8B7355' },
           { num: byProtection['א'].length, label: 'שימור רמה א׳', sites: byProtection['א'], color: '#8B3A1E' },
-          { num: neighborhoods.length, label: 'אזורים', sites: buildings.filter(b => !!b.neighborhood), color: '#4A5C45' },
           { num: byPriority['גבוהה'].length, label: 'עדיפות גבוהה', sites: byPriority['גבוהה'], color: '#C4582A' },
-        ].map(({ num, label, sites, color }) => {
+          { num: neighborhoods.length, label: 'אזורים', sites: [], color: '#4A5C45', disabled: true },
+        ].map(({ num, label, sites, color, disabled }) => {
           const key = label;
           const isActive = selected?.label === key;
-          return (
+          return disabled ? (
+            <div key={key} className="bg-white rounded-xl border border-stone-light p-6 text-center opacity-50 cursor-not-allowed">
+              <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
+              <p className="text-xs text-ink-soft uppercase tracking-wide">{label}</p>
+            </div>
+          ) : (
             <button key={key} onClick={() => select(key, sites)}
               className="bg-white rounded-xl border p-6 text-center transition-all hover:shadow-md"
               style={{ borderColor: isActive ? color : '#EDE0CC', borderWidth: isActive ? 2 : 1, cursor: 'pointer' }}>
@@ -91,7 +100,6 @@ export default function OverviewPage() {
           );
         })}
       </div>
-      <SelectedPanel />
 
       {/* Priority + Protection combined */}
       <div className="bg-white rounded-xl border border-stone-light p-6">
@@ -134,7 +142,6 @@ export default function OverviewPage() {
           })}
         </div>
       </div>
-      <SelectedPanel />
 
       {/* Types + Reasons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,7 +182,6 @@ export default function OverviewPage() {
           </div>
         </div>
       </div>
-      <SelectedPanel />
 
       {/* Neighborhoods */}
       <div className="bg-white rounded-xl border border-stone-light p-6">
@@ -195,7 +201,6 @@ export default function OverviewPage() {
           })}
         </div>
       </div>
-      <SelectedPanel />
 
       {/* CTA */}
       <div className="flex gap-4 justify-center flex-wrap pb-6">
@@ -212,5 +217,8 @@ export default function OverviewPage() {
         ))}
       </div>
     </div>
+    </div>
+    {selected && <SelectedPanel />}
+    </>
   );
 }

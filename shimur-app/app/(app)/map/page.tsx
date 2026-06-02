@@ -3,14 +3,14 @@
 import dynamic from 'next/dynamic';
 import { useState, useMemo } from 'react';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
-import { Building } from '@/lib/types';
+import { Building, STATUS_COLORS } from '@/lib/types';
 
 const BuildingsMap = dynamic(
   () => import('@/components/map/BuildingsMap').then(m => m.BuildingsMap),
   { ssr: false, loading: () => <div className="w-full h-[500px] rounded-lg border border-stone-light bg-parchment animate-pulse" /> }
 );
 
-type FilterGroup = 'priority' | 'type' | 'neighborhood' | 'protection' | null;
+type FilterGroup = 'status' | 'type' | 'neighborhood' | null;
 
 const TYPE_GROUPS: Record<string, string[]> = {
   'ארכאולוגי': ['תל ארכאולוגי', 'מצודה ארכאולוגית'],
@@ -28,24 +28,17 @@ function getTypeGroup(b: Building): string {
 }
 
 const FILTER_OPTIONS = {
-  priority: ['גבוהה', 'בינונית', 'נמוכה'],
+  status: ['לא_התחיל', 'בתהליך', 'הוגש', 'אושר', 'הוחזר'],
   type: ['ארכאולוגי', 'היסטורי', 'תרבותי', 'אקולוגי'],
   neighborhood: [...new Set(DEMO_BUILDINGS.map(b => b.neighborhood).filter(Boolean) as string[])],
-  protection: ['א', 'ב', 'ג'],
 };
 
 const GROUP_LABELS: Record<NonNullable<FilterGroup>, string> = {
-  priority: 'עדיפות',
+  status: 'עדיפות וסטטוס',
   type: 'קטגוריה',
   neighborhood: 'אזור',
-  protection: 'רמת שימור',
 };
 
-const PRIORITY_COLORS: Record<string, string> = {
-  'גבוהה': '#8B3A1E',
-  'בינונית': '#C4582A',
-  'נמוכה': '#8B7355',
-};
 
 export default function MapPage() {
   const [activeGroup, setActiveGroup] = useState<FilterGroup>(null);
@@ -70,20 +63,16 @@ export default function MapPage() {
     if (!activeGroup || !activeValue) return DEMO_BUILDINGS;
     return DEMO_BUILDINGS.filter(b => {
       switch (activeGroup) {
-        case 'priority': return b.priority_level === activeValue;
+        case 'status': return b.status === activeValue;
         case 'type': return getTypeGroup(b) === activeValue;
         case 'neighborhood': return b.neighborhood === activeValue;
-        case 'protection': return b.protection_level === activeValue;
         default: return true;
       }
     });
   }, [activeGroup, activeValue]);
 
-  // Map: color by priority
-  const mapBuildings = filtered.map(b => ({
-    ...b,
-    status: (b.priority_level === 'גבוהה' ? 'הוחזר' : b.priority_level === 'בינונית' ? 'בתהליך' : 'לא_התחיל') as any,
-  }));
+  // Pass filtered buildings to map
+  const mapBuildings = filtered;
 
   const FilterGroup = ({ group, label }: { group: NonNullable<FilterGroup>; label: string }) => {
     const isActive = activeGroup === group;
@@ -119,10 +108,9 @@ export default function MapPage() {
                   <span className="mr-1 text-xs opacity-60">
                     ({DEMO_BUILDINGS.filter(b => {
                       switch (group) {
-                        case 'priority': return b.priority_level === v;
+                        case 'status': return b.status === v;
                         case 'type': return getTypeGroup(b) === v;
                         case 'neighborhood': return b.neighborhood === v;
-                        case 'protection': return b.protection_level === v;
                         default: return false;
                       }
                     }).length})
@@ -154,11 +142,10 @@ export default function MapPage() {
             ? `בחר ערך מ"${GROUP_LABELS[activeGroup]}" — לחץ שוב על הקבוצה לאיפוס`
             : 'לחץ על קבוצת סינון כדי לפתח אפשרויות'}
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-          <FilterGroup group="priority" label="עדיפות" />
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+          <FilterGroup group="status" label="עדיפות וסטטוס" />
           <FilterGroup group="type" label="קטגוריה" />
           <FilterGroup group="neighborhood" label="אזור" />
-          <FilterGroup group="protection" label="רמת שימור" />
         </div>
         {(activeGroup || activeValue) && (
           <button
@@ -188,12 +175,14 @@ export default function MapPage() {
 
       {/* Legend */}
       <div className="bg-white rounded-lg border border-stone-light p-4">
-        <p className="text-xs font-semibold text-ink-soft uppercase mb-3">מקרא — צבע לפי עדיפות</p>
+        <p className="text-xs font-semibold text-ink-soft uppercase mb-3">מקרא — צבע לפי סטטוס</p>
         <div className="flex gap-6 flex-wrap">
           {[
-            { color: PRIORITY_COLORS['גבוהה'], label: 'עדיפות גבוהה' },
-            { color: PRIORITY_COLORS['בינונית'], label: 'עדיפות בינונית' },
-            { color: PRIORITY_COLORS['נמוכה'], label: 'עדיפות נמוכה' },
+            { color: STATUS_COLORS['לא_התחיל'], label: 'לא התחיל' },
+            { color: STATUS_COLORS['בתהליך'], label: 'בתהליך' },
+            { color: STATUS_COLORS['הוגש'], label: 'הוגש' },
+            { color: STATUS_COLORS['אושר'], label: 'אושר' },
+            { color: STATUS_COLORS['הוחזר'], label: 'הוחזר' },
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-2 text-xs">
               <div className="w-4 h-4 rounded-full border-2 border-white shadow" style={{ backgroundColor: color }} />

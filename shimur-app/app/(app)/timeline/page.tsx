@@ -9,6 +9,7 @@ const PERIODS = [
     color: '#6B4226',
     desc: 'ישובים כנעניים וחופיים קדומים. מסחר ימי עם מצרים ואוגריט. תל מור כנקודת שליטה על פי הנחל.',
     keywords: ['תקופות קדומות', 'תקופת הברונזה'],
+    backgroundImage: '/timeline/ancient.jpg',
   },
   {
     id: 'iron',
@@ -17,6 +18,7 @@ const PERIODS = [
     color: '#8B5E3C',
     desc: 'אשדוד — אחת מחמש ערי הפלשתים הגדולות. מרכז כלכלי ותרבותי מרכזי. שרידי יישוב בתל מור.',
     keywords: ['תקופת הברזל'],
+    backgroundImage: '/timeline/iron.jpg',
   },
   {
     id: 'persian',
@@ -25,6 +27,7 @@ const PERIODS = [
     color: '#7A5C8A',
     desc: 'אשדוד — נמל מסחרי תוסס. שרידים מהתקופה בתל מור ובמצודת אשדוד-ים.',
     keywords: ['תקופות קדומות', 'תקופה פרסית-הלניסטית'],
+    backgroundImage: '/timeline/persian.jpg',
   },
   {
     id: 'roman',
@@ -33,6 +36,7 @@ const PERIODS = [
     color: '#5C5C8A',
     desc: 'אזוטוס — עיר נמל רומית. כנסיה ביזנטית במצודת אשדוד-ים. מתחם פולחן חשוב.',
     keywords: ['תקופה ביזנטית'],
+    backgroundImage: '/timeline/roman.jpg',
   },
   {
     id: 'islamic',
@@ -41,6 +45,7 @@ const PERIODS = [
     color: '#4A7A5C',
     desc: 'מצודת אשדוד-ים כריבאט — ביצור דתי-צבאי. אל-מוקדסי (מאה ה-10) מזכיר את האתר.',
     keywords: ['תקופה אסלאמית קדומה'],
+    backgroundImage: '/timeline/islamic.jpg',
   },
   {
     id: 'mamluk',
@@ -49,6 +54,7 @@ const PERIODS = [
     color: '#7A6A4A',
     desc: 'גשר עד הלום נבנה על יסודות רומיים. האזור שומם יחסית. שרידי ישובי דייגים.',
     keywords: ['תקופה מנדטורית'],
+    backgroundImage: '/timeline/mamluk.jpg',
   },
   {
     id: 'mandate',
@@ -57,6 +63,7 @@ const PERIODS = [
     color: '#6A7A4A',
     desc: 'פארק עד הלום — מצדית בטון בריטית (1936). 15.5.1948: גשר עד הלום מפוצץ לעצור צבא מצרים.',
     keywords: ['תקופה מנדטורית'],
+    backgroundImage: '/timeline/mandate.jpg',
   },
   {
     id: 'israeli',
@@ -65,6 +72,7 @@ const PERIODS = [
     color: '#4A7A72',
     desc: 'הקמת עיר אשדוד מ-1956. רובע א׳ ראשון. נמל (1965). המגדלור, בנקים, בית קנדה, הגן האדום ועוד.',
     keywords: ['תקופה ישראלית'],
+    backgroundImage: '/timeline/israeli.jpg',
   },
 ];
 
@@ -98,11 +106,16 @@ export default function TimelinePage() {
 
               {/* Content */}
               <div className="flex-1 pb-6 pr-2">
-                <div className="bg-white rounded-xl border border-stone-light p-5">
+                <div className="bg-white rounded-xl border border-stone-light p-5 relative overflow-hidden">
+                  {/* Background image with 50% opacity */}
+                  {period.backgroundImage && (
+                    <div className="absolute inset-0 opacity-50 -z-10"
+                      style={{ backgroundImage: `url('${period.backgroundImage}')`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                  )}
                   <div className="flex items-start justify-between flex-wrap gap-2 mb-3">
                     <div>
                       <h3 className="font-serif font-bold text-lg text-ink">{period.label}</h3>
-                      <p className="text-xs font-mono" style={{ color: period.color }}>{period.years}</p>
+                      <p className="text-2xl font-bold font-serif" style={{ color: period.color }}>{period.years}</p>
                     </div>
                     {periodBuildings.length > 0 && (
                       <span className="text-xs px-2 py-1 rounded-full font-medium"
