@@ -12,24 +12,31 @@ interface BuildingsMapProps {
 export function BuildingsMap({ buildings }: BuildingsMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.CircleMarker[]>([]);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current) return;
 
-    // Initialize map
-    map.current = L.map(mapContainer.current, {
-      center: [31.8039, 34.7522], // Ashdod coordinates
-      zoom: 12,
-      layers: [
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          maxZoom: 19,
-        }),
-      ],
-    });
+    if (!map.current) {
+      // Initialize map only once
+      map.current = L.map(mapContainer.current, {
+        center: [31.8039, 34.7522],
+        zoom: 12,
+        layers: [
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+          }),
+        ],
+      });
+    }
 
-    // Add markers for each building with coordinates
+    // Remove old markers
+    markersRef.current.forEach(marker => marker.removeFrom(map.current!));
+    markersRef.current = [];
+
+    // Add markers for filtered buildings
     buildings.forEach((building) => {
       if (building.lat && building.lng) {
         const color = STATUS_COLORS[building.status];
@@ -51,10 +58,11 @@ export function BuildingsMap({ buildings }: BuildingsMapProps) {
         );
 
         marker.addTo(map.current!);
+        markersRef.current.push(marker);
       }
     });
 
-    // Fit bounds if buildings have coordinates
+    // Fit bounds to filtered buildings
     const buildingsWithCoords = buildings.filter((b) => b.lat && b.lng);
     if (buildingsWithCoords.length > 0) {
       const bounds = L.latLngBounds(
