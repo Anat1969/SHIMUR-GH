@@ -20,7 +20,7 @@ export function BuildingsMap({ buildings }: BuildingsMapProps) {
     if (!map.current) {
       // Initialize map only once
       map.current = L.map(mapContainer.current, {
-        center: [31.8039, 34.7522],
+        center: [31.8050, 34.6460],
         zoom: 12,
         layers: [
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
