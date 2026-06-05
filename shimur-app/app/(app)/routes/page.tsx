@@ -29,16 +29,17 @@ export default function RoutesPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="text-center pt-4">
+      <div className="page-intro">
         <p className="text-sm tracking-widest uppercase mb-3" style={{ color: 'var(--ocean)' }}>
           מסלולי סיור
         </p>
-        <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>
           מורשת אשדוד — מסלולים
         </h1>
-        <p className="max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
-          מסלולים נרטיביים המחברים בין אתרי השימור על פי חוט משותף —
-          תקופה, נושא, שכונה או סיפור.
+        <p className="leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
+          מסלולים נרטיביים המחברים בין אתרי השימור על פי <span className="highlight-text">חוט משותף</span> —
+          תקופה, נושא, שכונה או סיפור. כל מסלול מספר סיפור אחד דרך מספר אתרים.
+          שימור הוא לא רק הגנה — הוא <span className="highlight-text">סיפור</span>.
         </p>
       </div>
 
@@ -89,7 +90,7 @@ export default function RoutesPage() {
             }}
           >
             <div className="flex items-start justify-between mb-3">
-              <h3 className="font-serif font-bold text-xl group-hover:underline" style={{ color: 'var(--ink)' }}>
+              <h3 className="font-serif font-bold text-xl group-hover:underline" style={{ color: 'var(--navy)' }}>
                 {route.title}
               </h3>
               {route.theme && (
@@ -103,7 +104,7 @@ export default function RoutesPage() {
             </div>
 
             {route.description && (
-              <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--navy-soft)' }}>
                 {route.description}
               </p>
             )}
@@ -117,7 +118,7 @@ export default function RoutesPage() {
               </span>
               <span className="text-xs" style={{ color: 'var(--ocean-dark)' }}>אתרים</span>
               <span className="text-xs mx-1" style={{ color: 'var(--stone)' }}>·</span>
-              <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>
+              <span className="text-xs" style={{ color: 'var(--navy-soft)' }}>
                 {(route.sites ?? []).slice(0, 3).map((s) => getBuildingName(s.building_id)).filter(Boolean).join(' → ')}
                 {(route.sites?.length ?? 0) > 3 && ' →…'}
               </span>

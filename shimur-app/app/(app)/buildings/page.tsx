@@ -71,9 +71,13 @@ export default async function BuildingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-serif font-bold text-ink mb-2">ניהול רשומות — אתרי שימור</h1>
-        <p className="text-ink-soft">{buildings.length} אתרים במערכת</p>
+      <div className="page-intro">
+        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>ניהול רשומות — אתרי שימור</h1>
+        <p style={{ color: 'var(--navy-soft)' }}>
+          <span className="highlight-text">{buildings.length} אתרים</span> במערכת.
+          ניהול כל רשומות השימור — סטטוס תיעוד, עדיפות, והתקדמות.
+          שימור מתחיל בתיעוד שיטתי.
+        </p>
       </div>
       <BuildingsTable buildings={buildings} />
     </div>

@@ -13,7 +13,7 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
   if (!route) {
     return (
       <div className="text-center py-20">
-        <h1 className="text-2xl font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-2xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>
           מסלול לא נמצא
         </h1>
         <Link
@@ -58,11 +58,11 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
               {route.theme}
             </span>
           )}
-          <h1 className="text-3xl font-serif font-bold mb-3" style={{ color: 'var(--ink)' }}>
+          <h1 className="text-3xl font-serif font-bold mb-3" style={{ color: 'var(--navy)' }}>
             {route.title}
           </h1>
           {route.description && (
-            <p className="leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+            <p className="leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
               {route.description}
             </p>
           )}

@@ -17,6 +17,11 @@ const config: Config = {
           DEFAULT: '#1A1410',
           soft: '#3D3228',
         },
+        navy: {
+          DEFAULT: '#1B2A4A',
+          light: '#2C3E6B',
+          soft: '#4A5A7A',
+        },
         parchment: {
           DEFAULT: '#F7F0E3',
           deep: '#EDE3D0',

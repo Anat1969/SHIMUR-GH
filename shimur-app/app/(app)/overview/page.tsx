@@ -43,11 +43,11 @@ export default function OverviewPage() {
     <div className="fixed right-0 top-0 w-96 h-screen shadow-2xl z-40 p-6 overflow-y-auto flex flex-col gap-4"
       style={{ background: 'linear-gradient(180deg, var(--stone-light) 0%, var(--parchment) 100%)' }}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--ink)' }}>{selected.label}</h3>
+        <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>{selected.label}</h3>
         <button onClick={() => setSelected(null)} className="text-lg px-3 py-1 rounded hover:bg-white"
           style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--stone-dark)' }}>×</button>
       </div>
-      <p className="text-xs border-b pb-3 mb-2" style={{ color: 'var(--ink-soft)', borderColor: 'var(--stone)' }}>
+      <p className="text-xs border-b pb-3 mb-2" style={{ color: 'var(--navy-soft)', borderColor: 'var(--stone)' }}>
         {selected.sites.length} אתרים בחרו
       </p>
       <div className="space-y-2 flex-1">
@@ -55,9 +55,9 @@ export default function OverviewPage() {
           <Link key={b.id} href={`/buildings/${b.id}`}
             className="block p-3 rounded-lg hover:bg-white transition-colors"
             style={{ borderRight: '4px solid var(--amber)', backgroundColor: '#FAFAF8' }}>
-            <span className="font-mono text-xs block" style={{ color: 'var(--ink-soft)' }}>{b.city_registry_id}</span>
-            <span className="text-sm font-medium block mt-1" style={{ color: 'var(--ink)' }}>{b.name}</span>
-            <span className="text-xs block mt-1" style={{ color: 'var(--ink-soft)' }}>{b.address}</span>
+            <span className="font-mono text-xs block" style={{ color: 'var(--navy-soft)' }}>{b.city_registry_id}</span>
+            <span className="text-sm font-medium block mt-1" style={{ color: 'var(--navy)' }}>{b.name}</span>
+            <span className="text-xs block mt-1" style={{ color: 'var(--navy-soft)' }}>{b.address}</span>
           </Link>
         ))}
       </div>
@@ -68,14 +68,15 @@ export default function OverviewPage() {
     <>
     <div className={selected ? 'blur-sm pointer-events-none' : ''}>
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="text-center pt-4">
-        <p className="text-sm tracking-widest uppercase mb-3" style={{ color: 'var(--stone-dark)' }}>עיריית אשדוד — יחידת שימור</p>
-        <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>רשימת אתרי השימור של אשדוד</h1>
-        <p className="max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
-          רשימת השימור העירונית נקבעת מכוח חוק התכנון והבנייה, ומגדירה אתרים בעלי ערך היסטורי, אדריכלי, תרבותי ואקולוגי
+      <div className="page-intro">
+        <p className="text-sm tracking-widest uppercase mb-3" style={{ color: 'var(--ocean)' }}>עיריית אשדוד — יחידת שימור</p>
+        <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>רשימת אתרי השימור של אשדוד</h1>
+        <p className="max-w-2xl leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
+          רשימת השימור העירונית נקבעת מכוח <span className="highlight-text">חוק התכנון והבנייה</span>, ומגדירה אתרים בעלי ערך
+          <span className="highlight-text">היסטורי, אדריכלי, תרבותי ואקולוגי</span>
           המחייבים הגנה ותיעוד לפני כל שינוי.
         </p>
-        <p className="text-xs mt-2" style={{ color: 'var(--ink-soft)' }}>לחץ על כל נתון מספרי לצפייה ברשימת האתרים</p>
+        <p className="text-xs mt-2" style={{ color: 'var(--navy-soft)' }}>לחץ על כל נתון מספרי לצפייה ברשימת האתרים</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -88,17 +89,16 @@ export default function OverviewPage() {
           const key = label;
           const isActive = selected?.label === key;
           return disabled ? (
-            <div key={key} className="bg-white rounded-xl border p-6 text-center opacity-50 cursor-not-allowed"
-              style={{ borderColor: 'var(--stone-light)' }}>
+            <div key={key} className="glass-card p-6 text-center opacity-50 cursor-not-allowed">
               <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </div>
           ) : (
             <button key={key} onClick={() => select(key, sites)}
-              className="bg-white rounded-xl border p-6 text-center transition-all hover:shadow-md"
-              style={{ borderColor: isActive ? color : 'var(--stone-light)', borderWidth: isActive ? 2 : 1, cursor: 'pointer' }}>
+              className="glass-card p-6 text-center transition-all hover:shadow-md"
+              style={{ borderColor: isActive ? color : undefined, borderWidth: isActive ? 2 : undefined, cursor: 'pointer' }}>
               <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </button>
           );
         })}
@@ -107,7 +107,7 @@ export default function OverviewPage() {
       {/* מסלולים אחרונים */}
       <div className="rounded-xl p-6" style={{ background: 'linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%)', border: '1px solid var(--ocean-pale)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-serif font-bold" style={{ color: 'var(--ink)' }}>מסלולי סיור</h2>
+          <h2 className="text-lg font-serif font-bold" style={{ color: 'var(--navy)' }}>מסלולי סיור</h2>
           <Link href="/routes" className="text-sm font-medium transition-colors" style={{ color: 'var(--ocean)' }}>
             כל המסלולים →
           </Link>
@@ -117,8 +117,8 @@ export default function OverviewPage() {
             <Link key={route.id} href={`/routes/${route.id}`}
               className="bg-white rounded-lg p-4 transition-all hover:shadow-md"
               style={{ border: '1px solid var(--ocean-pale)' }}>
-              <h3 className="font-serif font-bold text-sm mb-1" style={{ color: 'var(--ink)' }}>{route.title}</h3>
-              <p className="text-xs mb-2" style={{ color: 'var(--ink-soft)' }}>
+              <h3 className="font-serif font-bold text-sm mb-1" style={{ color: 'var(--navy)' }}>{route.title}</h3>
+              <p className="text-xs mb-2" style={{ color: 'var(--navy-soft)' }}>
                 {route.description?.slice(0, 80)}…
               </p>
               <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--ocean-pale)', color: 'var(--ocean-dark)' }}>
@@ -129,8 +129,8 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border p-6" style={{ borderColor: 'var(--stone-light)' }}>
-        <h2 className="text-lg font-serif font-bold mb-5" style={{ color: 'var(--ink)' }}>עדיפות טיפול ורמת שימור</h2>
+      <div className="glass-card p-6" style={{  }}>
+        <h2 className="text-lg font-serif font-bold mb-5" style={{ color: 'var(--navy)' }}>עדיפות טיפול ורמת שימור</h2>
         <div className="space-y-4">
           {[
             { label: 'עדיפות גבוהה', group: byPriority['גבוהה'], color: 'var(--rust)' },
@@ -142,7 +142,7 @@ export default function OverviewPage() {
               <div key={label}>
                 <div className="flex items-center gap-4">
                   <button onClick={() => select(label, group)}
-                    className="text-sm shrink-0 hover:underline w-36 text-right" style={{ color: 'var(--ink-soft)' }}>
+                    className="text-sm shrink-0 hover:underline w-36 text-right" style={{ color: 'var(--navy-soft)' }}>
                     {label} ({group.length})
                   </button>
                   <div className="flex-1 h-8 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--parchment-deep)' }}>
@@ -172,8 +172,8 @@ export default function OverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border p-6" style={{ borderColor: 'var(--stone-light)' }}>
-          <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>סוגי אתרים</h2>
+        <div className="glass-card p-6" style={{  }}>
+          <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>סוגי אתרים</h2>
           <div className="space-y-2">
             {Object.entries(typeGroups).sort((a, b) => b[1].length - a[1].length).map(([type, sites]) => {
               const isActive = selected?.label === type;
@@ -182,15 +182,15 @@ export default function OverviewPage() {
                   className="flex justify-between items-center py-1.5 w-full last:border-0 hover:bg-parchment px-2 rounded transition-colors"
                   style={{ backgroundColor: isActive ? 'var(--parchment-deep)' : undefined, borderBottom: '1px solid var(--stone-light)' }}>
                   <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--stone-dark)' }}>{sites.length}</span>
-                  <span className="text-sm" style={{ color: 'var(--ink)' }}>{type}</span>
+                  <span className="text-sm" style={{ color: 'var(--navy)' }}>{type}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border p-6" style={{ borderColor: 'var(--stone-light)' }}>
-          <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>סיבות שימור</h2>
+        <div className="glass-card p-6" style={{  }}>
+          <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>סיבות שימור</h2>
           <div className="space-y-2">
             {Object.entries(reasons).sort((a, b) => b[1].length - a[1].length).map(([reason, sites]) => {
               const isActive = selected?.label === `סיבה: ${reason}`;
@@ -202,7 +202,7 @@ export default function OverviewPage() {
                     <div className="h-2 rounded-full" style={{ width: `${sites.length * 14}px`, backgroundColor: 'var(--sage)', opacity: 0.7 }} />
                     <span className="text-xs font-bold" style={{ color: 'var(--sage)' }}>{sites.length}</span>
                   </div>
-                  <span className="text-sm" style={{ color: 'var(--ink)' }}>{reason}</span>
+                  <span className="text-sm" style={{ color: 'var(--navy)' }}>{reason}</span>
                 </button>
               );
             })}
@@ -210,8 +210,8 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border p-6" style={{ borderColor: 'var(--stone-light)' }}>
-        <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>פיזור גיאוגרפי</h2>
+      <div className="glass-card p-6" style={{  }}>
+        <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>פיזור גיאוגרפי</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {neighborhoods.map(n => {
             const sites = buildings.filter(b => b.neighborhood === n);
@@ -220,8 +220,8 @@ export default function OverviewPage() {
               <button key={n} onClick={() => select(n, sites)}
                 className="rounded-lg p-4 text-center transition-all hover:shadow-sm"
                 style={{ backgroundColor: isActive ? 'var(--parchment-deep)' : 'var(--parchment)', border: isActive ? '2px solid var(--stone)' : '1px solid var(--stone-light)' }}>
-                <p className="font-semibold text-lg" style={{ color: 'var(--ink)' }}>{sites.length}</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>{n}</p>
+                <p className="font-semibold text-lg" style={{ color: 'var(--navy)' }}>{sites.length}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--navy-soft)' }}>{n}</p>
               </button>
             );
           })}

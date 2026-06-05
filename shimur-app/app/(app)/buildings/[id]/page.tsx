@@ -18,7 +18,7 @@ export default function BuildingDetailPage({ params }: Props) {
   if (!building) {
     return (
       <div className="text-center py-20">
-        <h1 className="text-2xl font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-2xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>
           אתר לא נמצא
         </h1>
         <Link href="/buildings" className="text-sm" style={{ color: 'var(--ocean)' }}>
@@ -61,83 +61,83 @@ export default function BuildingDetailPage({ params }: Props) {
       <SiteCard building={building} variant={viewMode} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
+        <div className="glass-card p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
           <div>
-            <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>מס׳ רישום בעיר</label>
-            <p className="text-lg font-mono" style={{ color: 'var(--ink)' }}>{building.city_registry_id}</p>
+            <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>מס׳ רישום בעיר</label>
+            <p className="text-lg font-mono" style={{ color: 'var(--navy)' }}>{building.city_registry_id}</p>
           </div>
           {building.neighborhood && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>שכונה</label>
-              <p style={{ color: 'var(--ink)' }}>{building.neighborhood}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>שכונה</label>
+              <p style={{ color: 'var(--navy)' }}>{building.neighborhood}</p>
             </div>
           )}
           {building.year_built && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>שנת בנייה</label>
-              <p style={{ color: 'var(--ink)' }}>{building.year_built}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>שנת בנייה</label>
+              <p style={{ color: 'var(--navy)' }}>{building.year_built}</p>
             </div>
           )}
           {building.floors && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>קומות</label>
-              <p style={{ color: 'var(--ink)' }}>{building.floors}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>קומות</label>
+              <p style={{ color: 'var(--navy)' }}>{building.floors}</p>
             </div>
           )}
           {building.total_built_area && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>שטח בנוי</label>
-              <p style={{ color: 'var(--ink)' }}>{building.total_built_area.toLocaleString()} מ"ר</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>שטח בנוי</label>
+              <p style={{ color: 'var(--navy)' }}>{building.total_built_area.toLocaleString()} מ"ר</p>
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-lg border p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
+        <div className="glass-card p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
           {building.architect && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>אדריכל</label>
-              <p style={{ color: 'var(--ink)' }}>{building.architect}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>אדריכל</label>
+              <p style={{ color: 'var(--navy)' }}>{building.architect}</p>
             </div>
           )}
           {building.protection_level && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>רמת שימור</label>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>רמת שימור</label>
               <p className="text-lg font-semibold" style={{ color: 'var(--amber-dark)' }}>{building.protection_level}</p>
             </div>
           )}
           {building.construction_type && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>סוג בנייה</label>
-              <p style={{ color: 'var(--ink)' }}>{building.construction_type}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>סוג בנייה</label>
+              <p style={{ color: 'var(--navy)' }}>{building.construction_type}</p>
             </div>
           )}
           {building.is_complex && (
             <div>
-              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>סוג</label>
-              <p style={{ color: 'var(--ink)' }}>מתחם</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--navy-soft)' }}>סוג</label>
+              <p style={{ color: 'var(--navy)' }}>מתחם</p>
             </div>
           )}
         </div>
       </div>
 
       {building.current_use && (
-        <div className="bg-white rounded-lg border p-6" style={{ borderColor: 'var(--stone-light)' }}>
-          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--ink-soft)' }}>שימוש קיים</label>
-          <p style={{ color: 'var(--ink)' }}>{building.current_use}</p>
+        <div className="glass-card p-6" style={{ borderColor: 'var(--stone-light)' }}>
+          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--navy-soft)' }}>שימוש קיים</label>
+          <p style={{ color: 'var(--navy)' }}>{building.current_use}</p>
         </div>
       )}
 
       {building.full_description && (
-        <div className="bg-white rounded-lg border p-6" style={{ borderColor: 'var(--stone-light)' }}>
-          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--ink-soft)' }}>תיאור</label>
-          <p className="leading-relaxed" style={{ color: 'var(--ink)' }}>{building.full_description}</p>
+        <div className="glass-card p-6" style={{ borderColor: 'var(--stone-light)' }}>
+          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--navy-soft)' }}>תיאור</label>
+          <p className="leading-relaxed" style={{ color: 'var(--navy)' }}>{building.full_description}</p>
         </div>
       )}
 
       {building.additional_info && (
         <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--parchment-deep)', border: '1px solid var(--stone)' }}>
           <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--stone-dark)' }}>מידע נוסף</label>
-          <p className="leading-relaxed text-sm" style={{ color: 'var(--ink-soft)' }}>{building.additional_info}</p>
+          <p className="leading-relaxed text-sm" style={{ color: 'var(--navy-soft)' }}>{building.additional_info}</p>
           {building.iaa_reference && (
             <p className="text-xs mt-2 font-mono" style={{ color: 'var(--stone-dark)' }}>IAA: {building.iaa_reference}</p>
           )}

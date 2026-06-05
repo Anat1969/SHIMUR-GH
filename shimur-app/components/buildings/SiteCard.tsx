@@ -28,14 +28,14 @@ function ProfessionalCard({ building, showActions }: { building: Building; showA
           <p className="font-mono text-xs mb-1" style={{ color: 'var(--stone-dark)' }}>
             {building.city_registry_id}
           </p>
-          <h3 className="font-serif font-bold text-xl mb-2" style={{ color: 'var(--ink)' }}>
+          <h3 className="font-serif font-bold text-xl mb-2" style={{ color: 'var(--navy)' }}>
             {building.name}
           </h3>
-          <p className="text-sm mb-3" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-sm mb-3" style={{ color: 'var(--navy-soft)' }}>
             {building.address}
           </p>
 
-          <div className="flex flex-wrap gap-3 text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>
+          <div className="flex flex-wrap gap-3 text-xs mb-4" style={{ color: 'var(--navy-soft)' }}>
             {building.taba && <span>גוש: {building.taba}</span>}
             {building.parcel && <span>חלקה: {building.parcel}</span>}
             {building.protection_level && (
@@ -77,7 +77,7 @@ function ProfessionalCard({ building, showActions }: { building: Building; showA
           <Link
             href={`/buildings/${building.id}`}
             className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--ink-soft)' }}
+            style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--navy-soft)' }}
           >
             פרטי אתר
           </Link>
@@ -106,7 +106,7 @@ function PublicCard({
     <div className="public-accent rounded-xl p-6">
       <div className="mb-4">
         <div className="flex items-baseline gap-3 mb-2">
-          <h3 className="font-serif font-bold text-2xl" style={{ color: 'var(--ink)' }}>
+          <h3 className="font-serif font-bold text-2xl" style={{ color: 'var(--navy)' }}>
             {building.name}
           </h3>
           {building.year_built && (
@@ -115,7 +115,7 @@ function PublicCard({
             </span>
           )}
         </div>
-        <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>
           {building.address}
           {building.neighborhood && ` — ${building.neighborhood}`}
         </p>
@@ -124,7 +124,7 @@ function PublicCard({
       {building.full_description && (
         <p
           className="text-sm leading-relaxed mb-4"
-          style={{ color: 'var(--ink-soft)' }}
+          style={{ color: 'var(--navy-soft)' }}
         >
           {building.full_description.length > 200
             ? building.full_description.slice(0, 200) + '…'

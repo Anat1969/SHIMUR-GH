@@ -9,6 +9,11 @@
   
   --ink: #1A1410;
   --ink-soft: #3D3228;
+
+  /* Navy — טקסט ראשי */
+  --navy: #1B2A4A;
+  --navy-light: #2C3E6B;
+  --navy-soft: #4A5A7A;
   
   --parchment: #F7F0E3;
   --parchment-deep: #EDE3D0;
@@ -106,4 +111,40 @@ body {
 .water-line {
   border-top: 2px solid var(--ocean);
   opacity: 0.3;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(200, 184, 154, 0.3);
+  border-radius: 12px;
+}
+
+.glass-dark {
+  background: rgba(27, 42, 74, 0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(27, 42, 74, 0.08);
+  border-radius: 12px;
+}
+
+.highlight-text {
+  background: linear-gradient(120deg, rgba(212, 146, 42, 0.15) 0%, rgba(212, 146, 42, 0.05) 100%);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.page-intro {
+  background: linear-gradient(135deg, rgba(27, 107, 125, 0.05) 0%, rgba(247, 240, 227, 0.8) 100%);
+  border-right: 3px solid var(--ocean);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+}
+
+.nav-active {
+  background: rgba(27, 107, 125, 0.1);
+  color: var(--ocean-dark) !important;
+  font-weight: 600;
+  border-radius: 6px;
 }
