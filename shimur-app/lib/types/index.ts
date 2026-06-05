@@ -92,6 +92,28 @@ export const STATUS_COLORS: Record<BuildingStatus, string> = {
   'הוחזר': '#8B3A1E',
 };
 
+export interface Route {
+  id: string;
+  title: string;
+  description: string | null;
+  theme: string | null;
+  cover_image_url: string | null;
+  created_by: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  sites?: RouteSite[];
+}
+
+export interface RouteSite {
+  id: string;
+  route_id: string;
+  building_id: string;
+  position: number;
+  narrative_text: string | null;
+  building?: Building;
+}
+
 export const STATUS_LABELS: Record<BuildingStatus, string> = {
   'לא_התחיל': 'לא התחיל',
   'בתהליך': 'בתהליך',

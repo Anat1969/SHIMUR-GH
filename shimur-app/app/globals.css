@@ -19,6 +19,18 @@
   --sage: #4A5C45;
   --sage-light: #7A9174;
 
+  /* Ocean — ממשק ציבורי, מסלולים, מפה */
+  --ocean: #1B6B7D;
+  --ocean-dark: #0E4A58;
+  --ocean-light: #2A8FA3;
+  --ocean-pale: #E8F4F7;
+
+  /* Amber — הדגשות, CTA, ערכים מספריים */
+  --amber: #D4922A;
+  --amber-dark: #A67318;
+  --amber-light: #E8B44C;
+  --amber-pale: #FDF5E6;
+
   /* Status Colors */
   --status-not-started: var(--stone-dark);
   --status-in-progress: var(--rust-light);
@@ -74,4 +86,24 @@ body {
   color: var(--ink);
   font-weight: 400;
   line-height: 1.6;
+}
+
+.card-heritage {
+  background: linear-gradient(135deg, var(--parchment) 0%, var(--parchment-deep) 100%);
+  border: 1px solid var(--stone-light);
+  border-radius: 12px;
+}
+
+.public-accent {
+  background: linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%);
+  border-right: 3px solid var(--ocean);
+}
+
+.pro-accent {
+  border-right: 3px solid var(--amber);
+}
+
+.water-line {
+  border-top: 2px solid var(--ocean);
+  opacity: 0.3;
 }
