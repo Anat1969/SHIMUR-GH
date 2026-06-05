@@ -38,7 +38,8 @@ export default function RootLayout({
     >
       <head>
         <meta charSet="utf-8" />
-        <meta name="theme-color" content="#C8B89A" />
+        <meta name="theme-color" content="#1B6B7D" />
+        <link rel="icon" href="/dolphin.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         {children}

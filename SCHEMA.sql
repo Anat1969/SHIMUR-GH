@@ -474,3 +474,65 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- =======================================
+-- ROUTES — מסלולי סיור
+-- =======================================
+CREATE TABLE routes (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title           TEXT NOT NULL,
+  description     TEXT,
+  theme           TEXT,
+  cover_image_url TEXT,
+  created_by      UUID REFERENCES profiles(id),
+  is_public       BOOLEAN NOT NULL DEFAULT false,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE route_sites (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  route_id        UUID NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
+  building_id     UUID NOT NULL REFERENCES buildings(id),
+  position        INTEGER NOT NULL,
+  narrative_text  TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_route_sites_route ON route_sites(route_id);
+CREATE INDEX idx_route_sites_building ON route_sites(building_id);
+
+CREATE TRIGGER routes_updated_at
+  BEFORE UPDATE ON routes
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- RLS — routes
+ALTER TABLE routes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE route_sites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public routes visible to all" ON routes
+  FOR SELECT USING (is_public = true);
+
+CREATE POLICY "Creator manages own routes" ON routes
+  FOR ALL USING (auth.uid() = created_by);
+
+CREATE POLICY "Manager manages all routes" ON routes
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'manager')
+  );
+
+CREATE POLICY "Route sites visible with route" ON route_sites
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM routes
+      WHERE id = route_id AND (is_public = true OR created_by = auth.uid())
+    )
+  );
+
+CREATE POLICY "Creator manages route sites" ON route_sites
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM routes
+      WHERE id = route_id AND created_by = auth.uid()
+    )
+  );

@@ -29,6 +29,18 @@ const config: Config = {
           DEFAULT: '#4A5C45',
           light: '#7A9174',
         },
+        ocean: {
+          DEFAULT: '#1B6B7D',
+          dark: '#0E4A58',
+          light: '#2A8FA3',
+          pale: '#E8F4F7',
+        },
+        amber: {
+          DEFAULT: '#D4922A',
+          dark: '#A67318',
+          light: '#E8B44C',
+          pale: '#FDF5E6',
+        },
       },
       fontFamily: {
         sans: ['var(--font-heebo)', 'system-ui', 'sans-serif'],

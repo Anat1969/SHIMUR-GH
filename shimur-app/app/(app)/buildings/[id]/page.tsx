@@ -1,117 +1,151 @@
+'use client';
+
+import { use, useState } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { StatusBadge } from '@/components/buildings/StatusBadge';
+import { SiteCard } from '@/components/buildings/SiteCard';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function BuildingDetailPage({ params }: Props) {
-  const { id } = await params;
+export default function BuildingDetailPage({ params }: Props) {
+  const { id } = use(params);
   const building = DEMO_BUILDINGS.find(b => b.id === id);
+  const [viewMode, setViewMode] = useState<'professional' | 'public'>('professional');
 
-  if (!building) notFound();
+  if (!building) {
+    return (
+      <div className="text-center py-20">
+        <h1 className="text-2xl font-serif font-bold mb-4" style={{ color: 'var(--ink)' }}>
+          אתר לא נמצא
+        </h1>
+        <Link href="/buildings" className="text-sm" style={{ color: 'var(--ocean)' }}>
+          ← חזרה לרשימה
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <Link href="/buildings" className="text-sm mb-3 inline-block transition-colors" style={{ color: '#8B7355' }}>
-            ← חזרה לרשימה
-          </Link>
-          <h1 className="text-3xl font-serif font-bold text-ink">{building.name}</h1>
-          <p className="text-ink-soft mt-1">{building.address}</p>
+      <div className="flex items-center justify-between">
+        <Link href="/buildings" className="text-sm transition-colors" style={{ color: 'var(--stone-dark)' }}>
+          ← חזרה לרשימה
+        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setViewMode('professional')}
+            className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: viewMode === 'professional' ? 'var(--amber)' : 'var(--parchment-deep)',
+              color: viewMode === 'professional' ? 'white' : 'var(--ink-soft)',
+            }}
+          >
+            מקצועי
+          </button>
+          <button
+            onClick={() => setViewMode('public')}
+            className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: viewMode === 'public' ? 'var(--ocean)' : 'var(--ocean-pale)',
+              color: viewMode === 'public' ? 'white' : 'var(--ocean-dark)',
+            }}
+          >
+            תצוגת תייר
+          </button>
         </div>
-        <StatusBadge status={building.status} />
       </div>
 
+      <SiteCard building={building} variant={viewMode} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4">
+        <div className="bg-white rounded-lg border p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
           <div>
-            <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">מס׳ רישום בעיר</label>
-            <p className="text-lg font-mono text-ink">{building.city_registry_id}</p>
+            <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>מס׳ רישום בעיר</label>
+            <p className="text-lg font-mono" style={{ color: 'var(--ink)' }}>{building.city_registry_id}</p>
           </div>
           {building.neighborhood && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">שכונה</label>
-              <p className="text-ink">{building.neighborhood}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>שכונה</label>
+              <p style={{ color: 'var(--ink)' }}>{building.neighborhood}</p>
             </div>
           )}
           {building.year_built && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">שנת בנייה</label>
-              <p className="text-ink">{building.year_built}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>שנת בנייה</label>
+              <p style={{ color: 'var(--ink)' }}>{building.year_built}</p>
             </div>
           )}
           {building.floors && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">קומות</label>
-              <p className="text-ink">{building.floors}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>קומות</label>
+              <p style={{ color: 'var(--ink)' }}>{building.floors}</p>
             </div>
           )}
           {building.total_built_area && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">שטח בנוי</label>
-              <p className="text-ink">{building.total_built_area.toLocaleString()} מ"ר</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>שטח בנוי</label>
+              <p style={{ color: 'var(--ink)' }}>{building.total_built_area.toLocaleString()} מ"ר</p>
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4">
+        <div className="bg-white rounded-lg border p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
           {building.architect && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">אדריכל</label>
-              <p className="text-ink">{building.architect}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>אדריכל</label>
+              <p style={{ color: 'var(--ink)' }}>{building.architect}</p>
             </div>
           )}
           {building.protection_level && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">רמת שימור</label>
-              <p className="text-lg font-semibold" style={{ color: '#8B3A1E' }}>{building.protection_level}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>רמת שימור</label>
+              <p className="text-lg font-semibold" style={{ color: 'var(--amber-dark)' }}>{building.protection_level}</p>
             </div>
           )}
           {building.construction_type && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">סוג בנייה</label>
-              <p className="text-ink">{building.construction_type}</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>סוג בנייה</label>
+              <p style={{ color: 'var(--ink)' }}>{building.construction_type}</p>
             </div>
           )}
           {building.is_complex && (
             <div>
-              <label className="block text-xs font-semibold text-ink-soft uppercase mb-1">סוג</label>
-              <p className="text-ink">מתחם</p>
+              <label className="block text-xs font-semibold uppercase mb-1" style={{ color: 'var(--ink-soft)' }}>סוג</label>
+              <p style={{ color: 'var(--ink)' }}>מתחם</p>
             </div>
           )}
         </div>
       </div>
 
       {building.current_use && (
-        <div className="bg-white rounded-lg border border-stone-light p-6">
-          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">שימוש קיים</label>
-          <p className="text-ink">{building.current_use}</p>
+        <div className="bg-white rounded-lg border p-6" style={{ borderColor: 'var(--stone-light)' }}>
+          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--ink-soft)' }}>שימוש קיים</label>
+          <p style={{ color: 'var(--ink)' }}>{building.current_use}</p>
         </div>
       )}
 
       {building.full_description && (
-        <div className="bg-white rounded-lg border border-stone-light p-6">
-          <label className="block text-xs font-semibold text-ink-soft uppercase mb-2">תיאור</label>
-          <p className="text-ink leading-relaxed">{building.full_description}</p>
+        <div className="bg-white rounded-lg border p-6" style={{ borderColor: 'var(--stone-light)' }}>
+          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--ink-soft)' }}>תיאור</label>
+          <p className="leading-relaxed" style={{ color: 'var(--ink)' }}>{building.full_description}</p>
         </div>
       )}
 
       {building.additional_info && (
-        <div className="rounded-lg p-6" style={{ backgroundColor: '#EDE3D0', border: '1px solid #C8B89A' }}>
-          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: '#8B7355' }}>מידע נוסף</label>
-          <p className="text-ink-soft leading-relaxed text-sm">{building.additional_info}</p>
+        <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--parchment-deep)', border: '1px solid var(--stone)' }}>
+          <label className="block text-xs font-semibold uppercase mb-2" style={{ color: 'var(--stone-dark)' }}>מידע נוסף</label>
+          <p className="leading-relaxed text-sm" style={{ color: 'var(--ink-soft)' }}>{building.additional_info}</p>
           {building.iaa_reference && (
-            <p className="text-xs mt-2 font-mono" style={{ color: '#8B7355' }}>IAA: {building.iaa_reference}</p>
+            <p className="text-xs mt-2 font-mono" style={{ color: 'var(--stone-dark)' }}>IAA: {building.iaa_reference}</p>
           )}
           {(building.gov_sources ?? []).length > 0 && (
             <div className="mt-2 flex gap-2 flex-wrap">
               {building.gov_sources!.map(url => (
                 <a key={url} href={url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs underline" style={{ color: '#4A5C45' }}>
+                  className="text-xs underline" style={{ color: 'var(--sage)' }}>
                   מקור ממשלתי ↗
                 </a>
               ))}
@@ -122,18 +156,18 @@ export default async function BuildingDetailPage({ params }: Props) {
 
       <div className="flex gap-3 flex-wrap">
         <Link href={`/buildings/${building.id}/file`}
-          className="px-6 py-3 text-white font-medium rounded-md transition-colors text-sm"
-          style={{ backgroundColor: '#8B7355' }}>
+          className="px-6 py-3 text-white font-medium rounded-lg transition-colors text-sm"
+          style={{ backgroundColor: 'var(--amber)' }}>
           פתח תיק תיעוד
         </Link>
         <Link href={`/field/${building.id}`}
-          className="px-6 py-3 font-medium rounded-md transition-colors text-sm border"
-          style={{ backgroundColor: 'white', color: '#4A5C45', borderColor: '#4A5C45' }}>
+          className="px-6 py-3 font-medium rounded-lg transition-colors text-sm"
+          style={{ backgroundColor: 'white', color: 'var(--sage)', border: '1px solid var(--sage)' }}>
           מצב שטח
         </Link>
         <Link href={`/buildings/${building.id}/card`}
-          className="px-6 py-3 font-medium rounded-md transition-colors text-sm border"
-          style={{ backgroundColor: 'white', color: '#8B3A1E', borderColor: '#8B3A1E' }}>
+          className="px-6 py-3 font-medium rounded-lg transition-colors text-sm"
+          style={{ backgroundColor: 'white', color: 'var(--ocean)', border: '1px solid var(--ocean)' }}>
           כרטסת תיק
         </Link>
       </div>
