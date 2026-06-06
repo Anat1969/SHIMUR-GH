@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { StatusBadge } from '@/components/buildings/StatusBadge';
 import { SiteCard } from '@/components/buildings/SiteCard';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { SITE_IMAGES } from '@/lib/demo/site-images';
 
 interface Props {
   params: Promise<{ id: string }>;

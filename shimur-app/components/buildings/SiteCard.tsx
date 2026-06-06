@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Building, STATUS_COLORS, STATUS_LABELS, BuildingStatus } from '@/lib/types';
+import { SITE_IMAGES } from '@/lib/demo/site-images';
 
 interface SiteCardProps {
   building: Building;
@@ -17,25 +18,41 @@ export function SiteCard({ building, variant, onAddToRoute, showActions = true }
   return <PublicCard building={building} onAddToRoute={onAddToRoute} showActions={showActions} />;
 }
 
+function CardBgImage({ buildingId }: { buildingId: string }) {
+  const src = SITE_IMAGES[buildingId];
+  if (!src) return null;
+  return (
+    <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+      <img
+        src={src}
+        alt=""
+        className="w-full h-full object-cover"
+        style={{ opacity: 0.08, filter: 'grayscale(60%)' }}
+      />
+    </div>
+  );
+}
+
 function ProfessionalCard({ building, showActions }: { building: Building; showActions: boolean }) {
   const statusColor = STATUS_COLORS[building.status];
   const statusLabel = STATUS_LABELS[building.status];
 
   return (
-    <div className="card-heritage pro-accent p-6">
-      <div className="flex justify-between items-start gap-4">
+    <div className="card-heritage pro-accent p-6 relative overflow-hidden">
+      <CardBgImage buildingId={building.id} />
+      <div className="flex justify-between items-start gap-4 relative" style={{ zIndex: 1 }}>
         <div className="flex-1 min-w-0">
           <p className="font-mono text-xs mb-1" style={{ color: 'var(--stone-dark)' }}>
             {building.city_registry_id}
           </p>
-          <h3 className="font-serif font-bold text-xl mb-2" style={{ color: 'var(--ink)' }}>
+          <h3 className="font-serif font-bold text-xl mb-2" style={{ color: 'var(--navy)' }}>
             {building.name}
           </h3>
-          <p className="text-sm mb-3" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-sm mb-3" style={{ color: 'var(--navy-soft)' }}>
             {building.address}
           </p>
 
-          <div className="flex flex-wrap gap-3 text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>
+          <div className="flex flex-wrap gap-3 text-xs mb-4" style={{ color: 'var(--navy-soft)' }}>
             {building.taba && <span>גוש: {building.taba}</span>}
             {building.parcel && <span>חלקה: {building.parcel}</span>}
             {building.protection_level && (
@@ -66,7 +83,7 @@ function ProfessionalCard({ building, showActions }: { building: Building; showA
       </div>
 
       {showActions && (
-        <div className="flex gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--stone-light)' }}>
+        <div className="flex gap-3 mt-4 pt-4 relative" style={{ borderTop: '1px solid var(--stone-light)', zIndex: 1 }}>
           <Link
             href={`/buildings/${building.id}/file`}
             className="px-5 py-2 rounded-lg text-sm font-medium text-white transition-colors"
@@ -77,7 +94,7 @@ function ProfessionalCard({ building, showActions }: { building: Building; showA
           <Link
             href={`/buildings/${building.id}`}
             className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--ink-soft)' }}
+            style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--navy-soft)' }}
           >
             פרטי אתר
           </Link>
@@ -103,73 +120,76 @@ function PublicCard({
   ].filter(Boolean);
 
   return (
-    <div className="public-accent rounded-xl p-6">
-      <div className="mb-4">
-        <div className="flex items-baseline gap-3 mb-2">
-          <h3 className="font-serif font-bold text-2xl" style={{ color: 'var(--ink)' }}>
-            {building.name}
-          </h3>
-          {building.year_built && (
-            <span className="text-sm font-mono" style={{ color: 'var(--ocean)' }}>
-              {building.year_built}
-            </span>
-          )}
+    <div className="public-accent rounded-xl p-6 relative overflow-hidden">
+      <CardBgImage buildingId={building.id} />
+      <div className="relative" style={{ zIndex: 1 }}>
+        <div className="mb-4">
+          <div className="flex items-baseline gap-3 mb-2">
+            <h3 className="font-serif font-bold text-2xl" style={{ color: 'var(--navy)' }}>
+              {building.name}
+            </h3>
+            {building.year_built && (
+              <span className="text-sm font-mono" style={{ color: 'var(--ocean)' }}>
+                {building.year_built}
+              </span>
+            )}
+          </div>
+          <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>
+            {building.address}
+            {building.neighborhood && ` — ${building.neighborhood}`}
+          </p>
         </div>
-        <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
-          {building.address}
-          {building.neighborhood && ` — ${building.neighborhood}`}
-        </p>
-      </div>
 
-      {building.full_description && (
-        <p
-          className="text-sm leading-relaxed mb-4"
-          style={{ color: 'var(--ink-soft)' }}
-        >
-          {building.full_description.length > 200
-            ? building.full_description.slice(0, 200) + '…'
-            : building.full_description}
-        </p>
-      )}
-
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-xs px-3 py-1 rounded-full"
-              style={{ backgroundColor: 'var(--ocean-pale)', color: 'var(--ocean-dark)' }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {showActions && (
-        <div className="flex gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--ocean-pale)' }}>
-          <Link
-            href={`/buildings/${building.id}`}
-            className="px-5 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-            style={{ backgroundColor: 'var(--ocean)' }}
+        {building.full_description && (
+          <p
+            className="text-sm leading-relaxed mb-4"
+            style={{ color: 'var(--navy-soft)' }}
           >
-            קרא עוד
-          </Link>
-          {onAddToRoute && (
-            <button
-              onClick={() => onAddToRoute(building.id)}
-              className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: 'var(--ocean-pale)',
-                color: 'var(--ocean-dark)',
-                border: '1px solid var(--ocean-light)',
-              }}
+            {building.full_description.length > 200
+              ? building.full_description.slice(0, 200) + '…'
+              : building.full_description}
+          </p>
+        )}
+
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-xs px-3 py-1 rounded-full"
+                style={{ backgroundColor: 'var(--ocean-pale)', color: 'var(--ocean-dark)' }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {showActions && (
+          <div className="flex gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--ocean-pale)' }}>
+            <Link
+              href={`/buildings/${building.id}`}
+              className="px-5 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+              style={{ backgroundColor: 'var(--ocean)' }}
             >
-              הוסף למסלול
-            </button>
-          )}
-        </div>
-      )}
+              קרא עוד
+            </Link>
+            {onAddToRoute && (
+              <button
+                onClick={() => onAddToRoute(building.id)}
+                className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: 'var(--ocean-pale)',
+                  color: 'var(--ocean-dark)',
+                  border: '1px solid var(--ocean-light)',
+                }}
+              >
+                הוסף למסלול
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
