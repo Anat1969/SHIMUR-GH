@@ -2,9 +2,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { DEMO_ROUTES } from '@/lib/demo/routes';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 import { RouteBuilder } from '@/components/routes/RouteBuilder';
+
+const RoutesMap = dynamic(
+  () => import('@/components/map/RoutesMap').then((m) => m.RoutesMap),
+  { ssr: false, loading: () => <div className="w-full h-[500px] rounded-xl bg-stone-100 animate-pulse" /> }
+);
 
 type Filter = 'all' | 'public';
 
@@ -77,6 +83,25 @@ export default function RoutesPage() {
           }}
         />
       )}
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-serif font-bold" style={{ color: 'var(--navy)' }}>
+          מפת המסלולים
+        </h2>
+        <RoutesMap
+          routes={routes}
+          buildings={DEMO_BUILDINGS}
+          themeColors={themeColors}
+        />
+        <div className="flex flex-wrap gap-3 justify-end pt-1">
+          {Object.entries(themeColors).map(([theme, color]) => (
+            <span key={theme} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--navy-soft)' }}>
+              <span className="w-4 h-1 rounded-full inline-block" style={{ backgroundColor: color }} />
+              {theme}
+            </span>
+          ))}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {routes.map((route) => (
