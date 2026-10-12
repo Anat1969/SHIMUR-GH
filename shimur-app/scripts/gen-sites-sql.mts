@@ -1,9 +1,11 @@
 // מייצר SQL למאגר מתוך lib/demo/buildings.ts — מקור אחד לנתוני הגיבוי ולמאגר.
-// הרצה: node --experimental-strip-types scripts/gen-sites-sql.mts [מספר-אתר-ראשון]
-// בלי ארגומנט: כל האתרים. עם ארגומנט: רק אתרים ממספר זה והלאה (להוספה בלבד).
+// הרצה: node --experimental-strip-types scripts/gen-sites-sql.mts [מספר-אתר-ראשון | רשימת-מספרים]
+// בלי ארגומנט: כל האתרים. מספר אחד: אתרים ממספר זה והלאה. רשימה מופרדת בפסיקים (14,17): רק האתרים האלה.
 import { DEMO_BUILDINGS } from '../lib/demo/buildings.ts';
 
-const minId = Number(process.argv[2] ?? 0);
+const arg = process.argv[2] ?? '0';
+const only = arg.includes(',') ? new Set(arg.split(',').map(Number)) : null;
+const minId = only ? 0 : Number(arg);
 const cols = ['site_no', 'city_registry_id', 'name', 'address', 'neighborhood', 'parcel', 'is_complex', 'lat', 'lng', 'year_built', 'year_built_verified', 'architect', 'architect_verified', 'style', 'historical_periods', 'protection_level', 'documentation_reason', 'owner', 'current_use', 'building_type', 'preservation_reasons', 'priority_level', 'full_description', 'additional_info', 'iaa_reference', 'gov_sources', 'committee_no', 'list_status', 'statutory_ref', 'coords_approx', 'data_conflict', 'components', 'risk_note', 'grade_note'];
 const arrCols = new Set(['historical_periods', 'preservation_reasons', 'gov_sources', 'components']);
 const boolCols = new Set(['is_complex', 'year_built_verified', 'architect_verified', 'coords_approx']);
@@ -18,7 +20,7 @@ const q = (v: unknown): string => {
   return `'${s.replace(/'/g, "''")}'`;
 };
 
-const rows = DEMO_BUILDINGS.filter(b => Number(b.id) >= minId).map(b => {
+const rows = DEMO_BUILDINGS.filter(b => (only ? only.has(Number(b.id)) : Number(b.id) >= minId)).map(b => {
   const r = b as unknown as Record<string, unknown>;
   return '(' + cols.map(c => {
     const v = c === 'site_no' ? Number(b.id) : r[c];

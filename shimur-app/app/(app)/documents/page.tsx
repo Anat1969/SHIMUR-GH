@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { SOURCE_CREDIT } from '@/lib/clusters';
 import { useSites } from '@/components/providers/SiteData';
 import type { SiteDocument } from '@/lib/types';
 import { apiFetch } from '@/lib/supabase/browser';
@@ -144,6 +145,24 @@ export default function DocumentsPage() {
           תיעוד מלא הוא הבסיס לכל תהליך שימור — צלם, רשום, שמור.
         </p>
       </div>
+
+      {/* מסמך המקור — קבוע, לא תלוי במאגר */}
+      <section className="glass-card p-6 flex flex-wrap items-center justify-between gap-4" aria-labelledby="source-doc">
+        <div className="min-w-0 max-w-xl">
+          <p className="text-xs font-semibold" style={{ color: 'var(--ocean)' }}>מסמך המקור של הרשימה</p>
+          <h2 id="source-doc" className="text-lg font-serif font-bold mt-1" style={{ color: 'var(--navy)' }}>משמרים אתרים באשדוד — ועדה לשימור אתרים 2016</h2>
+          <p className="text-sm mt-1 leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
+            12 שקפים: התוספת הרביעית לחוק, ארכאולוגיה לפי תקופות ומסלול &quot;טיילת בזמן&quot;, טבלת 21 האתרים, והמקבצים חוף הים, נחל לכיש ורובע א׳.
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--navy-soft)' }}>{SOURCE_CREDIT}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a href="/docs/committee-2016.pdf" target="_blank" rel="noopener noreferrer"
+            className="px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>פתיחת המצגת</a>
+          <a href="/docs/committee-2016.pdf" download="משמרים-אתרים-באשדוד-2016.pdf"
+            className="px-6 py-3 rounded-lg text-sm font-semibold" style={{ border: '1px solid var(--navy)', color: 'var(--navy)' }}>הורדה</a>
+        </div>
+      </section>
 
       <EditorGate what="הוספה ועריכה של מסמכים"><span /></EditorGate>
       {actionError && (
