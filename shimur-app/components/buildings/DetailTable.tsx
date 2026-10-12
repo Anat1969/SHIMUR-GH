@@ -103,7 +103,7 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
       </div>
 
       {/* Table */}
-      <div className={expanded ? 'overflow-x-auto' : ''} style={{ borderRadius: 8, border: '1px solid #EDE0CC' }}>
+      <div className="overflow-x-auto" style={{ borderRadius: 8, border: '1px solid #EDE0CC' }}>
         <table className="bg-white text-sm w-full" style={expanded ? { minWidth: 1300 } : {}}>
           <thead>
             <tr className="border-b border-stone-light bg-parchment-deep">

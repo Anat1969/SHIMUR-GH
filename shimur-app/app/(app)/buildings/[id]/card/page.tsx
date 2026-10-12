@@ -42,7 +42,7 @@ const SLIDE_STYLE = {
   backgroundColor: 'white',
   border: '1px solid #EDE0CC',
   borderRadius: 8,
-  padding: '3rem',
+  padding: 'clamp(1.25rem, 4vw, 3rem)',
   marginBottom: '1.5rem',
   display: 'flex' as const,
   flexDirection: 'column' as const,
@@ -106,7 +106,7 @@ export default async function CardPage({ params }: Props) {
           <SlideHeader num="א" title="זיהוי" />
           <h1 style={{ fontSize: '2.5rem', fontFamily: 'Georgia, serif', color: '#1A1410', marginBottom: '0.5rem' }}>{building!.name}</h1>
           <p style={{ fontSize: '1.2rem', color: '#3D3228', marginBottom: '2rem' }}>{building!.address}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginTop: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '1.5rem', marginTop: 'auto' }}>
             {[
               ['מס׳ רישום', building!.city_registry_id],
               ['רמת שימור', building!.protection_level ?? '—'],
@@ -171,7 +171,7 @@ export default async function CardPage({ params }: Props) {
           <SlideHeader num="ה" title="מצב קיים וממצאים" />
           <h2 style={HEADING}>מצב קיים — ממצאי שטח ({findings.length})</h2>
           {findings.length === 0 && <p style={{ color: '#8B7355', fontStyle: 'italic' }}>טרם נרשמו ממצאי שטח</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', flex: 1 }}>
             {findings.slice(0, 6).map(f => (
               <div key={f.id} style={{ display: 'flex', gap: '0.75rem', ...FIELD_BOX }}>
                 {f.photo_url && (
@@ -191,7 +191,7 @@ export default async function CardPage({ params }: Props) {
         <div className="slide" style={SLIDE_STYLE}>
           <SlideHeader num="ו" title="מדידה ושרטוט" />
           <h2 style={HEADING}>סקר חזיתות ופרטי בינוי</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
             <div>
               <p style={{ ...FIELD_LABEL, fontSize: '0.85rem', marginBottom: '0.75rem' }}>פרק ג — סקר חזיתות</p>
               {chapters['gimel'] ? Object.entries(chapters['gimel']).filter(([,v]) => v?.trim()).map(([k,v]) => (
@@ -237,7 +237,7 @@ export default async function CardPage({ params }: Props) {
         <div className="slide" style={SLIDE_STYLE}>
           <SlideHeader num="ט" title="נספחים, מקורות וחוסרים" />
           <h2 style={HEADING}>נספחים ומקורות</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
             <div>
               {chapters['tet'] && Object.entries(chapters['tet']).filter(([,v]) => v?.trim()).map(([k,v]) => (
                 <div key={k} style={FIELD_BOX}><p style={FIELD_LABEL}>{k}</p><p style={{ color: '#1A1410' }}>{v}</p></div>
