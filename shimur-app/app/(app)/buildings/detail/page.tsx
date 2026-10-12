@@ -1,6 +1,7 @@
 import { DetailTable } from '@/components/buildings/DetailTable';
 import { getSites } from '@/lib/data';
 import type { Building } from '@/lib/types';
+import { LIST_STATUS_LABELS } from '@/lib/types';
 import { PrintButton } from '@/components/PrintButton';
 
 export default async function DetailPage() {
@@ -31,9 +32,11 @@ export default async function DetailPage() {
 }
 
 function buildCsv(sites: Building[]): string {
-  const headers = ['מס׳','שם','כתובת','שכונה','סוג','תקופה','בעלות','סיבות שימור','סטטוס קיים','עדיפות','רמת שימור','חלקה','תיאור'];
+  const headers = ['מס׳','מס׳ בוועדה','מעמד ברשימה','שם','כתובת','שכונה','סוג','תקופה','בעלות','סיבות שימור','סטטוס קיים','עדיפות','רמת שימור','חלקה','תיאור','לאימות'];
   const rows = sites.map(b => [
     b.city_registry_id,
+    b.committee_no ?? '',
+    b.list_status ? LIST_STATUS_LABELS[b.list_status] : '',
     b.name,
     b.address,
     b.neighborhood ?? '',
@@ -46,6 +49,7 @@ function buildCsv(sites: Building[]): string {
     b.protection_level ?? '',
     b.parcel ?? '',
     (b.full_description ?? b.documentation_reason ?? '').replace(/,/g, '؛'),
-  ].map(v => `"${v}"`).join(','));
+    b.data_conflict ? `לאימות: ${b.data_conflict}` : '',
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
   return [headers.map(h => `"${h}"`).join(','), ...rows].join('\n');
 }

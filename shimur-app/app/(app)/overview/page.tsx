@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSites, useRoutes } from '@/components/providers/SiteData';
-import { Building } from '@/lib/types';
+import { Building, LIST_STATUS_LABELS, LIST_STATUS_NOTES, ListStatus } from '@/lib/types';
+import { CLUSTERS, SOURCE_CREDIT } from '@/lib/clusters';
+import { LIST_STATUS_COLORS, LIST_STATUS_NOTES_SHORT, needsVerification } from '@/components/sites/ListInfo';
 import { SiteImage } from '@/components/sites/SiteImage';
 
 type Selection = { label: string; sites: Building[] } | null;
@@ -28,6 +30,14 @@ export default function OverviewPage() {
     'ג': buildings.filter(b => b.protection_level === 'ג'),
   };
   const neighborhoods = [...new Set(buildings.map(b => b.neighborhood).filter(Boolean) as string[])];
+  // מקבצים: הרשימה הקבועה מהוועדה, ואחריה כל אזור שקיים בנתונים ואינו ברשימה
+  const clusters = [
+    ...CLUSTERS,
+    ...neighborhoods.filter(n => !CLUSTERS.some(c => c.name === n)).map(name => ({ name, description: '', textual: false })),
+  ];
+  const committeeCount = buildings.filter(b => b.committee_no).length;
+  const byListStatus = (Object.keys(LIST_STATUS_LABELS) as ListStatus[]).map(s => ({ s, sites: buildings.filter(b => b.list_status === s) }));
+  const toVerify = buildings.filter(needsVerification);
   const typeGroups: Record<string, Building[]> = {};
   buildings.forEach(b => {
     const t = b.building_type ?? b.style ?? 'אחר';
@@ -102,7 +112,7 @@ export default function OverviewPage() {
           { num: buildings.length, label: 'אתרים מתועדים במערכת', sites: buildings, color: 'var(--amber)' },
           { num: byProtection['א'].length, label: 'דרגה א׳ מוצעת', sites: byProtection['א'], color: 'var(--rust)' },
           { num: byPriority['גבוהה'].length, label: 'עדיפות תיעוד גבוהה', sites: byPriority['גבוהה'], color: 'var(--amber-dark)' },
-          { num: neighborhoods.length, label: 'מקבצים עירוניים', sites: buildings, color: 'var(--ocean)', anchor: '#clusters' },
+          { num: clusters.length, label: 'מקבצים עירוניים', sites: buildings, color: 'var(--ocean)', anchor: '#clusters' },
         ].map(({ num, label, sites, color, anchor }) => {
           const isActive = selected?.label === label;
           return anchor ? (
@@ -129,8 +139,12 @@ export default function OverviewPage() {
             <p>הוועדה העירונית לשימור אתרים, בישיבה 201601 מיום 17.8.2016, מכוח התוספת הרביעית לחוק התכנון והבנייה (סעיף 12). הוועדה אישרה &quot;רשימת אתרים וסביבתם לשימור בתחום העיר&quot;, מאורגנת במקבצים עירוניים — חוף הים, נחל לכיש, רובע א׳ ומסדרון אקולוגי — והחליטה להוסיף את כל בתי הכנסת המייצגים את תרבויות העיר ואת כל האנדרטאות.</p>
           </div>
           <div>
-            <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>למה 14 אתרים</h3>
-            <p>14 הם האתרים שתועדו עד כה במערכת, מתוך רשימת הוועדה הרחבה יותר. כל אתר נוסף מהרשימה נכנס למערכת עם תיק תיעוד משלו — המספר יגדל ככל שהתיעוד מתקדם.</p>
+            <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>למה {buildings.length} אתרים</h3>
+            <p>
+              {buildings.length} אתרים במערכת: {committeeCount} אתרים ממוספרים ברשימת הוועדה
+              {byListStatus.filter(x => x.s !== 'committee_2016' && x.sites.length).map(x => `, ${x.sites.length} ${LIST_STATUS_NOTES_SHORT[x.s]}`).join('')}.
+              {' '}כל אתר נכנס למערכת עם תיק תיעוד משלו. המספר מחושב מהנתונים ויגדל עם כל אתר שנוסף.
+            </p>
           </div>
           <div>
             <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>מה פירוש דרגה א׳ / ב׳</h3>
@@ -141,6 +155,48 @@ export default function OverviewPage() {
             <p>עדיפות לסדר התיעוד, לא לחשיבות האתר: אתרים בעלי ערך לאומי או ארכאולוגי, או אתרים שעלולים להיפגע מפיתוח והתחדשות עירונית בסביבתם. גם זו הערכת עבודה של הצוות, שתוצג לוועדה.</p>
           </div>
         </div>
+
+        <div className="border-t pt-5" style={{ borderColor: 'var(--stone-light)' }}>
+          <h3 className="font-bold mb-3 text-sm" style={{ color: 'var(--navy)' }}>מעמד האתר ברשימה — לחיצה מציגה את האתרים</h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {byListStatus.map(({ s, sites }) => (
+              <button key={s} onClick={() => sites.length && select(LIST_STATUS_LABELS[s], sites)} disabled={!sites.length}
+                className="flex gap-3 items-start text-right p-3 rounded-lg transition-colors hover:bg-white disabled:opacity-60 disabled:hover:bg-transparent"
+                style={{ border: '1px solid var(--stone-light)' }}>
+                <span className="mt-1 w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: LIST_STATUS_COLORS[s] }} aria-hidden="true" />
+                <span>
+                  <span className="block text-sm font-bold" style={{ color: 'var(--navy)' }}>{LIST_STATUS_LABELS[s]} ({sites.length})</span>
+                  <span className="block text-xs leading-relaxed" style={{ color: 'var(--navy-soft)' }}>{LIST_STATUS_NOTES[s]}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          {toVerify.length > 0 && (
+            <button onClick={() => select('רשומות לאימות', toVerify)} className="mt-3 text-sm underline" style={{ color: 'var(--rust)' }}>
+              {toVerify.length} רשומות מסומנות &quot;לאימות&quot; — מקורות סותרים או מידע חסר
+            </button>
+          )}
+        </div>
+
+        <p className="text-xs leading-relaxed border-t pt-4" style={{ color: 'var(--navy-soft)', borderColor: 'var(--stone-light)' }}>{SOURCE_CREDIT}</p>
+      </section>
+
+      <section className="glass-card p-6 space-y-4" aria-labelledby="fourth-schedule">
+        <h2 id="fourth-schedule" className="text-xl font-serif font-bold" style={{ color: 'var(--navy)' }}>התוספת הרביעית לחוק התכנון והבנייה</h2>
+        <dl className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+          {[
+            ['מהו אתר לשימור', 'בניין או קבוצת בניינים, או חלק מהם, לרבות סביבתם הקרובה, שלדעת מוסד תכנון הם בעלי חשיבות היסטורית, לאומית, אדריכלית או ארכאולוגית.'],
+            ['מעמד הרשימה', 'כלי עבודה ואינוונטר. הכללה ברשימה אינה תכנית סטטוטורית, אבל היא בסיס לתכניות שימור ולהפעלת סמכויות רישוי.'],
+            ['תכנית לשימור', 'דינה כדין תכנית מתאר מקומית. היא קובעת שימושים, הוראות שימור ותוספות בנייה.'],
+            ['הרכב הוועדה', 'יו״ר, שלושה חברי מועצה, נציג מקצועי של הרשות ומומחה שימור בעל דעה מייעצת. מהנדס העיר ומתכנן המחוז מוזמנים קבועים.'],
+            ['פיצויים ותמריצים', 'לפי סעיף 197, ובאמצעות העברת זכויות והנחות באגרות.'],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <dt className="font-bold" style={{ color: 'var(--navy)' }}>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <Link href="/tour" className="block rounded-2xl p-6 sm:p-8 text-white transition-transform hover:scale-[1.01]"
@@ -254,7 +310,7 @@ export default function OverviewPage() {
                   className="flex justify-between items-center py-1.5 w-full last:border-0 hover:bg-parchment px-2 rounded transition-colors"
                   style={{ backgroundColor: isActive ? 'var(--parchment-deep)' : undefined, borderBottom: '1px solid var(--stone-light)' }}>
                   <div className="flex items-center gap-2">
-                    <div className="h-2 rounded-full" style={{ width: `${sites.length * 14}px`, backgroundColor: 'var(--sage)', opacity: 0.7 }} />
+                    <div className="h-2 rounded-full" style={{ width: `${Math.min(sites.length * 8, 120)}px`, backgroundColor: 'var(--sage)', opacity: 0.7 }} />
                     <span className="text-xs font-bold" style={{ color: 'var(--sage)' }}>{sites.length}</span>
                   </div>
                   <span className="text-sm" style={{ color: 'var(--navy)' }}>{reason}</span>
@@ -268,17 +324,26 @@ export default function OverviewPage() {
       <div className="glass-card p-6" style={{  }}>
         <h2 id="clusters" className="text-lg font-serif font-bold mb-1 scroll-mt-24" style={{ color: 'var(--navy)' }}>מקבצים עירוניים</h2>
         <p className="text-xs mb-4" style={{ color: 'var(--navy-soft)' }}>הרשימה בנויה ממקבצים ולא מאתרים בודדים: כל מקבץ הוא סביבה שלמה — רחובות, נוף ומבנים — שמספרת פרק בתולדות העיר. לחיצה מציגה את האתרים במקבץ.</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {neighborhoods.map(n => {
-            const sites = buildings.filter(b => b.neighborhood === n);
-            const isActive = selected?.label === n;
-            return (
-              <button key={n} onClick={() => select(n, sites)}
-                className="rounded-lg p-4 text-center transition-all hover:shadow-sm"
-                style={{ backgroundColor: isActive ? 'var(--parchment-deep)' : 'var(--parchment)', border: isActive ? '2px solid var(--stone)' : '1px solid var(--stone-light)' }}>
-                <p className="font-semibold text-lg" style={{ color: 'var(--navy)' }}>{sites.length}</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--navy-soft)' }}>{n}</p>
-              </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {clusters.map(c => {
+            const sites = buildings.filter(b => b.neighborhood === c.name);
+            const isActive = selected?.label === c.name;
+            const body = (
+              <>
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="font-semibold" style={{ color: 'var(--navy)' }}>{c.name}</span>
+                  <span className="text-xs font-bold shrink-0" style={{ color: 'var(--stone-dark)' }}>
+                    {c.textual ? 'מרקם עירוני כולל' : sites.length === 1 ? 'אתר אחד' : `${sites.length} אתרים`}
+                  </span>
+                </span>
+                {c.description && <span className="block text-xs mt-1.5 leading-relaxed" style={{ color: 'var(--navy-soft)' }}>{c.description}</span>}
+              </>
+            );
+            const style = { backgroundColor: isActive ? 'var(--parchment-deep)' : 'var(--parchment)', border: isActive ? '2px solid var(--stone)' : '1px solid var(--stone-light)' };
+            return sites.length ? (
+              <button key={c.name} onClick={() => select(c.name, sites)} className="rounded-lg p-4 text-right transition-all hover:shadow-sm" style={style}>{body}</button>
+            ) : (
+              <div key={c.name} className="rounded-lg p-4" style={style}>{body}</div>
             );
           })}
         </div>

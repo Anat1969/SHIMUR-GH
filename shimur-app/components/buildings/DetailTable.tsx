@@ -3,9 +3,10 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { SiteImage } from '@/components/sites/SiteImage';
-import { Building } from '@/lib/types';
+import { Building, LIST_STATUS_LABELS, ListStatus } from '@/lib/types';
+import { VerifyTag, needsVerification } from '@/components/sites/ListInfo';
 
-type Col = 'city_registry_id' | 'name' | 'neighborhood' | 'building_type' | 'historical_periods' |
+type Col = 'city_registry_id' | 'committee_no' | 'name' | 'neighborhood' | 'building_type' | 'historical_periods' |
            'owner' | 'preservation_reasons' | 'current_use' | 'priority_level' | 'protection_level' | 'parcel';
 
 const COMPACT_COLS: { key: Col; label: string }[] = [
@@ -19,6 +20,7 @@ const COMPACT_COLS: { key: Col; label: string }[] = [
 
 const ALL_COLS: { key: Col; label: string; width?: string }[] = [
   { key: 'city_registry_id', label: 'מס׳', width: '80px' },
+  { key: 'committee_no', label: 'מס׳ בוועדה', width: '80px' },
   { key: 'name', label: 'שם האתר', width: '180px' },
   { key: 'neighborhood', label: 'אזור', width: '100px' },
   { key: 'building_type', label: 'סוג', width: '130px' },
@@ -43,6 +45,7 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
   const [sortCol, setSortCol] = useState<Col>('city_registry_id');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
+  const [listStatus, setListStatus] = useState<ListStatus | 'verify' | null>(null);
 
   const handleSort = (col: Col) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -58,16 +61,25 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return buildings.filter(b =>
-      !q || ALL_COLS.some(c => getValue(b, c.key).toLowerCase().includes(q)) ||
-      (b.full_description ?? '').toLowerCase().includes(q)
+      (!listStatus || (listStatus === 'verify' ? needsVerification(b) : b.list_status === listStatus)) &&
+      (!q || ALL_COLS.some(c => getValue(b, c.key).toLowerCase().includes(q)) ||
+      (b.full_description ?? '').toLowerCase().includes(q))
     );
-  }, [buildings, search]);
+  }, [buildings, search, listStatus]);
+
+  const statusOptions = useMemo(
+    () => (Object.keys(LIST_STATUS_LABELS) as ListStatus[])
+      .map(s => ({ s, n: buildings.filter(b => b.list_status === s).length }))
+      .filter(x => x.n > 0),
+    [buildings],
+  );
+  const verifyCount = useMemo(() => buildings.filter(needsVerification).length, [buildings]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
       const av = getValue(a, sortCol);
       const bv = getValue(b, sortCol);
-      return sortDir === 'asc' ? av.localeCompare(bv, 'he') : bv.localeCompare(av, 'he');
+      return sortDir === 'asc' ? av.localeCompare(bv, 'he', { numeric: true }) : bv.localeCompare(av, 'he', { numeric: true });
     });
   }, [filtered, sortCol, sortDir]);
 
@@ -95,12 +107,31 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
           placeholder="חיפוש חופשי בכל השדות..."
           className="px-4 py-2 border rounded-md text-sm flex-1 max-w-sm"
           style={{ borderColor: '#EDE0CC', direction: 'rtl' }} />
-        {search && <span className="text-xs text-ink-soft">{filtered.length} תוצאות</span>}
+        {(search || listStatus) && <span className="text-xs text-ink-soft">{filtered.length} תוצאות</span>}
         <button onClick={() => setExpanded(e => !e)}
           className="px-4 py-2 border rounded-md text-sm font-medium transition-colors mr-auto"
           style={{ borderColor: '#C8B89A', color: expanded ? '#4A5C45' : '#8B7355', backgroundColor: expanded ? '#F0F7F0' : 'white' }}>
           {expanded ? 'תצוגה מצומצמת' : 'תצוגה מורחבת'}
         </button>
+      </div>
+
+      <div className="no-print flex flex-wrap items-center gap-2" role="group" aria-label="סינון לפי מעמד ברשימה">
+        <span className="text-xs font-semibold text-ink-soft">מעמד ברשימה:</span>
+        {statusOptions.map(({ s, n }) => (
+          <button key={s} onClick={() => setListStatus(v => v === s ? null : s)} aria-pressed={listStatus === s}
+            className="px-3 py-1.5 rounded-full text-xs border transition-colors"
+            style={{ borderColor: '#C8B89A', backgroundColor: listStatus === s ? '#1B2A4A' : 'white', color: listStatus === s ? 'white' : '#3D3228' }}>
+            {LIST_STATUS_LABELS[s]} ({n})
+          </button>
+        ))}
+        {verifyCount > 0 && (
+          <button onClick={() => setListStatus(v => v === 'verify' ? null : 'verify')} aria-pressed={listStatus === 'verify'}
+            className="px-3 py-1.5 rounded-full text-xs border transition-colors"
+            style={{ borderColor: '#E8C48A', backgroundColor: listStatus === 'verify' ? '#8B3A1E' : '#FBEFD9', color: listStatus === 'verify' ? 'white' : '#8B3A1E' }}>
+            לאימות ({verifyCount})
+          </button>
+        )}
+        {listStatus && <button onClick={() => setListStatus(null)} className="text-xs underline" style={{ color: '#8B3A1E' }}>ניקוי</button>}
       </div>
 
       {/* Table */}
@@ -131,10 +162,12 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
                     borderTop: isGroupStart ? '2px solid #C8B89A' : '1px solid #EDE0CC',
                   }}>
                   <td className="px-4 py-3 font-mono text-xs text-ink-soft">{b.city_registry_id}</td>
+                  {expanded && <td className="px-4 py-3 font-mono text-xs text-ink-soft">{b.committee_no ?? '—'}</td>}
                   <td className="px-4 py-3 font-medium" style={expanded ? { minWidth: 180 } : {}}>
                     <Link href={`/buildings/${b.id}`} className="flex items-center gap-3 hover:underline" style={{ color: '#1A1410' }}>
                       <SiteImage site={b} size="thumb" className="!w-10 !h-10" />
                       {b.name}
+                      <VerifyTag site={b} />
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-ink-soft text-sm">{b.neighborhood ?? '—'}</td>

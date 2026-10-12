@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Building, STATUS_COLORS, STATUS_LABELS, BuildingStatus } from '@/lib/types';
 import { SiteImage } from '@/components/sites/SiteImage';
+import { ListStatusBadge, VerifyTag } from '@/components/sites/ListInfo';
 
 interface SiteCardProps {
   building: Building;
@@ -112,10 +113,12 @@ function PublicCard({
       {showImage && <SiteImage site={building} size="card" className="!rounded-none !h-52" />}
       <div className="p-6">
       <div className="mb-4">
-        <div className="flex items-baseline gap-3 mb-2">
+        <div className="flex flex-wrap items-baseline gap-3 mb-2">
           <h3 className="font-serif font-bold text-2xl" style={{ color: 'var(--navy)' }}>
             {building.name}
           </h3>
+          <ListStatusBadge status={building.list_status} />
+          <VerifyTag site={building} />
           {building.year_built && (
             <span className="text-sm font-mono" style={{ color: 'var(--ocean)' }}>
               {building.year_built}
