@@ -105,6 +105,8 @@ function Timeline() {
   const params = useSearchParams();
   const period = PERIODS.find(p => p.id === params.get('period')) ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [scale, setScale] = useState<'periods' | 'years'>('periods');
+  const [zoom, setZoom] = useState(1);
 
   const go = useCallback((id: string | null) => {
     setSelectedId(null);
@@ -117,20 +119,56 @@ function Timeline() {
   const selected = visible.find(s => s.id === selectedId) ?? null;
   const idx = period ? PERIODS.indexOf(period) : -1;
 
-  // תחום הסרגל: כל הציר, או תקופה מוגדלת
+  // סרגל: בתצוגה הראשית — "לפי תקופות" (רוחב שווה לכל תקופה, ללא צפיפות) או "לפי שנים" (קנה מידה אמיתי)
   const range = period
     ? (() => { const pad = (period.endYear - period.startYear) * 0.08; return [period.startYear - pad, period.endYear + pad]; })()
     : [TIMELINE_START, TIMELINE_END];
-  const pos = (y: number) => ((Math.min(Math.max(y, range[0]), range[1]) - range[0]) / (range[1] - range[0])) * 100;
+  const linear = (y: number) => ((Math.min(Math.max(y, range[0]), range[1]) - range[0]) / (range[1] - range[0])) * 100;
+  const byPeriods = !period && scale === 'periods';
+  // רוחב כל תקופה לפי מספר האתרים בה — תקופה צפופה מקבלת יותר מקום
+  const weights = PERIODS.map(p => 1 + sites.filter(b => { const y = siteYear(b); return y !== null && y >= p.startYear && y < p.endYear; }).length);
+  const totalW = weights.reduce((a, w) => a + w, 0);
+  const startW = weights.map((_, k) => weights.slice(0, k).reduce((a, w) => a + w, 0));
+  const slot = (k: number, f: number) => ((startW[k] + weights[k] * f) / totalW) * 100;
+  const periodIndex = (y: number) => {
+    if (y >= PERIODS[PERIODS.length - 1].endYear) return PERIODS.length - 1;
+    return Math.max(0, PERIODS.findIndex(p => y >= p.startYear && y < p.endYear));
+  };
+  const pos = (y: number) => {
+    if (!byPeriods) return linear(y);
+    if (y >= PERIODS[PERIODS.length - 1].endYear) return 100;
+    const k = periodIndex(y);
+    const p = PERIODS[k];
+    return slot(k, (y - p.startYear) / (p.endYear - p.startYear));
+  };
 
   const sortedMarkers = visible
     .map(b => ({ b, y: siteYear(b) }))
     .filter((x): x is { b: Building; y: number } => x.y !== null)
     .sort((a, b) => a.y - b.y);
-  // בתצוגת תקופה: פריסה שווה לפי סדר כרונולוגי, כדי שאתרים בני אותה שנה לא יסתירו זה את זה
-  const markers = period && sortedMarkers.length > 1
-    ? sortedMarkers.map((m, i) => ({ ...m, y: period.startYear + ((period.endYear - period.startYear) * (i + 0.5)) / sortedMarkers.length }))
-    : sortedMarkers.map(m => (period ? { ...m, y: (period.startYear + period.endYear) / 2 } : m));
+
+  // מיקום כל אתר באחוזים. בכל מקטע (תקופה) האתרים נפרסים בשווה לפי סדרם — כך אין אתרים זה על זה
+  const markers: { b: Building; x: number }[] = (() => {
+    if (period) {
+      const n = sortedMarkers.length;
+      return sortedMarkers.map((m, i) => ({ b: m.b, x: linear(period.startYear + ((period.endYear - period.startYear) * (i + 0.5)) / Math.max(n, 1)) }));
+    }
+    if (byPeriods) {
+      const slots: Record<number, { b: Building; y: number }[]> = {};
+      sortedMarkers.forEach(m => {
+        (slots[periodIndex(m.y)] ??= []).push(m);
+      });
+      return Object.entries(slots).flatMap(([k, list]) =>
+        list.map((m, i) => ({ b: m.b, x: slot(Number(k), (i + 0.5) / list.length) })));
+    }
+    return sortedMarkers.map(m => ({ b: m.b, x: linear(m.y) }));
+  })();
+
+  // תוויות שנים — רק כשיש מקום, כדי שלא יעלו זו על זו
+  const ticks: number[] = (byPeriods
+    ? PERIODS.map(p => p.startYear)
+    : Array.from({ length: 6 }, (_, i) => range[0] + ((range[1] - range[0]) * i) / 5)
+  ).filter((y, i, all) => i === 0 || pos(y) - pos(all[i - 1]) > 7 / zoom);
 
   return (
     <div className="space-y-6">
@@ -183,8 +221,28 @@ function Timeline() {
       )}
 
       {/* סרגל */}
-      <section className="glass-card p-4 sm:p-6 overflow-x-auto" aria-label="סרגל זמן">
-        <div className="relative" style={{ minWidth: 720 }}>
+      <section className="glass-card p-4 sm:p-6" aria-label="סרגל זמן">
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+          {!period && (
+            <>
+              <span style={{ color: 'var(--navy-soft)' }}>קנה מידה:</span>
+              {([['periods', 'לפי תקופות'], ['years', 'לפי שנים']] as const).map(([k, l]) => (
+                <button key={k} onClick={() => setScale(k)} aria-pressed={scale === k}
+                  className="px-3 py-1.5 rounded-full"
+                  style={{ border: `1px solid ${scale === k ? 'var(--ocean)' : 'var(--stone-light)'}`, backgroundColor: scale === k ? 'var(--ocean)' : 'white', color: scale === k ? 'white' : 'var(--navy)' }}>
+                  {l}
+                </button>
+              ))}
+              <span className="mx-1 w-px h-5" style={{ backgroundColor: 'var(--stone)' }} />
+            </>
+          )}
+          <span style={{ color: 'var(--navy-soft)' }}>מרווח:</span>
+          <button onClick={() => setZoom(z => Math.max(1, z - 1))} disabled={zoom === 1} className="px-3 py-1.5 rounded-full disabled:opacity-40" style={{ border: '1px solid var(--stone-light)', backgroundColor: 'white', color: 'var(--navy)' }}>צמצום</button>
+          <button onClick={() => setZoom(z => Math.min(4, z + 1))} disabled={zoom === 4} className="px-3 py-1.5 rounded-full disabled:opacity-40" style={{ border: '1px solid var(--stone-light)', backgroundColor: 'white', color: 'var(--navy)' }}>ריווח</button>
+          {zoom > 1 && <span style={{ color: 'var(--navy-soft)' }}>גללי הצידה לצפייה בכל הציר</span>}
+        </div>
+        <div className="overflow-x-auto pb-2">
+        <div className="relative" style={{ minWidth: 720 * zoom }}>
           <div className="relative h-12 rounded-lg overflow-hidden">
             {(period ? [period] : PERIODS).map(p => {
               const right = pos(p.startYear);
@@ -203,19 +261,19 @@ function Timeline() {
             })}
           </div>
           <div className="relative h-6 mt-1 text-[11px]" style={{ color: 'var(--navy-soft)' }}>
-            {Array.from({ length: 6 }, (_, i) => range[0] + ((range[1] - range[0]) * i) / 5).map(y => (
+            {ticks.map(y => (
               <span key={y} className="absolute -translate-x-1/2" style={{ right: `${pos(y)}%`, transform: 'translateX(50%)' }}>{fmtYear(Math.round(y))}</span>
             ))}
           </div>
-          <div className="relative h-24 mt-2">
-            {markers.map(({ b, y }, i) => {
+          <div className="relative h-36 mt-2">
+            {markers.map(({ b, x }, i) => {
               const sel = b.id === selectedId;
               return (
                 <button
                   key={b.id}
                   onClick={() => setSelectedId(sel ? null : b.id)}
                   className="absolute group"
-                  style={{ right: `${pos(y)}%`, top: (i % 2) * 44, transform: 'translateX(50%)', zIndex: sel ? 20 : 10 }}
+                  style={{ right: `${x}%`, top: (i % 3) * 44, transform: 'translateX(50%)', zIndex: sel ? 20 : 10 }}
                   aria-label={b.name}
                 >
                   <SiteImage site={b} size="thumb" className={`!w-10 !h-10 ring-2 transition-transform group-hover:scale-125 ${sel ? 'ring-[var(--amber)] scale-125' : 'ring-white'} shadow-md`} />
@@ -226,6 +284,7 @@ function Timeline() {
               );
             })}
           </div>
+        </div>
         </div>
       </section>
 

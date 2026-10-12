@@ -88,3 +88,14 @@ UPDATE shimur_buildings SET historical_periods = ARRAY['תקופה ממלוכי�
 UPDATE shimur_buildings SET historical_periods = ARRAY['תקופת הברונזה','תקופת הברזל','תקופה פרסית-הלניסטית'] WHERE site_no=13;
 UPDATE shimur_buildings SET historical_periods = ARRAY['תקופת הברזל','תקופה פרסית-הלניסטית','תקופה אסלאמית קדומה'] WHERE site_no=14;
 UPDATE shimur_buildings SET historical_periods = ARRAY['תקופה ישראלית'] WHERE site_no=12;
+
+UPDATE shimur_buildings SET neighborhood='נחל לכיש' WHERE site_no IN (12,13);
+UPDATE shimur_buildings SET neighborhood='חוף הים' WHERE neighborhood='חוף';
+
+-- קואורדינטות מדויקות (מקורות: ויקיפדיה, Google Maps places, OSM), אוקטובר 2026
+UPDATE shimur_buildings b SET lat=v.lat, lng=v.lng FROM (VALUES
+ (1,31.81391,34.64633),(2,31.78206,34.66940),(3,31.78191,34.66647),(5,31.80873,34.64458),(7,31.80798,34.64525),(13,31.82340,34.65603),(12,31.7744,34.6607)
+) v(n,lat,lng) WHERE b.site_no=v.n;
+UPDATE shimur_buildings SET address='שבי ציון 1' WHERE site_no=5;
+UPDATE shimur_buildings SET address='שבי ציון 4 — המרכז המסחרי' WHERE site_no=7;
+UPDATE shimur_buildings SET address='פארק חולות אשדוד (מיקום משוער — לאימות)' WHERE site_no=12;

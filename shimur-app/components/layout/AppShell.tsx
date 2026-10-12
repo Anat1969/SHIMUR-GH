@@ -7,6 +7,9 @@ import { usePathname } from 'next/navigation';
 import type { DataSource } from '@/lib/types';
 import { EditorProvider, useEditor } from '@/components/providers/Editor';
 
+// לוח הצבעים של האפליקציה — ה-DNA העיצובי, מוצג ליד השם
+const PALETTE = ['#C8B89A', '#8B7355', '#8B3A1E', '#D4922A', '#4A5C45', '#1B6B7D', '#1B2A4A'];
+
 const PUBLIC_LINKS = [
   { href: '/overview', label: 'סקירה' },
   { href: '/map', label: 'מפה' },
@@ -81,11 +84,13 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
 
       <nav className="sticky top-0 z-[1100] glass-card no-print" style={{ borderRadius: 0, borderInline: 'none', borderTop: 'none', borderBottom: '1px solid rgba(200, 184, 154, 0.3)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <Link href="/overview" className="flex items-center gap-2.5 shrink-0" aria-label="SHIMUR.ASHDOD — לדף הבית">
-            <Image src="/dolphin.svg" alt="" width={22} height={22} />
+          <Link href="/overview" className="brand group flex items-center gap-2.5 shrink-0 rounded-xl px-2 py-1 -mx-2" aria-label="SHIMUR.ASHDOD — לסקירה">
+            <Image src="/dolphin.svg" alt="" width={22} height={22} className="transition-transform duration-300 group-hover:-rotate-12 group-hover:scale-110" />
             <span>
-              <span className="block text-lg font-serif font-bold leading-tight" style={{ color: 'var(--navy)' }}>SHIMUR.ASHDOD</span>
-              <span className="block text-[11px] leading-tight" style={{ color: 'var(--navy-soft)' }}>מורשת בנויה · עיריית אשדוד</span>
+              <span className="block text-lg font-serif font-bold leading-tight transition-colors group-hover:text-[var(--ocean)]" style={{ color: 'var(--navy)' }}>SHIMUR.ASHDOD</span>
+              <span className="brand-dna" aria-hidden="true">
+                {PALETTE.map(c => <i key={c} style={{ backgroundColor: c }} />)}
+              </span>
             </span>
           </Link>
 
