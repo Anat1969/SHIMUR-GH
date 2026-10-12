@@ -4,7 +4,9 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSites } from '@/components/providers/SiteData';
-import type { HistoricalMap } from '@/lib/types';
+import type { HistoricalMap, ListStatus } from '@/lib/types';
+import { LIST_STATUS_LABELS } from '@/lib/types';
+import { LIST_STATUS_COLORS, VerifyTag } from '@/components/sites/ListInfo';
 import { SiteImage } from '@/components/sites/SiteImage';
 import type { Basemap, OverlayLayer } from '@/components/map/BuildingsMap';
 import { apiFetch } from '@/lib/supabase/browser';
@@ -32,6 +34,7 @@ export default function MapPage() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [neighborhood, setNeighborhood] = useState<string | null>(null);
+  const [listStatus, setListStatus] = useState<ListStatus | null>(null);
   const [colorBy, setColorBy] = useState<ColorBy>('category');
   const [basemap, setBasemap] = useState<Basemap>('streets');
   const [showLabels, setShowLabels] = useState(false);
@@ -57,15 +60,23 @@ export default function MapPage() {
   const filtered = useMemo(() => sites.filter(b =>
     matchesQuery(b, query)
     && (!category || categoryOf(b) === category)
-    && (!neighborhood || b.neighborhood === neighborhood),
-  ), [sites, query, category, neighborhood]);
+    && (!neighborhood || b.neighborhood === neighborhood)
+    && (!listStatus || b.list_status === listStatus),
+  ), [sites, query, category, neighborhood, listStatus]);
+
+  const listStatuses = useMemo(
+    () => (Object.keys(LIST_STATUS_LABELS) as ListStatus[])
+      .map(s => ({ s, n: sites.filter(b => b.list_status === s).length }))
+      .filter(x => x.n > 0),
+    [sites],
+  );
 
   const overlays: OverlayLayer[] = useMemo(
     () => maps.filter(m => active[m.id] !== undefined).map(m => ({ map: m, opacity: active[m.id] })),
     [maps, active],
   );
 
-  const resetFilters = () => { setQuery(''); setCategory(null); setNeighborhood(null); setSelectedId(null); };
+  const resetFilters = () => { setQuery(''); setCategory(null); setNeighborhood(null); setListStatus(null); setSelectedId(null); };
 
   const saveMap = async () => {
     if (!view) return;
@@ -111,7 +122,7 @@ export default function MapPage() {
 
       <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
         {/* פאנל צד */}
-        <aside className="glass-card p-4 space-y-4 lg:max-h-[calc(100vh-190px)] lg:overflow-y-auto order-2 lg:order-1">
+        <aside className="glass-card p-4 space-y-4 min-w-0 lg:max-h-[calc(100vh-190px)] lg:overflow-y-auto order-2 lg:order-1">
           <div>
             <label htmlFor="site-search" className="block text-xs font-semibold mb-1" style={{ color: 'var(--navy-soft)' }}>חיפוש</label>
             <input
@@ -149,7 +160,22 @@ export default function MapPage() {
             </div>
           </div>
 
-          {(query || category || neighborhood) && (
+          {listStatuses.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--navy-soft)' }}>מעמד ברשימה</p>
+              <div className="flex flex-wrap gap-1.5">
+                {listStatuses.map(({ s, n }) => (
+                  <button key={s} onClick={() => setListStatus(v => v === s ? null : s)} aria-pressed={listStatus === s}
+                    className="px-3 py-1.5 rounded-full text-xs transition-colors inline-flex items-center gap-1.5" style={chip(listStatus === s)}>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: LIST_STATUS_COLORS[s] }} aria-hidden="true" />
+                    {LIST_STATUS_LABELS[s]} ({n})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(query || category || neighborhood || listStatus) && (
             <button onClick={resetFilters} className="text-xs underline" style={{ color: 'var(--rust)' }}>ניקוי סינון</button>
           )}
 
@@ -173,7 +199,7 @@ export default function MapPage() {
                       <span className="absolute -bottom-1 -left-1 w-3.5 h-3.5 rounded-full border-2 border-white" style={{ backgroundColor: markerColor(b, colorBy) }} />
                     </span>
                     <span className="min-w-0 self-center">
-                      <span className="block text-sm font-medium" style={{ color: 'var(--navy)' }}>{b.name}</span>
+                      <span className="block text-sm font-medium" style={{ color: 'var(--navy)' }}>{b.name} <VerifyTag site={b} /></span>
                       <span className="block text-xs truncate" style={{ color: 'var(--navy-soft)' }}>{b.address}</span>
                     </span>
                   </button>
@@ -193,7 +219,7 @@ export default function MapPage() {
         </aside>
 
         {/* מפה */}
-        <section className="space-y-3 order-1 lg:order-2">
+        <section className="space-y-3 min-w-0 order-1 lg:order-2">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span style={{ color: 'var(--navy-soft)' }}>צבע לפי:</span>
             {(Object.keys(COLOR_BY_LABELS) as ColorBy[]).map(k => (

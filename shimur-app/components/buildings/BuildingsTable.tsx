@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { SiteImage } from '@/components/sites/SiteImage';
+import { VerifyTag } from '@/components/sites/ListInfo';
 import { StatusBadge } from './StatusBadge';
 import { Building } from '@/lib/types';
 
@@ -75,6 +76,7 @@ export function BuildingsTable({ buildings }: { buildings: BuildingWithActivity[
                   <Link href={`/buildings/${b.id}`} onClick={e => e.stopPropagation()} className="flex items-center gap-3 hover:underline" style={{ color: '#1A1410' }}>
                     <SiteImage site={b} size="thumb" />
                     {b.name}
+                    <VerifyTag site={b} />
                   </Link>
                 </td>
                 <td className="px-5 py-4 text-sm text-ink-soft">{b.address}</td>

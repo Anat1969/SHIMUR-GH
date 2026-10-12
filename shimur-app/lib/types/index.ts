@@ -14,6 +14,22 @@ export interface Profile {
 export type BuildingStatus = 'לא_התחיל' | 'בתהליך' | 'הוגש' | 'אושר' | 'הוחזר';
 export type ProtectionLevel = 'א' | 'ב' | 'ג' | 'מונומנט';
 export type FileType = 'מבנה' | 'מתחם';
+/** committee_2016: ברשימת הוועדה · texture: מרקם או סביבה · archaeology: אתר עתיק (לפני 1700) · added_by_plan: נוסף מתכנית מאושרת */
+export type ListStatus = 'committee_2016' | 'texture' | 'archaeology' | 'added_by_plan';
+
+export const LIST_STATUS_LABELS: Record<ListStatus, string> = {
+  committee_2016: 'ברשימת הוועדה',
+  texture: 'מרקם או סביבה',
+  archaeology: 'אתר ארכאולוגי',
+  added_by_plan: 'נוסף מתכנית מאושרת',
+};
+
+export const LIST_STATUS_NOTES: Record<ListStatus, string> = {
+  committee_2016: 'אתר ממוספר ברשימה שאישרה הוועדה לשימור אתרים בישיבה 201601 (17.8.2016).',
+  texture: 'מרקם עירוני, נוף או סביבה שהוועדה כללה בשימור, בלי מספר ברשימה.',
+  archaeology: 'אתר עתיק מלפני 1700, באחריות רשות העתיקות. אינו "אתר לשימור" לפי התוספת הרביעית לחוק.',
+  added_by_plan: 'אתר שנוסף לשימור בתכנית מאושרת אחרי החלטת הוועדה.',
+};
 
 export interface Building {
   /** מספר אתר (site_no) — משמש בכתובות /buildings/[id] */
@@ -62,6 +78,21 @@ export interface Building {
   iaa_reference?: string;
   gov_sources?: string[];
   additional_info?: string;
+  // שדות רשימת הוועדה (2016) — כולם אופציונליים
+  /** המספר ברשימת הוועדה ("1" עד "21"), ריק לאתר שאינו ממוספר */
+  committee_no?: string;
+  list_status?: ListStatus;
+  /** תב"ע או תמ"ל שמגנים על האתר */
+  statutory_ref?: string;
+  /** המיקום משוער (מרכז אזור), לא נקודה מדויקת */
+  coords_approx?: boolean;
+  /** הערה כשהמקורות סותרים — מוצגת כתגית "לאימות" */
+  data_conflict?: string;
+  /** רכיבים בתוך אתר מורכב */
+  components?: string[];
+  risk_note?: string;
+  /** הערה על מקור הדרגה והעדיפות */
+  grade_note?: string;
   status: BuildingStatus;
   assigned_architect?: string;
   created_at: string;

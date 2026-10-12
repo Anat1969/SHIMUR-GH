@@ -4,7 +4,7 @@ import { T } from '@/lib/supabase/config';
 import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
 import { DEMO_ROUTES } from '@/lib/demo/routes';
 import type {
-  Building, Route, RouteSite, HistoricalMap, SiteDocument, DataSource, BuildingStatus, ProtectionLevel,
+  Building, Route, RouteSite, HistoricalMap, SiteDocument, DataSource, BuildingStatus, ProtectionLevel, ListStatus,
 } from '@/lib/types';
 
 // שכבת נתונים אחת לכל האפליקציה: קוראת מ-ASHDODMAP,
@@ -43,12 +43,21 @@ interface BuildingRow {
   iaa_reference: string | null;
   gov_sources: string[];
   image_url: string | null;
+  // שדות רשימת הוועדה — חסרים אם migration 003 לא הורץ
+  committee_no?: string | null;
+  list_status?: ListStatus | null;
+  statutory_ref?: string | null;
+  coords_approx?: boolean | null;
+  data_conflict?: string | null;
+  components?: string[] | null;
+  risk_note?: string | null;
+  grade_note?: string | null;
   status: BuildingStatus;
   created_at: string;
   updated_at: string;
 }
 
-const u = <V,>(v: V | null): V | undefined => (v === null ? undefined : v);
+const u = <V,>(v: V | null | undefined): V | undefined => (v === null ? undefined : v);
 
 function mapBuilding(r: BuildingRow): Building {
   return {
@@ -84,6 +93,14 @@ function mapBuilding(r: BuildingRow): Building {
     iaa_reference: u(r.iaa_reference),
     gov_sources: r.gov_sources,
     image_url: u(r.image_url),
+    committee_no: u(r.committee_no),
+    list_status: u(r.list_status),
+    statutory_ref: u(r.statutory_ref),
+    coords_approx: r.coords_approx ?? false,
+    data_conflict: u(r.data_conflict),
+    components: r.components ?? [],
+    risk_note: u(r.risk_note),
+    grade_note: u(r.grade_note),
     status: r.status,
     created_at: r.created_at,
     updated_at: r.updated_at,

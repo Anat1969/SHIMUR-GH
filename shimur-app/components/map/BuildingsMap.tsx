@@ -54,7 +54,7 @@ function popupHtml(b: Building): string {
   return `<div class="site-popup" dir="rtl">
     ${img}
     <p style="margin:0;font-weight:700;font-size:14px;color:#1B2A4A">${escapeHtml(b.name)}</p>
-    <p style="margin:2px 0 8px;font-size:12px;color:#4A5A7A">${escapeHtml(b.address)}</p>
+    <p style="margin:2px 0 8px;font-size:12px;color:#4A5A7A">${escapeHtml(b.address)}${b.coords_approx ? ' · <span style="color:#8B3A1E">מיקום משוער</span>' : ''}</p>
     <a href="/buildings/${encodeURIComponent(b.id)}" style="font-size:12px;color:#1B6B7D;font-weight:600">לדף האתר</a>
   </div>`;
 }
@@ -110,6 +110,8 @@ export function BuildingsMap({
     withCoords.forEach(b => {
       const mk = L.circleMarker([b.lat!, b.lng!], {
         radius: 9, fillColor: markerColor(b, colorBy), color: '#fff', weight: 2.5, fillOpacity: 0.92,
+        // מיקום משוער: מסגרת מקווקוות
+        dashArray: b.coords_approx ? '3 3' : undefined,
       });
       if (popups) mk.bindPopup(popupHtml(b), { maxWidth: 240, minWidth: 200 });
       // ריחוף: תצוגה מקדימה עם תמונה. תוויות קבועות: שם בלבד

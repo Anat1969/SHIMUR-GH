@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/buildings/StatusBadge';
 import { SiteCard } from '@/components/buildings/SiteCard';
 import { useSites, useGallery } from '@/components/providers/SiteData';
 import { SiteImage } from '@/components/sites/SiteImage';
+import { CommitteeDetails } from '@/components/sites/ListInfo';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -89,6 +90,8 @@ export default function BuildingDetailPage({ params }: Props) {
       )}
 
       <SiteCard building={building} variant={viewMode} showImage={false} />
+
+      <CommitteeDetails site={building} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-card p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>
