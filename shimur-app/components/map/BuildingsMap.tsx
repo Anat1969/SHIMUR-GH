@@ -112,8 +112,12 @@ export function BuildingsMap({
         radius: 9, fillColor: markerColor(b, colorBy), color: '#fff', weight: 2.5, fillOpacity: 0.92,
       });
       if (popups) mk.bindPopup(popupHtml(b), { maxWidth: 240, minWidth: 200 });
-      mk.bindTooltip(escapeHtml(b.name), {
-        direction: 'top', offset: [0, -8], className: 'site-tooltip', permanent: showLabels,
+      // ריחוף: תצוגה מקדימה עם תמונה. תוויות קבועות: שם בלבד
+      const hoverHtml = !showLabels && b.image_url
+        ? `<div class="site-hover"><img src="${escapeHtml(b.image_url)}" alt="" /><span>${escapeHtml(b.name)}</span></div>`
+        : escapeHtml(b.name);
+      mk.bindTooltip(hoverHtml, {
+        direction: 'top', offset: [0, -8], className: showLabels || !b.image_url ? 'site-tooltip' : 'site-tooltip site-tooltip-img', permanent: showLabels,
       });
       mk.on('click', () => onSelectRef.current?.(b.id));
       mk.addTo(m);

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useSites, useRoutes } from '@/components/providers/SiteData';
 import { Building } from '@/lib/types';
+import { SiteImage } from '@/components/sites/SiteImage';
 
 type Selection = { label: string; sites: Building[] } | null;
 
@@ -53,11 +54,14 @@ export default function OverviewPage() {
       <div className="space-y-2 flex-1">
         {selected.sites.map(b => (
           <Link key={b.id} href={`/buildings/${b.id}`}
-            className="block p-3 rounded-lg hover:bg-white transition-colors"
-            style={{ borderRight: '4px solid var(--amber)', backgroundColor: '#FAFAF8' }}>
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors"
+            style={{ borderInlineStart: '4px solid var(--amber)', backgroundColor: '#FAFAF8' }}>
+            <SiteImage site={b} size="thumb" />
+            <span className="min-w-0">
             <span className="font-mono text-xs block" style={{ color: 'var(--navy-soft)' }}>{b.city_registry_id}</span>
             <span className="text-sm font-medium block mt-1" style={{ color: 'var(--navy)' }}>{b.name}</span>
             <span className="text-xs block mt-1" style={{ color: 'var(--navy-soft)' }}>{b.address}</span>
+            </span>
           </Link>
         ))}
       </div>
@@ -123,8 +127,15 @@ export default function OverviewPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {routes.slice(0, 3).map(route => (
             <Link key={route.id} href={`/routes/${route.id}`}
-              className="bg-white rounded-lg p-4 transition-all hover:shadow-md"
+              className="bg-white rounded-lg overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5"
               style={{ border: '1px solid var(--ocean-pale)' }}>
+              <div className="flex h-20">
+                {(route.sites ?? []).slice(0, 3).map(s => {
+                  const b = buildings.find(x => x.id === s.building_id);
+                  return b ? <SiteImage key={s.id} site={b} size="card" className="!h-20 !rounded-none flex-1 min-w-0" /> : null;
+                })}
+              </div>
+              <div className="p-4">
               <h3 className="font-serif font-bold text-sm mb-1" style={{ color: 'var(--navy)' }}>{route.title}</h3>
               <p className="text-xs mb-2" style={{ color: 'var(--navy-soft)' }}>
                 {route.description?.slice(0, 80)}…
@@ -132,6 +143,7 @@ export default function OverviewPage() {
               <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--ocean-pale)', color: 'var(--ocean-dark)' }}>
                 {route.sites?.length ?? 0} אתרים
               </span>
+              </div>
             </Link>
           ))}
         </div>

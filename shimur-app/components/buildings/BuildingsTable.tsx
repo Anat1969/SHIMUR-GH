@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { SiteImage } from '@/components/sites/SiteImage';
 import { StatusBadge } from './StatusBadge';
 import { Building } from '@/lib/types';
 
@@ -70,8 +71,9 @@ export function BuildingsTable({ buildings }: { buildings: BuildingWithActivity[
                 onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}>
                 <td className="px-3 py-4 text-sm text-ink-soft text-center">{expandedId === b.id ? 'סגירה' : 'פרטים'}</td>
                 <td className="px-5 py-4 text-sm text-ink-soft font-mono">{b.city_registry_id}</td>
-                <td className="px-5 py-4 text-sm font-medium">
-                  <Link href={`/buildings/${b.id}`} className="hover:underline" style={{ color: '#1A1410' }}>
+                <td className="px-5 py-3 text-sm font-medium">
+                  <Link href={`/buildings/${b.id}`} onClick={e => e.stopPropagation()} className="flex items-center gap-3 hover:underline" style={{ color: '#1A1410' }}>
+                    <SiteImage site={b} size="thumb" />
                     {b.name}
                   </Link>
                 </td>

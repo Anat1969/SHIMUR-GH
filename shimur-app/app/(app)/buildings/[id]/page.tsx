@@ -4,7 +4,8 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/buildings/StatusBadge';
 import { SiteCard } from '@/components/buildings/SiteCard';
-import { useSites } from '@/components/providers/SiteData';
+import { useSites, useGallery } from '@/components/providers/SiteData';
+import { SiteImage } from '@/components/sites/SiteImage';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -13,6 +14,8 @@ interface Props {
 export default function BuildingDetailPage({ params }: Props) {
   const { id } = use(params);
   const building = useSites().find(b => b.id === id);
+  const gallery = useGallery(id);
+  const [lightbox, setLightbox] = useState<{ url: string; title: string } | null>(null);
   const [viewMode, setViewMode] = useState<'professional' | 'public'>('professional');
 
   if (!building) {
@@ -58,12 +61,34 @@ export default function BuildingDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {building.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={building.image_url} alt={building.name} className="w-full h-56 sm:h-80 object-cover rounded-2xl shadow-md" />
+      <SiteImage site={building} size="hero" priority className="shadow-md" />
+
+      {gallery.length > 0 && (
+        <div className="flex gap-3 overflow-x-auto pb-1" aria-label="תמונות נוספות">
+          {gallery.map(g => (
+            <button key={g.url} onClick={() => setLightbox(g)} className="shrink-0 group relative rounded-xl overflow-hidden shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={g.url} alt={g.title} loading="lazy" className="h-28 w-40 object-cover transition-transform group-hover:scale-105" />
+              <span className="absolute inset-x-0 bottom-0 px-2 py-1 text-[11px] text-white text-right" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.6), transparent)' }}>{g.title}</span>
+            </button>
+          ))}
+        </div>
       )}
 
-      <SiteCard building={building} variant={viewMode} />
+      {lightbox && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(26,20,16,0.9)' }} onClick={() => setLightbox(null)} role="dialog" aria-label={lightbox.title}>
+          <figure className="max-w-4xl w-full" onClick={e => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightbox.url} alt={lightbox.title} className="w-full max-h-[80vh] object-contain rounded-lg" />
+            <figcaption className="flex justify-between items-center mt-3 text-white text-sm">
+              <span>{lightbox.title}</span>
+              <button onClick={() => setLightbox(null)} className="px-5 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>סגירה</button>
+            </figcaption>
+          </figure>
+        </div>
+      )}
+
+      <SiteCard building={building} variant={viewMode} showImage={false} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-card p-6 space-y-4" style={{ borderColor: 'var(--stone-light)' }}>

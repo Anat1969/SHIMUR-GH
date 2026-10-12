@@ -150,6 +150,10 @@ button:disabled { cursor: not-allowed; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .site-tooltip::before { display: none; }
+.site-tooltip-img { padding: 0; overflow: hidden; border-radius: 10px; }
+.site-hover { width: 180px; }
+.site-hover img { display: block; width: 180px; height: 110px; object-fit: cover; }
+.site-hover span { display: block; padding: 6px 10px; font-size: 12px; font-weight: 600; white-space: normal; }
 
 /* ===== מצגת ===== */
 @keyframes tour-fade-in { from { opacity: 0; } to { opacity: 1; } }

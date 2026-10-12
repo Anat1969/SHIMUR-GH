@@ -5,6 +5,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useSites, useRoutes } from '@/components/providers/SiteData';
+import { SiteImage } from '@/components/sites/SiteImage';
 import { apiFetch } from '@/lib/supabase/browser';
 import { EditorGate, useEditor } from '@/components/providers/Editor';
 import { RouteBuilder } from '@/components/routes/RouteBuilder';
@@ -123,12 +124,19 @@ export default function RoutesPage() {
           <Link
             key={route.id}
             href={`/routes/${route.id}`}
-            className="group block rounded-xl p-6 transition-all hover:shadow-lg"
+            className="group block rounded-xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
             style={{
               background: 'linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%)',
               border: '1px solid var(--ocean-pale)',
             }}
           >
+            <div className="flex h-28">
+              {(route.sites ?? []).slice(0, 4).map(s => {
+                const b = allBuildings.find(x => x.id === s.building_id);
+                return b ? <SiteImage key={s.id} site={b} size="card" className="!h-28 !rounded-none flex-1 min-w-0" /> : null;
+              })}
+            </div>
+            <div className="p-6">
             <div className="flex items-start justify-between mb-3">
               <h3 className="font-serif font-bold text-xl group-hover:underline" style={{ color: 'var(--navy)' }}>
                 {route.title}
@@ -162,6 +170,7 @@ export default function RoutesPage() {
                 {(route.sites ?? []).slice(0, 3).map((s) => getBuildingName(s.building_id)).filter(Boolean).join(' · ')}
                 {(route.sites?.length ?? 0) > 3 && ' ועוד'}
               </span>
+            </div>
             </div>
           </Link>
         ))}

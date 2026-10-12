@@ -3,10 +3,14 @@
 import { createContext, useContext } from 'react';
 import type { Building, Route, DataSource } from '@/lib/types';
 
+export interface GalleryImage { url: string; title: string }
+
 interface SiteDataValue {
   sites: Building[];
   routes: Route[];
   source: DataSource;
+  /** תמונות נוספות לפי מספר אתר */
+  gallery: Record<string, GalleryImage[]>;
 }
 
 const SiteDataContext = createContext<SiteDataValue | null>(null);
@@ -24,3 +28,4 @@ function useSiteData(): SiteDataValue {
 export const useSites = () => useSiteData().sites;
 export const useRoutes = () => useSiteData().routes;
 export const useDataSource = () => useSiteData().source;
+export const useGallery = (siteId: string): GalleryImage[] => useSiteData().gallery[siteId] ?? [];

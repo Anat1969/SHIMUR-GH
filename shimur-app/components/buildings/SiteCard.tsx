@@ -2,19 +2,22 @@
 
 import Link from 'next/link';
 import { Building, STATUS_COLORS, STATUS_LABELS, BuildingStatus } from '@/lib/types';
+import { SiteImage } from '@/components/sites/SiteImage';
 
 interface SiteCardProps {
   building: Building;
   variant: 'professional' | 'public';
   onAddToRoute?: (buildingId: string) => void;
   showActions?: boolean;
+  /** תמונה בראש הכרטיס הציבורי (כבוי כשהדף כבר מציג תמונה גדולה) */
+  showImage?: boolean;
 }
 
-export function SiteCard({ building, variant, onAddToRoute, showActions = true }: SiteCardProps) {
+export function SiteCard({ building, variant, onAddToRoute, showActions = true, showImage = true }: SiteCardProps) {
   if (variant === 'professional') {
     return <ProfessionalCard building={building} showActions={showActions} />;
   }
-  return <PublicCard building={building} onAddToRoute={onAddToRoute} showActions={showActions} />;
+  return <PublicCard building={building} onAddToRoute={onAddToRoute} showActions={showActions} showImage={showImage} />;
 }
 
 function ProfessionalCard({ building, showActions }: { building: Building; showActions: boolean }) {
@@ -91,10 +94,12 @@ function PublicCard({
   building,
   onAddToRoute,
   showActions,
+  showImage,
 }: {
   building: Building;
   onAddToRoute?: (buildingId: string) => void;
   showActions: boolean;
+  showImage: boolean;
 }) {
   const tags = [
     building.style,
@@ -103,7 +108,9 @@ function PublicCard({
   ].filter(Boolean);
 
   return (
-    <div className="public-accent rounded-xl p-6">
+    <div className="public-accent rounded-xl overflow-hidden shadow-sm">
+      {showImage && <SiteImage site={building} size="card" className="!rounded-none !h-52" />}
+      <div className="p-6">
       <div className="mb-4">
         <div className="flex items-baseline gap-3 mb-2">
           <h3 className="font-serif font-bold text-2xl" style={{ color: 'var(--navy)' }}>
@@ -170,6 +177,7 @@ function PublicCard({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

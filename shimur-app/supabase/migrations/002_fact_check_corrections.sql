@@ -81,3 +81,10 @@ UPDATE shimur_route_sites rs SET narrative_text=v.t FROM (VALUES
  (7,'המרכז הרובעי — הלב של השכונה. קולונדה, עמודים ובריכת מים ציבורית.'),
  (2,'גשר עד הלום — גשר ממלוכי מהמאה ה-13, שפוצץ בידי לוחמי גבעתי ב-12.5.1948.')
 ) v(n,t) WHERE rs.building_id=(SELECT id FROM shimur_buildings WHERE site_no=v.n);
+
+-- תמונות ותקופות (אוקטובר 2026)
+UPDATE shimur_buildings SET image_url='/sites/s07-c.jpg' WHERE site_no=7;
+UPDATE shimur_buildings SET historical_periods = ARRAY['תקופה ממלוכית','תקופה מנדטורית','תקופה ישראלית'] WHERE site_no=2;
+UPDATE shimur_buildings SET historical_periods = ARRAY['תקופת הברונזה','תקופת הברזל','תקופה פרסית-הלניסטית'] WHERE site_no=13;
+UPDATE shimur_buildings SET historical_periods = ARRAY['תקופת הברזל','תקופה פרסית-הלניסטית','תקופה אסלאמית קדומה'] WHERE site_no=14;
+UPDATE shimur_buildings SET historical_periods = ARRAY['תקופה ישראלית'] WHERE site_no=12;

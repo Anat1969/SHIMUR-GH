@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { SiteImage } from '@/components/sites/SiteImage';
 import { Building } from '@/lib/types';
 
 type Col = 'city_registry_id' | 'name' | 'neighborhood' | 'building_type' | 'historical_periods' |
@@ -131,7 +132,8 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
                   }}>
                   <td className="px-4 py-3 font-mono text-xs text-ink-soft">{b.city_registry_id}</td>
                   <td className="px-4 py-3 font-medium" style={expanded ? { minWidth: 180 } : {}}>
-                    <Link href={`/buildings/${b.id}`} className="hover:underline" style={{ color: '#1A1410' }}>
+                    <Link href={`/buildings/${b.id}`} className="flex items-center gap-3 hover:underline" style={{ color: '#1A1410' }}>
+                      <SiteImage site={b} size="thumb" className="!w-10 !h-10" />
                       {b.name}
                     </Link>
                   </td>

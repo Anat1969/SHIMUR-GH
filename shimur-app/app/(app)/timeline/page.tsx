@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSites } from '@/components/providers/SiteData';
-import { Building } from '@/lib/types';
+import { SiteImage } from '@/components/sites/SiteImage';
+import type { Building } from '@/lib/types';
 
 const TIMELINE_START = -3000;
 const TIMELINE_END = 2030;
-const TOTAL_YEARS = TIMELINE_END - TIMELINE_START;
 
 interface Period {
   id: string;
@@ -22,336 +23,282 @@ interface Period {
 
 const PERIODS: Period[] = [
   {
-    id: 'ancient', label: 'ברונזה', startYear: -3000, endYear: -1200,
-    color: '#6B4226',
-    desc: 'ישובים כנעניים וחופיים קדומים. מסחר ימי עם מצרים ואוגריט.',
-    preservationNote: 'שימור ארכאולוגי — חפירות מתועדות, שימור in-situ, כיסוי מגן.',
-    keywords: ['תקופות קדומות', 'תקופת הברונזה'],
+    id: 'bronze', label: 'ברונזה', startYear: -3000, endYear: -1200, color: '#6B4226',
+    desc: 'יישובים כנעניים על החוף ובפי הנחל. בברונזה המאוחרת — מבנים מבוצרים בתל מור, ככל הנראה חיל מצב מצרי.',
+    preservationNote: 'שימור ארכאולוגי — חפירות מתועדות, שימור במקום, כיסוי מגן.',
+    keywords: ['תקופת הברונזה'],
   },
   {
-    id: 'iron', label: 'ברזל', startYear: -1200, endYear: -586,
-    color: '#8B5E3C',
-    desc: 'אשדוד — אחת מחמש ערי הפלשתים. מרכז כלכלי ותרבותי.',
-    preservationNote: 'שימור שכבות — תיעוד סטרטיגרפי, שמירת ממצאים בשלמותם.',
+    id: 'iron', label: 'ברזל', startYear: -1200, endYear: -586, color: '#8B5E3C',
+    desc: 'אשדוד — אחת מחמש ערי הפלשתים. ביצורי אשדוד-ים מהמאה ה-8 לפנה"ס.',
+    preservationNote: 'שימור שכבות — תיעוד סטרטיגרפי ושמירת ממצאים בשלמותם.',
     keywords: ['תקופת הברזל'],
   },
   {
-    id: 'persian', label: 'פרסית-הלניסטית', startYear: -586, endYear: -63,
-    color: '#7A5C8A',
-    desc: 'נמל מסחרי תוסס. שרידים בתל מור ובמצודת אשדוד-ים.',
-    preservationNote: 'שימור אנסטילוזה — שחזור מרכיבים מקוריים במקומם.',
-    keywords: ['תקופות קדומות', 'תקופה פרסית-הלניסטית'],
+    id: 'persian', label: 'פרסית-הלניסטית', startYear: -586, endYear: -63, color: '#7A5C8A',
+    desc: 'נמל מסחרי פעיל. שרידים הלניסטיים בתל מור ובאשדוד-ים.',
+    preservationNote: 'אנסטילוזה — החזרת רכיבים מקוריים למקומם.',
+    keywords: ['תקופה פרסית-הלניסטית'],
   },
   {
-    id: 'roman', label: 'רומית-ביזנטית', startYear: -63, endYear: 636,
-    color: '#5C5C8A',
-    desc: 'אזוטוס — עיר נמל רומית. כנסיה ביזנטית במצודת אשדוד-ים.',
-    preservationNote: 'שימור פסיפסים ומבנים דתיים — ניקוי, קונסולידציה, הגנה סביבתית.',
+    id: 'roman', label: 'רומית-ביזנטית', startYear: -63, endYear: 636, color: '#5C5C8A',
+    desc: 'אזוטוס פרליוס — עיר הנמל של אשדוד.',
+    preservationNote: 'שימור פסיפסים ומבני דת — ניקוי, ייצוב והגנה סביבתית.',
     keywords: ['תקופה ביזנטית'],
   },
   {
-    id: 'islamic', label: 'אסלאמית קדומה', startYear: 636, endYear: 1260,
-    color: '#4A7A5C',
-    desc: 'ריבאט — ביצור דתי-צבאי. אל-מוקדסי מזכיר את האתר.',
-    preservationNote: 'שימור ביצורים — ייצוב קירות, ניקוז, הגנה מקורוזיה.',
+    id: 'islamic', label: 'אסלאמית קדומה', startYear: 636, endYear: 1099, color: '#4A7A5C',
+    desc: 'מבצר אומיי על החוף באשדוד-ים, חלק משרשרת מבצרי חוף (רבאטאת).',
+    preservationNote: 'שימור ביצורים — ייצוב קירות, ניקוז והגנה מקורוזיה.',
     keywords: ['תקופה אסלאמית קדומה'],
   },
   {
-    id: 'mamluk', label: 'ממלוכית-עות׳מנית', startYear: 1260, endYear: 1917,
-    color: '#7A6A4A',
-    desc: 'גשר עד הלום על יסודות רומיים. האזור שומם יחסית.',
-    preservationNote: 'שימור גשרים — חיזוק מבני, עמידות למים, שמירת חומרים מקוריים.',
+    id: 'mamluk', label: 'ממלוכית-עות׳מנית', startYear: 1099, endYear: 1917, color: '#7A6A4A',
+    desc: 'גשר אבן ממלוכי מהמאה ה-13 נבנה על דרך הים, מעל נחל לכיש.',
+    preservationNote: 'שימור גשרים — חיזוק מבני, עמידות למים ושמירת חומרים מקוריים.',
+    keywords: ['תקופה ממלוכית', 'תקופה עות׳מנית'],
+  },
+  {
+    id: 'mandate', label: 'מנדטורית', startYear: 1917, endYear: 1948, color: '#6A7A4A',
+    desc: 'ביצורי בטון מתקופת המנדט ומלחמת העצמאות. 1948: גשר עד הלום מפוצץ.',
+    preservationNote: 'שימור בטון היסטורי — טיפול בקורוזיה ושמירת אותנטיות החומר.',
     keywords: ['תקופה מנדטורית'],
   },
   {
-    id: 'mandate', label: 'מנדטורית', startYear: 1917, endYear: 1948,
-    color: '#6A7A4A',
-    desc: 'מצדית בריטית (1936). 1948: גשר עד הלום מפוצץ.',
-    preservationNote: 'שימור בטון מתקופה — טיפול בקורוזיה, שימור אותנטיות חומר.',
-    keywords: ['תקופה מנדטורית'],
-  },
-  {
-    id: 'israeli', label: 'ישראלית', startYear: 1948, endYear: 2030,
-    color: '#1B6B7D',
-    desc: 'הקמת אשדוד מ-1956. רובע א׳. נמל (1965). ברוטליזם ומודרניזם.',
-    preservationNote: 'שימור מודרניזם — תיעוד, שיקום חזיתות, שימור חומרים מקוריים, adaptive reuse.',
+    id: 'israeli', label: 'ישראלית', startYear: 1948, endYear: 2030, color: '#1B6B7D',
+    desc: 'הקמת אשדוד מ-1956, רובע א׳ ונמל אשדוד. מודרניזם וברוטליזם של עיר צעירה.',
+    preservationNote: 'שימור מודרניזם — תיעוד, שיקום חזיתות, חומרים מקוריים ושימוש מחודש.',
     keywords: ['תקופה ישראלית'],
   },
 ];
 
-const CENTURIES = Array.from({ length: Math.ceil(TOTAL_YEARS / 100) + 1 }, (_, i) => TIMELINE_START + i * 100);
+const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} לפנה"ס` : String(y));
 
-function yearToPercent(year: number): number {
-  return ((year - TIMELINE_START) / TOTAL_YEARS) * 100;
-}
-
-function getBuildingYear(b: Building): number | null {
+function siteYear(b: Building): number | null {
   if (b.year_built) return b.year_built;
-  const periods = b.historical_periods ?? [];
-  if (periods.includes('תקופת הברונזה')) return -2000;
-  if (periods.includes('תקופת הברזל')) return -900;
-  if (periods.includes('תקופה פרסית-הלניסטית')) return -300;
-  if (periods.includes('תקופה ביזנטית')) return 400;
-  if (periods.includes('תקופה אסלאמית קדומה')) return 900;
-  if (periods.includes('תקופה מנדטורית')) return 1935;
-  if (periods.includes('תקופה ישראלית')) return 1960;
+  const p = b.historical_periods ?? [];
+  if (p.includes('תקופת הברונזה')) return -1400;
+  if (p.includes('תקופת הברזל')) return -800;
+  if (p.includes('תקופה פרסית-הלניסטית')) return -300;
+  if (p.includes('תקופה ביזנטית')) return 400;
+  if (p.includes('תקופה אסלאמית קדומה')) return 750;
+  if (p.includes('תקופה ממלוכית')) return 1270;
+  if (p.includes('תקופה מנדטורית')) return 1936;
+  if (p.includes('תקופה ישראלית')) return 1962;
   return null;
 }
 
-export default function TimelinePage() {
-  const buildings = useSites();
-  const [selected, setSelected] = useState<Building | null>(null);
-  const [hoveredPeriod, setHoveredPeriod] = useState<string | null>(null);
+const inPeriod = (b: Building, p: Period) => (b.historical_periods ?? []).some(hp => p.keywords.includes(hp));
 
-  const buildingsWithYears = buildings.map(b => ({ building: b, year: getBuildingYear(b) })).filter(x => x.year !== null) as { building: Building; year: number }[];
+export default function TimelinePage() {
+  return (
+    <Suspense fallback={<div className="h-96 glass-card animate-pulse" />}>
+      <Timeline />
+    </Suspense>
+  );
+}
+
+function Timeline() {
+  const sites = useSites();
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const period = PERIODS.find(p => p.id === params.get('period')) ?? null;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const go = useCallback((id: string | null) => {
+    setSelectedId(null);
+    router.replace(id ? `${pathname}?period=${id}` : pathname, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [router, pathname]);
+
+  const bySite = useMemo(() => PERIODS.map(p => ({ p, list: sites.filter(b => inPeriod(b, p)) })), [sites]);
+  const visible = period ? bySite.find(x => x.p.id === period.id)!.list : sites;
+  const selected = visible.find(s => s.id === selectedId) ?? null;
+  const idx = period ? PERIODS.indexOf(period) : -1;
+
+  // תחום הסרגל: כל הציר, או תקופה מוגדלת
+  const range = period
+    ? (() => { const pad = (period.endYear - period.startYear) * 0.08; return [period.startYear - pad, period.endYear + pad]; })()
+    : [TIMELINE_START, TIMELINE_END];
+  const pos = (y: number) => ((Math.min(Math.max(y, range[0]), range[1]) - range[0]) / (range[1] - range[0])) * 100;
+
+  const sortedMarkers = visible
+    .map(b => ({ b, y: siteYear(b) }))
+    .filter((x): x is { b: Building; y: number } => x.y !== null)
+    .sort((a, b) => a.y - b.y);
+  // בתצוגת תקופה: פריסה שווה לפי סדר כרונולוגי, כדי שאתרים בני אותה שנה לא יסתירו זה את זה
+  const markers = period && sortedMarkers.length > 1
+    ? sortedMarkers.map((m, i) => ({ ...m, y: period.startYear + ((period.endYear - period.startYear) * (i + 0.5)) / sortedMarkers.length }))
+    : sortedMarkers.map(m => (period ? { ...m, y: (period.startYear + period.endYear) / 2 } : m));
 
   return (
     <div className="space-y-6">
-      {/* Page intro */}
-      <div className="page-intro">
-        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>
-          ציר זמן — מורשת אשדוד
-        </h1>
-        <p style={{ color: 'var(--navy-soft)' }}>
-          <span className="highlight-text">5,000 שנות היסטוריה</span> על קו חוף אחד.
-          הסרגל מציג את <span className="highlight-text">הרצף ההיסטורי המלא</span> — מהברונזה הקדומה ועד ימינו —
-          וכל אתר מסומן על הציר בהתאם לתקופתו. לחץ על אתר לפרטים ולהמלצת שיטת שימור.
-        </p>
-      </div>
-
-      {/* Timeline ruler */}
-      <div className="glass-card p-6 overflow-x-auto">
-        {/* Periods bar */}
-        <div className="relative h-14 rounded-lg overflow-hidden mb-2" style={{ minWidth: 900 }}>
-          {PERIODS.map(period => {
-            const left = yearToPercent(period.startYear);
-            const width = yearToPercent(period.endYear) - left;
-            const isHovered = hoveredPeriod === period.id;
-            return (
-              <div
-                key={period.id}
-                className="absolute top-0 h-full flex items-center justify-center cursor-pointer transition-all"
-                style={{
-                  right: `${left}%`,
-                  width: `${width}%`,
-                  backgroundColor: period.color,
-                  opacity: hoveredPeriod && !isHovered ? 0.4 : 0.85,
-                  borderLeft: '1px solid rgba(255,255,255,0.3)',
-                }}
-                onMouseEnter={() => setHoveredPeriod(period.id)}
-                onMouseLeave={() => setHoveredPeriod(null)}
-              >
-                {width > 4 && (
-                  <span className="text-white text-xs font-bold truncate px-1">{period.label}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Century ticks */}
-        <div className="relative h-8" style={{ minWidth: 900 }}>
-          {CENTURIES.filter(y => y >= TIMELINE_START && y <= TIMELINE_END).map(year => {
-            const pos = yearToPercent(year);
-            const isMajor = year % 1000 === 0;
-            return (
-              <div
-                key={year}
-                className="absolute flex flex-col items-center"
-                style={{ right: `${pos}%`, transform: 'translateX(50%)' }}
-              >
-                <div
-                  style={{
-                    width: isMajor ? 2 : 1,
-                    height: isMajor ? 16 : 8,
-                    backgroundColor: isMajor ? 'var(--navy)' : 'var(--stone)',
-                    opacity: isMajor ? 0.6 : 0.3,
-                  }}
-                />
-                {isMajor && (
-                  <span className="text-xs mt-0.5" style={{ color: 'var(--navy-soft)', fontSize: '0.6rem' }}>
-                    {year < 0 ? `${Math.abs(year)} לפנה"ס` : year}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Building markers on ruler */}
-        <div className="relative h-20 mt-2" style={{ minWidth: 900 }}>
-          {buildingsWithYears.map(({ building, year }, idx) => {
-            const pos = yearToPercent(year);
-            const isSelected = selected?.id === building.id;
-            const offset = (idx % 3) * 22;
-            return (
-              <button
-                key={building.id}
-                className="absolute transition-all"
-                style={{
-                  right: `${pos}%`,
-                  top: offset,
-                  transform: 'translateX(50%)',
-                  zIndex: isSelected ? 20 : 10,
-                }}
-                onClick={() => setSelected(isSelected ? null : building)}
-              >
-                <div
-                  className="rounded-full border-2 transition-all"
-                  style={{
-                    width: isSelected ? 18 : 12,
-                    height: isSelected ? 18 : 12,
-                    backgroundColor: isSelected ? 'var(--amber)' : 'var(--ocean)',
-                    borderColor: 'white',
-                    boxShadow: isSelected ? '0 0 8px rgba(212, 146, 42, 0.5)' : '0 1px 3px rgba(0,0,0,0.2)',
-                  }}
-                />
-                <div
-                  className="absolute top-full mt-1 text-center whitespace-nowrap"
-                  style={{
-                    right: '50%',
-                    transform: 'translateX(50%)',
-                    fontSize: '0.55rem',
-                    color: isSelected ? 'var(--amber-dark)' : 'var(--navy-soft)',
-                    fontWeight: isSelected ? 700 : 400,
-                    maxWidth: 80,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {building.name.split(' ')[0]}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Selected building detail */}
-      {selected && (
-        <div className="glass-card p-6" style={{ borderRight: '3px solid var(--amber)' }}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="font-serif font-bold text-xl mb-1" style={{ color: 'var(--navy)' }}>
-                {selected.name}
-              </h3>
-              <p className="text-sm mb-2" style={{ color: 'var(--navy-soft)' }}>{selected.address}</p>
-              {selected.year_built && (
-                <span className="highlight-text text-sm">נבנה: {selected.year_built}</span>
-              )}
-              {selected.full_description && (
-                <p className="text-sm leading-relaxed mt-3" style={{ color: 'var(--navy-soft)' }}>
-                  {selected.full_description}
-                </p>
-              )}
-            </div>
+      {/* ניווט תקופות — תמיד גלוי */}
+      <nav aria-label="תקופות" className="sticky top-16 z-30 -mx-4 px-4 py-3 sm:mx-0 sm:px-0" style={{ backgroundColor: 'rgba(247,240,227,0.92)', backdropFilter: 'blur(8px)' }}>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => go(null)}
+            aria-pressed={!period}
+            className="shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors"
+            style={{ backgroundColor: !period ? 'var(--navy)' : 'white', color: !period ? 'white' : 'var(--navy)', border: '1px solid var(--navy)' }}
+          >
+            כל התקופות
+          </button>
+          {bySite.map(({ p, list }) => (
             <button
-              onClick={() => setSelected(null)}
-              className="text-lg px-3 py-1 rounded"
-              style={{ color: 'var(--navy-soft)' }}
+              key={p.id}
+              onClick={() => go(p.id)}
+              aria-pressed={period?.id === p.id}
+              className="shrink-0 px-4 py-2.5 rounded-full text-sm transition-colors"
+              style={{
+                backgroundColor: period?.id === p.id ? p.color : 'white',
+                color: period?.id === p.id ? 'white' : p.color,
+                border: `1px solid ${p.color}`,
+                opacity: list.length ? 1 : 0.55,
+              }}
             >
-              ×
+              {p.label}{list.length ? ` · ${list.length}` : ''}
             </button>
-          </div>
-
-          {/* Preservation recommendation */}
-          {(() => {
-            const period = PERIODS.find(p =>
-              (selected.historical_periods ?? []).some(hp =>
-                p.keywords.some(k => hp.includes(k) || k.includes(hp))
-              )
-            );
-            return period ? (
-              <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(27, 107, 125, 0.06)' }}>
-                <p className="text-xs font-bold uppercase mb-1" style={{ color: 'var(--ocean)' }}>
-                  המלצת שימור — {period.label}
-                </p>
-                <p className="text-sm" style={{ color: 'var(--navy)' }}>{period.preservationNote}</p>
-              </div>
-            ) : null;
-          })()}
-
-          <div className="flex gap-3 mt-4">
-            <Link
-              href={`/buildings/${selected.id}`}
-              className="px-5 py-2 rounded-lg text-sm font-medium text-white"
-              style={{ backgroundColor: 'var(--ocean)' }}
-            >
-              פרטי אתר
-            </Link>
-            <Link
-              href={`/buildings/${selected.id}/file`}
-              className="px-5 py-2 rounded-lg text-sm font-medium"
-              style={{ backgroundColor: 'var(--amber-pale)', color: 'var(--amber-dark)' }}
-            >
-              תיק תיעוד
-            </Link>
-          </div>
+          ))}
         </div>
+      </nav>
+
+      {/* כותרת */}
+      {period ? (
+        <header className="rounded-2xl p-6 sm:p-8 text-white shadow-lg" style={{ background: `linear-gradient(120deg, ${period.color} 0%, var(--navy) 130%)` }}>
+          <p className="text-sm opacity-85">{fmtYear(period.startYear)} — {fmtYear(period.endYear)}</p>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold mt-1">התקופה ה{period.label}</h1>
+          <p className="mt-3 max-w-2xl leading-relaxed opacity-95">{period.desc}</p>
+          <p className="mt-3 text-sm max-w-2xl opacity-85">שיטת שימור מומלצת: {period.preservationNote}</p>
+        </header>
+      ) : (
+        <header className="page-intro">
+          <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>ציר זמן — מורשת אשדוד</h1>
+          <p style={{ color: 'var(--navy-soft)' }}>
+            <span className="highlight-text">5,000 שנות היסטוריה</span> על קו חוף אחד.
+            לחיצה על תקופה מציגה אותה ואת האתרים שלה. הכפתור &quot;כל התקופות&quot; מחזיר לתמונה המלאה.
+          </p>
+        </header>
       )}
 
-      {/* Period cards */}
-      <div className="space-y-4">
-        <h2 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>תקופות היסטוריות</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {PERIODS.map(period => {
-            const periodBuildings = buildings.filter(b =>
-              (b.historical_periods ?? []).some(hp =>
-                period.keywords.some(k => hp.includes(k) || k.includes(hp))
-              )
-            );
-            return (
-              <div
-                key={period.id}
-                className="glass-card p-5"
-                style={{ borderRight: `3px solid ${period.color}` }}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-serif font-bold" style={{ color: 'var(--navy)' }}>{period.label}</h3>
-                    <p className="text-sm font-mono" style={{ color: period.color }}>{period.startYear < 0 ? `${Math.abs(period.startYear)} לפנה"ס` : period.startYear} — {period.endYear < 0 ? `${Math.abs(period.endYear)} לפנה"ס` : period.endYear}</p>
-                  </div>
-                  {periodBuildings.length > 0 && (
-                    <span className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: period.color }}>
-                      {periodBuildings.length} אתרים
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm mb-2" style={{ color: 'var(--navy-soft)' }}>{period.desc}</p>
-                <p className="text-xs italic" style={{ color: 'var(--ocean)' }}>{period.preservationNote}</p>
-
-                {periodBuildings.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {periodBuildings.map(b => (
-                      <button
-                        key={b.id}
-                        onClick={() => setSelected(b)}
-                        className="text-xs px-2.5 py-1 rounded-full transition-colors"
-                        style={{
-                          backgroundColor: selected?.id === b.id ? period.color : `${period.color}15`,
-                          color: selected?.id === b.id ? 'white' : period.color,
-                          border: `1px solid ${period.color}30`,
-                        }}
-                      >
-                        {b.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* סרגל */}
+      <section className="glass-card p-4 sm:p-6 overflow-x-auto" aria-label="סרגל זמן">
+        <div className="relative" style={{ minWidth: 720 }}>
+          <div className="relative h-12 rounded-lg overflow-hidden">
+            {(period ? [period] : PERIODS).map(p => {
+              const right = pos(p.startYear);
+              const width = pos(p.endYear) - right;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => go(period ? null : p.id)}
+                  title={period ? 'חזרה לכל התקופות' : `הצגת התקופה ה${p.label}`}
+                  className="absolute top-0 h-full flex items-center justify-center text-white text-xs font-bold transition-opacity hover:opacity-100"
+                  style={{ right: `${right}%`, width: `${width}%`, backgroundColor: p.color, opacity: 0.85, borderInlineStart: '1px solid rgba(255,255,255,0.35)' }}
+                >
+                  {width > 5 && <span className="truncate px-1">{p.label}</span>}
+                </button>
+              );
+            })}
+          </div>
+          <div className="relative h-6 mt-1 text-[11px]" style={{ color: 'var(--navy-soft)' }}>
+            {Array.from({ length: 6 }, (_, i) => range[0] + ((range[1] - range[0]) * i) / 5).map(y => (
+              <span key={y} className="absolute -translate-x-1/2" style={{ right: `${pos(y)}%`, transform: 'translateX(50%)' }}>{fmtYear(Math.round(y))}</span>
+            ))}
+          </div>
+          <div className="relative h-24 mt-2">
+            {markers.map(({ b, y }, i) => {
+              const sel = b.id === selectedId;
+              return (
+                <button
+                  key={b.id}
+                  onClick={() => setSelectedId(sel ? null : b.id)}
+                  className="absolute group"
+                  style={{ right: `${pos(y)}%`, top: (i % 2) * 44, transform: 'translateX(50%)', zIndex: sel ? 20 : 10 }}
+                  aria-label={b.name}
+                >
+                  <SiteImage site={b} size="thumb" className={`!w-10 !h-10 ring-2 transition-transform group-hover:scale-125 ${sel ? 'ring-[var(--amber)] scale-125' : 'ring-white'} shadow-md`} />
+                  <span className="pointer-events-none absolute top-full mt-1 right-1/2 translate-x-1/2 whitespace-nowrap rounded px-2 py-0.5 text-[11px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: 'var(--navy)', color: 'white' }}>
+                    {b.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="flex gap-3 justify-center pt-4">
-        <Link href="/map" className="px-6 py-2 text-white rounded-lg text-sm" style={{ backgroundColor: 'var(--ocean)' }}>
-          צפה במפה
-        </Link>
-        <Link href="/overview" className="px-6 py-2 rounded-lg text-sm" style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--navy)', border: '1px solid var(--stone)' }}>
-          סקירה כללית
-        </Link>
-      </div>
+      {/* אתר נבחר */}
+      {selected && (
+        <article className="glass-card overflow-hidden grid sm:grid-cols-[280px_1fr]" style={{ borderInlineStart: '3px solid var(--amber)' }}>
+          <SiteImage site={selected} size="card" className="!h-48 sm:!h-full !rounded-none" />
+          <div className="p-5 space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="font-serif font-bold text-xl" style={{ color: 'var(--navy)' }}>{selected.name}</h2>
+              <button onClick={() => setSelectedId(null)} className="text-sm px-3 py-1 rounded" style={{ color: 'var(--navy-soft)', border: '1px solid var(--stone-light)' }}>סגירה</button>
+            </div>
+            <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>{selected.address}</p>
+            {selected.full_description && <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{selected.full_description}</p>}
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Link href={`/buildings/${selected.id}`} className="px-5 py-2.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: 'var(--ocean)' }}>לדף האתר</Link>
+              <Link href={`/tour?site=${selected.id}`} className="px-5 py-2.5 rounded-lg text-sm font-medium" style={{ border: '1px solid var(--ocean)', color: 'var(--ocean)' }}>במצגת</Link>
+            </div>
+          </div>
+        </article>
+      )}
+
+      {period ? (
+        /* תצוגת תקופה: האתרים שלה */
+        <section className="space-y-4">
+          <h2 className="font-serif font-bold text-xl" style={{ color: 'var(--navy)' }}>
+            {visible.length > 1 ? `${visible.length} אתרים מהתקופה` : visible.length === 1 ? 'אתר אחד מהתקופה' : 'אין עדיין אתרים ברשימה מהתקופה הזו'}
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visible.map(b => (
+              <button key={b.id} onClick={() => setSelectedId(b.id)} className="text-right glass-card overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-lg">
+                <SiteImage site={b} size="card" />
+                <div className="p-4">
+                  <p className="font-serif font-bold" style={{ color: 'var(--navy)' }}>{b.name}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--navy-soft)' }}>{b.address}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap justify-between gap-3 pt-2">
+            {idx > 0 ? <button onClick={() => go(PERIODS[idx - 1].id)} className="px-5 py-3 rounded-lg text-sm" style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>התקופה הקודמת: {PERIODS[idx - 1].label}</button> : <span />}
+            <button onClick={() => go(null)} className="px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>חזרה לכל התקופות</button>
+            {idx < PERIODS.length - 1 ? <button onClick={() => go(PERIODS[idx + 1].id)} className="px-5 py-3 rounded-lg text-sm" style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>התקופה הבאה: {PERIODS[idx + 1].label}</button> : <span />}
+          </div>
+        </section>
+      ) : (
+        /* תצוגה ראשית: כרטיס לכל תקופה */
+        <section className="grid sm:grid-cols-2 gap-4">
+          {bySite.map(({ p, list }) => (
+            <button
+              key={p.id}
+              onClick={() => go(p.id)}
+              className="text-right glass-card p-5 transition-transform hover:-translate-y-1 hover:shadow-lg"
+              style={{ borderInlineStart: `4px solid ${p.color}` }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>{p.label}</h3>
+                  <p className="text-xs" style={{ color: p.color }}>{fmtYear(p.startYear)} — {fmtYear(p.endYear)}</p>
+                </div>
+                <span className="text-xs px-2.5 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: p.color }}>{list.length === 1 ? 'אתר אחד' : `${list.length} אתרים`}</span>
+              </div>
+              <p className="text-sm mt-2" style={{ color: 'var(--navy-soft)' }}>{p.desc}</p>
+              {list.length > 0 && (
+                <div className="flex items-center gap-1.5 mt-3">
+                  {list.slice(0, 5).map(b => <SiteImage key={b.id} site={b} size="thumb" className="ring-2 ring-white shadow" />)}
+                  {list.length > 5 && <span className="text-xs ms-1" style={{ color: 'var(--navy-soft)' }}>ועוד {list.length - 5}</span>}
+                </div>
+              )}
+            </button>
+          ))}
+        </section>
+      )}
     </div>
   );
 }

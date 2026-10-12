@@ -1,4 +1,4 @@
-import { getSites, getRoutes } from '@/lib/data';
+import { getSites, getRoutes, getGallery } from '@/lib/data';
 import { SiteDataProvider } from '@/components/providers/SiteData';
 import { AppShell } from '@/components/layout/AppShell';
 
@@ -6,10 +6,10 @@ import { AppShell } from '@/components/layout/AppShell';
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [{ sites, source }, routes] = await Promise.all([getSites(), getRoutes()]);
+  const [{ sites, source }, routes, gallery] = await Promise.all([getSites(), getRoutes(), getGallery()]);
 
   return (
-    <SiteDataProvider value={{ sites, routes, source }}>
+    <SiteDataProvider value={{ sites, routes, source, gallery }}>
       <AppShell source={source}>{children}</AppShell>
     </SiteDataProvider>
   );
