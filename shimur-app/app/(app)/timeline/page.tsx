@@ -23,6 +23,12 @@ interface Period {
 
 const PERIODS: Period[] = [
   {
+    id: 'prehistoric', label: 'פרהיסטורית', startYear: -18000, endYear: -3000, color: '#8A7A5C',
+    desc: 'ציידים-לקטים על דיונות החוף בתקופה האפיפליאוליתית, לפני 15,000–18,000 שנה.',
+    preservationNote: 'שימור אתר פתוח — הגנה על שכבת הדיונה מפני פיתוח, תיעוד ושמירה במקום.',
+    keywords: ['תקופה פרהיסטורית'],
+  },
+  {
     id: 'bronze', label: 'ברונזה', startYear: -3000, endYear: -1200, color: '#6B4226',
     desc: 'יישובים כנעניים על החוף ובפי הנחל. בברונזה המאוחרת — מבנים מבוצרים בתל מור, ככל הנראה חיל מצב מצרי.',
     preservationNote: 'שימור ארכאולוגי — חפירות מתועדות, שימור במקום, כיסוי מגן.',
@@ -77,6 +83,7 @@ const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} לפנה"ס` : String(y)
 function siteYear(b: Building): number | null {
   if (b.year_built) return b.year_built;
   const p = b.historical_periods ?? [];
+  if (p.includes('תקופה פרהיסטורית')) return -16000;
   if (p.includes('תקופת הברונזה')) return -1400;
   if (p.includes('תקופת הברזל')) return -800;
   if (p.includes('תקופה פרסית-הלניסטית')) return -300;
@@ -118,6 +125,12 @@ function Timeline() {
   const visible = period ? bySite.find(x => x.p.id === period.id)!.list : sites;
   const selected = visible.find(s => s.id === selectedId) ?? null;
   const idx = period ? PERIODS.indexOf(period) : -1;
+  // טווח השנים מחושב מהאתר הקדום ביותר, מעוגל לאלפים
+  const historySpan = useMemo(() => {
+    const years = sites.map(siteYear).filter((y): y is number => y !== null);
+    if (!years.length) return 0;
+    return Math.round((new Date().getFullYear() - Math.min(...years)) / 1000) * 1000;
+  }, [sites]);
 
   // סרגל: בתצוגה הראשית — "לפי תקופות" (רוחב שווה לכל תקופה, ללא צפיפות) או "לפי שנים" (קנה מידה אמיתי)
   const range = period
@@ -214,7 +227,7 @@ function Timeline() {
         <header className="page-intro">
           <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>ציר זמן — מורשת אשדוד</h1>
           <p style={{ color: 'var(--navy-soft)' }}>
-            <span className="highlight-text">5,000 שנות היסטוריה</span> על קו חוף אחד.
+            <span className="highlight-text">{historySpan.toLocaleString('en-US')} שנות היסטוריה</span> על קו חוף אחד.
             לחיצה על תקופה מציגה אותה ואת האתרים שלה. הכפתור &quot;כל התקופות&quot; מחזיר לתמונה המלאה.
           </p>
         </header>
