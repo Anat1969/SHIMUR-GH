@@ -10,6 +10,44 @@ import { SiteImage } from '@/components/sites/SiteImage';
 
 type Selection = { label: string; sites: Building[] } | null;
 
+// מתוך מצגת הוועדה לשימור אתרים 2016, שקפים 1–5
+const FOURTH_SCHEDULE: { title: string; items: [string, string][] }[] = [
+  {
+    title: 'מעמדה של תוכנית לשימור',
+    items: [
+      ['מעמד סטטוטורי', 'דין תוכנית לשימור אתרים הוא כדין תוכנית מתאר מקומית לכל דבר ועניין (סעיף 2).'],
+      ['יוזמי התוכנית', 'הוועדה המקומית לתכנון ולבנייה, או מעוניינים — רשות מקומית, בעלי הקרקע, או גוף ציבורי או שימורי שקיבל אישור משר הפנים.'],
+      ['הוראות התוכנית', 'השימושים המותרים, מגבלות הפיתוח, הוראות השימור הפיזיות (חומרי גמר, שימור חזיתות או שימור מלא), תוספות בנייה מותרות והנחיות לסביבה הקרובה.'],
+      ['הגנה בתקופת ההכנה', 'הוועדה המחוזית או המקומית יכולה להטיל מגבלות ואיסורי בנייה או הריסה כבר בתקופת הכנת התוכנית (בדומה לסעיפים 77–78), כדי למנוע קביעת עובדות בשטח.'],
+    ],
+  },
+  {
+    title: 'הוועדה לשימור אתרים ברשות המקומית',
+    items: [
+      ['חובת הקמה', 'סעיפים 10–11 מחייבים כל רשות מקומית להקים ועדה מייעצת לשימור אתרים.'],
+      ['יושב ראש', 'ראש הרשות המקומית, סגנו, או יו״ר ועדת המשנה לתכנון ולבנייה.'],
+      ['חברים', 'שלושה חברי מועצת הרשות המקומית, נציג מקצועי של הרשות הבקי בענייני תכנון ובנייה, ומומחה לשימור מבנים ואתרי התיישבות (בעל דעה מייעצת).'],
+      ['מוזמנים קבועים', 'מהנדס הרשות המקומית ומתכנן המחוז, או נציגיהם.'],
+    ],
+  },
+  {
+    title: 'רשימת האתרים לשימור (סעיף 12)',
+    items: [
+      ['חובה', 'הוועדה מכינה רשימת אתרים לשימור בתחום הרשות בתוך שנתיים מיום הקמתה.'],
+      ['תוכן הרשימה', 'הנימוקים והערכים שבגינם האתר ראוי לשימור, מידת הפיתוח המותרת, ופרטי הבעלים ובעלי הזכויות.'],
+      ['מעמד משפטי', 'כלי עבודה מקצועי ואינוונטר פנימי. ההכללה ברשימה אינה הופכת אותה לתוכנית סטטוטורית מאושרת, אבל היא בסיס להכנת תוכניות שימור עירוניות ולהפעלת סמכויות רישוי.'],
+    ],
+  },
+  {
+    title: 'הפקעות, פיצויים ותמריצים',
+    items: [
+      ['סמכות הפקעה', 'בנסיבות מסוימות הרשות רשאית להפקיע אתר המיועד לשימור, אם הדבר נדרש להצלתו או לשימורו, כפוף למנגנון ערר.'],
+      ['תביעות פיצויים', 'בעלי נכסים שנפגעו מאישור תוכנית שימור (למשל בשל שלילת זכויות בנייה או הגבלת הריסה) זכאים לתבוע פיצויים לפי סעיף 197.'],
+      ['תמריצים', 'העברת זכויות בנייה, או פטורים והנחות מאגרות והיטלים, כדי לסייע במימון עבודות השימור היקרות.'],
+    ],
+  },
+];
+
 export default function OverviewPage() {
   const buildings = useSites();
   const routes = useRoutes();
@@ -178,25 +216,36 @@ export default function OverviewPage() {
           )}
         </div>
 
-        <p className="text-xs leading-relaxed border-t pt-4" style={{ color: 'var(--navy-soft)', borderColor: 'var(--stone-light)' }}>{SOURCE_CREDIT}</p>
+        <p className="text-xs leading-relaxed border-t pt-4" style={{ color: 'var(--navy-soft)', borderColor: 'var(--stone-light)' }}>{SOURCE_CREDIT}{' '}<a href="/docs/committee-2016.pdf" target="_blank" rel="noopener noreferrer" className="underline font-semibold" style={{ color: 'var(--ocean)' }}>למצגת המלאה (PDF)</a></p>
       </section>
 
-      <section className="glass-card p-6 space-y-4" aria-labelledby="fourth-schedule">
-        <h2 id="fourth-schedule" className="text-xl font-serif font-bold" style={{ color: 'var(--navy)' }}>התוספת הרביעית לחוק התכנון והבנייה</h2>
-        <dl className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
-          {[
-            ['מהו אתר לשימור', 'בניין או קבוצת בניינים, או חלק מהם, לרבות סביבתם הקרובה, שלדעת מוסד תכנון הם בעלי חשיבות היסטורית, לאומית, אדריכלית או ארכאולוגית.'],
-            ['מעמד הרשימה', 'כלי עבודה ואינוונטר. הכללה ברשימה אינה תכנית סטטוטורית, אבל היא בסיס לתכניות שימור ולהפעלת סמכויות רישוי.'],
-            ['תכנית לשימור', 'דינה כדין תכנית מתאר מקומית. היא קובעת שימושים, הוראות שימור ותוספות בנייה.'],
-            ['הרכב הוועדה', 'יו״ר, שלושה חברי מועצה, נציג מקצועי של הרשות ומומחה שימור בעל דעה מייעצת. מהנדס העיר ומתכנן המחוז מוזמנים קבועים.'],
-            ['פיצויים ותמריצים', 'לפי סעיף 197, ובאמצעות העברת זכויות והנחות באגרות.'],
-          ].map(([k, v]) => (
-            <div key={k}>
-              <dt className="font-bold" style={{ color: 'var(--navy)' }}>{k}</dt>
-              <dd>{v}</dd>
+      <section className="glass-card p-6 space-y-5" aria-labelledby="fourth-schedule">
+        <div>
+          <h2 id="fourth-schedule" className="text-xl font-serif font-bold" style={{ color: 'var(--navy)' }}>התוספת הרביעית לחוק התכנון והבנייה: שימור אתרים</h2>
+          <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+            <strong style={{ color: 'var(--navy)' }}>מהו אתר לשימור? </strong>
+            &quot;בניין או קבוצת בניינים או חלק מהם, לרבות סביבתם הקרובה, שלדעת מוסד תכנון הם בעלי חשיבות היסטורית, לאומית, אדריכלית או ארכאולוגית.&quot;
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-x-6 gap-y-5 text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+          {FOURTH_SCHEDULE.map(group => (
+            <div key={group.title}>
+              <h3 className="font-bold mb-1.5" style={{ color: 'var(--navy)' }}>{group.title}</h3>
+              <dl className="space-y-1.5">
+                {group.items.map(([k, v]) => (
+                  <div key={k}>
+                    <dt className="inline font-semibold" style={{ color: 'var(--navy)' }}>{k}: </dt>
+                    <dd className="inline">{v}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           ))}
-        </dl>
+        </div>
+        <a href="/docs/committee-2016.pdf" target="_blank" rel="noopener noreferrer"
+          className="inline-block px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>
+          למצגת הוועדה המלאה (PDF)
+        </a>
       </section>
 
       <Link href="/tour" className="block rounded-2xl p-6 sm:p-8 text-white transition-transform hover:scale-[1.01]"
