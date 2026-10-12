@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSites } from '@/lib/data';
 import { StatusBadge } from '@/components/buildings/StatusBadge';
+import { SiteImage } from '@/components/sites/SiteImage';
 
 export default async function FieldPage() {
   const { sites: buildings } = await getSites();
@@ -20,7 +21,8 @@ export default async function FieldPage() {
             className="bg-white rounded-lg border border-stone-light p-5 hover:bg-parchment transition-colors flex flex-col gap-3"
           >
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <SiteImage site={building} size="thumb" className="!w-14 !h-14" />
+              <div className="flex-1 min-w-0">
                 <p className="font-semibold text-ink">{building.name}</p>
                 <p className="text-sm text-ink-soft mt-0.5">{building.address}</p>
               </div>

@@ -92,7 +92,7 @@ function mapBuilding(r: BuildingRow): Building {
 
 const DEMO_IMAGES: Record<string, string> = {
   '1': '/sites/s01-old.jpg', '2': '/sites/s02-old.jpg', '3': '/sites/s03-old.jpg',
-  '4': '/sites/s04-old.jpg', '5': '/sites/s05-old.jpg', '14': '/sites/s14-old.jpg',
+  '4': '/sites/s04-old.jpg', '5': '/sites/s05-old.jpg', '7': '/sites/s07-c.jpg', '14': '/sites/s14-old.jpg',
 };
 
 const demoSites = (): Building[] =>
@@ -212,3 +212,13 @@ export const getDocuments = cache(async (): Promise<SiteDocument[]> => {
     return [];
   }
 });
+
+/** תמונות גלריה לפי אתר (מתוך shimur_documents מסוג image) */
+export async function getGallery(): Promise<Record<string, { url: string; title: string }[]>> {
+  const docs = await getDocuments();
+  const out: Record<string, { url: string; title: string }[]> = {};
+  docs.filter(d => d.kind === 'image' && d.url && d.building_id).reverse().forEach(d => {
+    (out[d.building_id!] ??= []).push({ url: d.url!, title: d.title });
+  });
+  return out;
+}

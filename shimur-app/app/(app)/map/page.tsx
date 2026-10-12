@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSites } from '@/components/providers/SiteData';
 import type { HistoricalMap } from '@/lib/types';
+import { SiteImage } from '@/components/sites/SiteImage';
 import type { Basemap, OverlayLayer } from '@/components/map/BuildingsMap';
 import { apiFetch } from '@/lib/supabase/browser';
 import { EditorGate, useEditor } from '@/components/providers/Editor';
@@ -167,8 +168,11 @@ export default function MapPage() {
                     className="w-full text-right flex items-start gap-3 p-2.5 rounded-lg transition-colors"
                     style={{ backgroundColor: sel ? 'var(--ocean-pale)' : 'transparent', border: `1px solid ${sel ? 'var(--ocean-light)' : 'transparent'}` }}
                   >
-                    <span className="mt-1.5 w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: markerColor(b, colorBy) }} />
-                    <span className="min-w-0">
+                    <span className="relative shrink-0">
+                      <SiteImage site={b} size="thumb" />
+                      <span className="absolute -bottom-1 -left-1 w-3.5 h-3.5 rounded-full border-2 border-white" style={{ backgroundColor: markerColor(b, colorBy) }} />
+                    </span>
+                    <span className="min-w-0 self-center">
                       <span className="block text-sm font-medium" style={{ color: 'var(--navy)' }}>{b.name}</span>
                       <span className="block text-xs truncate" style={{ color: 'var(--navy-soft)' }}>{b.address}</span>
                     </span>
