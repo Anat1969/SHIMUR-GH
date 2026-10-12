@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { useSites } from '@/components/providers/SiteData';
 import { Building } from '@/lib/types';
 
 const TIMELINE_START = -3000;
@@ -99,7 +99,7 @@ function getBuildingYear(b: Building): number | null {
 }
 
 export default function TimelinePage() {
-  const buildings = DEMO_BUILDINGS;
+  const buildings = useSites();
   const [selected, setSelected] = useState<Building | null>(null);
   const [hoveredPeriod, setHoveredPeriod] = useState<string | null>(null);
 

@@ -49,7 +49,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-heebo)', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-playfair)', 'serif'],
+        serif: ['var(--font-frank)', 'var(--font-playfair)', 'serif'],
       },
     },
   },

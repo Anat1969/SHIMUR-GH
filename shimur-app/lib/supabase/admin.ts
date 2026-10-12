@@ -1,13 +1,14 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, getServiceRoleKey } from './config';
 
 let _admin: SupabaseClient | null = null;
 
-export function getAdminClient(): SupabaseClient {
+/** לקוח שרת עם הרשאות כתיבה. מחזיר null כשהמפתח חסר. */
+export function getAdminClient(): SupabaseClient | null {
+  const key = getServiceRoleKey();
+  if (!key) return null;
   if (!_admin) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) throw new Error('Supabase admin env vars missing');
-    _admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+    _admin = createClient(SUPABASE_URL, key, { auth: { autoRefreshToken: false, persistSession: false } });
   }
   return _admin;
 }

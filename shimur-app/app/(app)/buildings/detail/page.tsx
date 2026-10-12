@@ -1,19 +1,21 @@
 import { DetailTable } from '@/components/buildings/DetailTable';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSites } from '@/lib/data';
+import type { Building } from '@/lib/types';
 import { PrintButton } from '@/components/PrintButton';
 
-export default function DetailPage() {
+export default async function DetailPage() {
+  const { sites } = await getSites();
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-ink mb-1">פירוט מבנים — אתרי שימור אשדוד</h1>
-          <p className="text-ink-soft">{DEMO_BUILDINGS.length} אתרים | ועדת השימור העירונית 2016</p>
+          <p className="text-ink-soft">{sites.length} אתרים | ועדת השימור העירונית</p>
         </div>
         <div className="flex gap-3 items-center no-print">
           <PrintButton label="הדפסה" />
           <a
-            href={`data:text/csv;charset=utf-8,${encodeURIComponent(buildCsv())}`}
+            href={`data:text/csv;charset=utf-8,%EF%BB%BF${encodeURIComponent(buildCsv(sites))}`}
             download="אתרי_שימור_אשדוד.csv"
             className="px-5 py-2 border rounded-md text-sm font-medium"
             style={{ borderColor: '#C8B89A', color: '#8B7355' }}
@@ -23,14 +25,14 @@ export default function DetailPage() {
         </div>
       </div>
 
-      <DetailTable buildings={DEMO_BUILDINGS} />
+      <DetailTable buildings={sites} />
     </div>
   );
 }
 
-function buildCsv(): string {
+function buildCsv(sites: Building[]): string {
   const headers = ['מס׳','שם','כתובת','שכונה','סוג','תקופה','בעלות','סיבות שימור','סטטוס קיים','עדיפות','רמת שימור','חלקה','תיאור'];
-  const rows = DEMO_BUILDINGS.map(b => [
+  const rows = sites.map(b => [
     b.city_registry_id,
     b.name,
     b.address,

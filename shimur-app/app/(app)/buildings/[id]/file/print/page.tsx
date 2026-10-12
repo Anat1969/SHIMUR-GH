@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSite } from '@/lib/data';
+import { getFileId, photoUrl } from '@/lib/data/files';
+import { T } from '@/lib/supabase/config';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { PrintButton } from '@/components/PrintButton';
 
@@ -18,13 +20,11 @@ const ALL_CHAPTERS = [
 
 async function loadAllChapters(cityRegistryId: string) {
   try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
     const admin = getAdminClient();
-    const { data: building } = await admin.from('buildings').select('id').eq('city_registry_id', cityRegistryId).maybeSingle();
-    if (!building) return {};
-    const { data: file } = await admin.from('documentation_files').select('id').eq('building_id', building.id).maybeSingle();
-    if (!file) return {};
-    const { data: chapters } = await admin.from('chapters').select('chapter_key, title, content, status').eq('file_id', file.id);
+    if (!admin) return {};
+    const fileId = await getFileId(admin, cityRegistryId);
+    if (!fileId) return {};
+    const { data: chapters } = await admin.from(T.chapters).select('chapter_key, title, content, status').eq('file_id', fileId);
     const map: Record<string, { title: string; content: Record<string, string>; status: string }> = {};
     (chapters || []).forEach(c => { map[c.chapter_key] = { title: c.title, content: c.content as Record<string, string>, status: c.status }; });
     return map;
@@ -35,7 +35,7 @@ interface Props { params: Promise<{ id: string }> }
 
 export default async function PrintPage({ params }: Props) {
   const { id } = await params;
-  const building = DEMO_BUILDINGS.find(b => b.id === id);
+  const building = await getSite(id);
   if (!building) notFound();
 
   const chaptersData = await loadAllChapters(building!.city_registry_id);
@@ -60,13 +60,13 @@ export default async function PrintPage({ params }: Props) {
         <div className="no-print flex gap-3 mb-8 p-4 bg-white rounded-lg border border-stone-light">
           <PrintButton label="הדפס / שמור PDF" />
           <Link href={`/buildings/${id}/file`} className="px-6 py-2 rounded-md text-sm font-medium border" style={{ color: '#8B7355', borderColor: '#C8B89A' }}>
-            ← חזרה לתיק
+            חזרה לתיק
           </Link>
         </div>
 
         {/* Cover */}
         <div style={{ borderBottom: '3px solid #C8B89A', paddingBottom: '2rem', marginBottom: '2rem' }}>
-          <p className="text-xs text-ink-soft uppercase tracking-widest mb-2">תיק תיעוד שימור — עיריית אשדוד</p>
+          <p className="text-xs text-ink-soft uppercase mb-2">תיק תיעוד שימור — עיריית אשדוד</p>
           <h1 style={{ fontSize: '2.5rem', fontFamily: 'Georgia, serif', color: '#1A1410', marginBottom: '0.5rem' }}>{building!.name}</h1>
           <p style={{ color: '#3D3228', fontSize: '1.1rem' }}>{building!.address}</p>
           <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

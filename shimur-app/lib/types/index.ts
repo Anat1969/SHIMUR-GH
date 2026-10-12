@@ -16,7 +16,10 @@ export type ProtectionLevel = 'א' | 'ב' | 'ג' | 'מונומנט';
 export type FileType = 'מבנה' | 'מתחם';
 
 export interface Building {
+  /** מספר אתר (site_no) — משמש בכתובות /buildings/[id] */
   id: string;
+  db_id?: string;
+  image_url?: string;
   city_registry_id: string;
   registry_card_number?: string;
   name: string;
@@ -51,8 +54,6 @@ export interface Building {
   surveyor?: string;
   surveyor_license?: string;
   surveyor_date?: string;
-  statutory_plans?: any[];
-  historical_maps?: any[];
   // שדות נוספים לאתרי שימור אשדוד
   building_type?: string;
   preservation_reasons?: string[];
@@ -121,3 +122,28 @@ export const STATUS_LABELS: Record<BuildingStatus, string> = {
   'אושר': 'אושר',
   'הוחזר': 'הוחזר לעדכון',
 };
+
+export interface HistoricalMap {
+  id: string;
+  title: string;
+  url: string;
+  year: string | null;
+  description: string | null;
+  /** [[south, west], [north, east]] */
+  bounds: [[number, number], [number, number]];
+}
+
+export type DocumentKind = 'link' | 'note' | 'image';
+
+export interface SiteDocument {
+  id: string;
+  kind: DocumentKind;
+  title: string;
+  url: string | null;
+  note: string | null;
+  /** מספר האתר (Building.id) או null למסמך כללי */
+  building_id: string | null;
+  created_at: string;
+}
+
+export type DataSource = 'db' | 'demo';

@@ -2,13 +2,13 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { DEMO_ROUTES } from '@/lib/demo/routes';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { useSites, useRoutes } from '@/components/providers/SiteData';
 import { RouteNarrative } from '@/components/routes/RouteNarrative';
 
 export default function RouteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const route = DEMO_ROUTES.find((r) => r.id === id);
+  const sites = useSites();
+  const route = useRoutes().find((r) => r.id === id);
 
   if (!route) {
     return (
@@ -29,7 +29,7 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
 
   const sortedSites = [...(route.sites ?? [])].sort((a, b) => a.position - b.position);
   const routeBuildings = sortedSites
-    .map((s) => DEMO_BUILDINGS.find((b) => b.id === s.building_id))
+    .map((s) => sites.find((b) => b.id === s.building_id))
     .filter(Boolean);
 
   return (
@@ -40,7 +40,7 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
           className="text-sm mb-4 inline-block transition-colors"
           style={{ color: 'var(--ocean)' }}
         >
-          ← חזרה למסלולים
+          חזרה למסלולים
         </Link>
 
         <div
@@ -66,13 +66,19 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
               {route.description}
             </p>
           )}
-          <p className="text-sm mt-4" style={{ color: 'var(--ocean)' }}>
-            {sortedSites.length} אתרים במסלול
-          </p>
+          <div className="flex flex-wrap items-center gap-4 mt-4">
+            <p className="text-sm" style={{ color: 'var(--ocean)' }}>
+              {sortedSites.length} אתרים במסלול
+            </p>
+            <Link href={`/tour?route=${encodeURIComponent(route.id)}`}
+              className="px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>
+              סיור מודרך במסלול
+            </Link>
+          </div>
         </div>
       </div>
 
-      <RouteNarrative route={route} buildings={DEMO_BUILDINGS} />
+      <RouteNarrative route={route} buildings={sites} />
 
       <div className="text-center py-6">
         <Link

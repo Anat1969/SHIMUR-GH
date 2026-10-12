@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Route, Building } from '@/lib/types';
+import { escapeHtml } from '@/lib/sites';
 
 interface RoutesMapProps {
   routes: Route[];
@@ -42,17 +43,17 @@ export function RoutesMap({ routes, buildings, themeColors, onRouteClick }: Rout
       .sort((a, b) => a.position - b.position)
       .map((s) => {
         const b = buildingMap.current.get(s.building_id);
-        return b ? `<li style="margin-bottom:4px"><strong>${b.name}</strong></li>` : '';
+        return b ? `<li style="margin-bottom:4px"><strong>${escapeHtml(b.name)}</strong></li>` : '';
       })
       .join('');
 
     return `
       <div dir="rtl" style="min-width:200px;max-width:280px;font-family:Heebo,sans-serif;">
-        <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:#1B2A4A;">${route.title}</h3>
-        ${route.theme ? `<span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;color:#fff;background:${getRouteColor(route.theme)};margin-bottom:6px;">${route.theme}</span>` : ''}
-        ${route.description ? `<p style="font-size:12px;color:#4A5A7A;margin:4px 0 8px;line-height:1.5;">${route.description}</p>` : ''}
+        <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:#1B2A4A;">${escapeHtml(route.title)}</h3>
+        ${route.theme ? `<span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;color:#fff;background:${getRouteColor(route.theme)};margin-bottom:6px;">${escapeHtml(route.theme)}</span>` : ''}
+        ${route.description ? `<p style="font-size:12px;color:#4A5A7A;margin:4px 0 8px;line-height:1.5;">${escapeHtml(route.description)}</p>` : ''}
         <ol style="margin:0;padding:0 16px 0 0;font-size:12px;color:#1A1410;">${sites}</ol>
-        <a href="/routes/${route.id}" style="display:inline-block;margin-top:8px;font-size:12px;color:#1B6B7D;text-decoration:underline;">פתח מסלול &larr;</a>
+        <a href="/routes/${encodeURIComponent(route.id)}" style="display:inline-block;margin-top:8px;font-size:12px;color:#1B6B7D;text-decoration:underline;">פתח מסלול &larr;</a>
       </div>
     `;
   }, []);
@@ -159,9 +160,9 @@ export function RoutesMap({ routes, buildings, themeColors, onRouteClick }: Rout
 
         const label = `
           <div dir="rtl" style="font-family:Heebo,sans-serif;">
-            <p style="margin:0;font-weight:700;font-size:13px;color:#1B2A4A;">${idx + 1}. ${b.name}</p>
-            <p style="margin:2px 0 0;font-size:11px;color:#4A5A7A;">${b.address}</p>
-            ${site.narrative_text ? `<p style="margin:4px 0 0;font-size:11px;color:#0E4A58;font-style:italic;line-height:1.4;">${site.narrative_text}</p>` : ''}
+            <p style="margin:0;font-weight:700;font-size:13px;color:#1B2A4A;">${idx + 1}. ${escapeHtml(b.name)}</p>
+            <p style="margin:2px 0 0;font-size:11px;color:#4A5A7A;">${escapeHtml(b.address)}</p>
+            ${site.narrative_text ? `<p style="margin:4px 0 0;font-size:11px;color:#0E4A58;font-style:italic;line-height:1.4;">${escapeHtml(site.narrative_text)}</p>` : ''}
           </div>
         `;
 

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { apiFetch } from '@/lib/supabase/browser';
+import { EditorGate } from '@/components/providers/Editor';
 
 interface ChapterEditorProps {
   fields: string[];
@@ -27,7 +29,7 @@ export function ChapterEditor({
 
   const save = async (data: Record<string, string>) => {
     setSaving(true); setError(null); setSaved(false);
-    const res = await fetch('/api/chapters', {
+    const res = await apiFetch('/api/chapters', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ city_registry_id: cityRegistryId, building_name: buildingName, building_address: buildingAddress, chapter_key: chapterKey, chapter_title: chapterTitle, content: data }),
@@ -50,6 +52,7 @@ export function ChapterEditor({
   const pct = fields.length > 0 ? Math.round((filledCount / fields.length) * 100) : 0;
 
   return (
+    <EditorGate what="עריכת פרקי התיק">
     <div className="space-y-6">
       {/* Progress */}
       <div className="bg-white rounded-lg border border-stone-light p-4">
@@ -92,10 +95,11 @@ export function ChapterEditor({
         >
           {saving ? 'שומר...' : 'שמור פרק'}
         </button>
-        {saved && <span className="text-sm" style={{ color: '#4A5C45' }}>✓ נשמר בהצלחה</span>}
+        {saved && <span className="text-sm" style={{ color: '#4A5C45' }}>נשמר</span>}
         {error && <span className="text-sm" style={{ color: '#8B3A1E' }}>שגיאה: {error}</span>}
         <span className="text-xs text-ink-soft mr-auto">שמירה אוטומטית אחרי 2 שניות</span>
       </div>
     </div>
+    </EditorGate>
   );
 }

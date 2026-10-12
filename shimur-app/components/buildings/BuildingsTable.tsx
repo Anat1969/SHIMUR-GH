@@ -37,7 +37,7 @@ export function BuildingsTable({ buildings }: { buildings: BuildingWithActivity[
   }, [buildings, sortKey, sortDir]);
 
   const Arrow = ({ col }: { col: SortKey }) =>
-    sortKey === col ? <span className="mr-1">{sortDir === 'asc' ? '↑' : '↓'}</span> : <span className="mr-1 opacity-20">↕</span>;
+    sortKey === col ? <span className="ms-1 text-[10px] font-normal opacity-70">{sortDir === 'asc' ? '(עולה)' : '(יורד)'}</span> : null;
 
   const Th = ({ col, label }: { col: SortKey; label: string }) => (
     <th onClick={() => handleSort(col)}
@@ -68,7 +68,7 @@ export function BuildingsTable({ buildings }: { buildings: BuildingWithActivity[
             {sorted.map((b) => (
               <tr key={b.id} className={`cursor-pointer transition-colors ${expandedId === b.id ? 'bg-parchment-deep' : 'hover:bg-parchment'}`}
                 onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}>
-                <td className="px-3 py-4 text-sm text-ink-soft text-center">{expandedId === b.id ? '▼' : '▶'}</td>
+                <td className="px-3 py-4 text-sm text-ink-soft text-center">{expandedId === b.id ? 'סגירה' : 'פרטים'}</td>
                 <td className="px-5 py-4 text-sm text-ink-soft font-mono">{b.city_registry_id}</td>
                 <td className="px-5 py-4 text-sm font-medium">
                   <Link href={`/buildings/${b.id}`} className="hover:underline" style={{ color: '#1A1410' }}>

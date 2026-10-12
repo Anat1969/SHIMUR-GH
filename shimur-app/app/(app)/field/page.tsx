@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSites } from '@/lib/data';
 import { StatusBadge } from '@/components/buildings/StatusBadge';
 
-export default function FieldPage() {
-  const buildings = DEMO_BUILDINGS;
+export default async function FieldPage() {
+  const { sites: buildings } = await getSites();
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSite } from '@/lib/data';
+import { getFileId, photoUrl } from '@/lib/data/files';
+import { T } from '@/lib/supabase/config';
 import { ChapterEditor } from '@/components/file/ChapterEditor';
 import { getAdminClient } from '@/lib/supabase/admin';
 
@@ -33,20 +35,18 @@ interface Props { params: Promise<{ id: string; chapter: string }> }
 
 async function loadSavedContent(cityRegistryId: string, chapterKey: string): Promise<Record<string, string>> {
   try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
     const admin = getAdminClient();
-    const { data: building } = await admin.from('buildings').select('id').eq('city_registry_id', cityRegistryId).maybeSingle();
-    if (!building) return {};
-    const { data: file } = await admin.from('documentation_files').select('id').eq('building_id', building.id).maybeSingle();
-    if (!file) return {};
-    const { data: chapter } = await admin.from('chapters').select('content').eq('file_id', file.id).eq('chapter_key', chapterKey).maybeSingle();
+    if (!admin) return {};
+    const fileId = await getFileId(admin, cityRegistryId);
+    if (!fileId) return {};
+    const { data: chapter } = await admin.from(T.chapters).select('content').eq('file_id', fileId).eq('chapter_key', chapterKey).maybeSingle();
     return (chapter?.content as Record<string, string>) ?? {};
   } catch { return {}; }
 }
 
 export default async function ChapterPage({ params }: Props) {
   const { id, chapter } = await params;
-  const building = DEMO_BUILDINGS.find(b => b.id === id);
+  const building = await getSite(id);
   if (!building) notFound();
 
   const allChapters = building!.is_complex ? CHAPTERS_COMPLEX : CHAPTERS_SINGLE;
@@ -99,14 +99,14 @@ export default async function ChapterPage({ params }: Props) {
           <Link href={`/buildings/${id}/file/${prevChapter}`}
             className="px-4 py-2 rounded-md text-sm font-medium border transition-colors"
             style={{ borderColor: '#C8B89A', color: '#8B7355' }}>
-            → פרק {allChapters[prevChapter].letter}: {allChapters[prevChapter].title}
+            הקודם: פרק {allChapters[prevChapter].letter}: {allChapters[prevChapter].title}
           </Link>
         ) : <div />}
         {nextChapter ? (
           <Link href={`/buildings/${id}/file/${nextChapter}`}
             className="px-4 py-2 rounded-md text-sm font-medium border transition-colors"
             style={{ borderColor: '#C8B89A', color: '#8B7355' }}>
-            פרק {allChapters[nextChapter].letter}: {allChapters[nextChapter].title} ←
+            הבא: פרק {allChapters[nextChapter].letter}: {allChapters[nextChapter].title}
           </Link>
         ) : <div />}
       </div>
