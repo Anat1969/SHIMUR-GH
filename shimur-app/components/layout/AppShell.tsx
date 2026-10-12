@@ -84,7 +84,7 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
 
       <nav className="sticky top-0 z-[1100] glass-card no-print" style={{ borderRadius: 0, borderInline: 'none', borderTop: 'none', borderBottom: '1px solid rgba(200, 184, 154, 0.3)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <Link href="/overview" className="brand group flex items-center gap-2.5 shrink-0 rounded-xl px-2 py-1 -mx-2" aria-label="SHIMUR.ASHDOD — לסקירה">
+          <Link href="/tour" className="brand group flex items-center gap-2.5 shrink-0 rounded-xl px-2 py-1 -mx-2" aria-label="SHIMUR.ASHDOD — לדף הפתיחה (מצגת)">
             <Image src="/dolphin.svg" alt="" width={22} height={22} className="transition-transform duration-300 group-hover:-rotate-12 group-hover:scale-110" />
             <span>
               <span className="block text-lg font-serif font-bold leading-tight transition-colors group-hover:text-[var(--ocean)]" style={{ color: 'var(--navy)' }}>SHIMUR.ASHDOD</span>
