@@ -5,6 +5,8 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useSites, useRoutes } from '@/components/providers/SiteData';
+import { apiFetch } from '@/lib/supabase/browser';
+import { EditorGate, useEditor } from '@/components/providers/Editor';
 import { RouteBuilder } from '@/components/routes/RouteBuilder';
 
 const RoutesMap = dynamic(
@@ -19,6 +21,7 @@ export default function RoutesPage() {
   const [showBuilder, setShowBuilder] = useState(false);
 
   const router = useRouter();
+  const { isEditor } = useEditor();
   const allBuildings = useSites();
   const routes = useRoutes().filter((r) => {
     if (filter === 'public') return r.is_public;
@@ -68,20 +71,20 @@ export default function RoutesPage() {
           ))}
         </div>
 
-        <button
+        {isEditor && <button
           onClick={() => setShowBuilder(!showBuilder)}
           className="px-5 py-2 rounded-lg text-sm font-medium text-white transition-colors"
           style={{ backgroundColor: 'var(--ocean)' }}
         >
           {showBuilder ? 'סגור' : 'צור מסלול חדש'}
-        </button>
+        </button>}
       </div>
 
       {showBuilder && (
         <RouteBuilder
           buildings={allBuildings}
           onSave={async (data) => {
-            const res = await fetch('/api/routes', {
+            const res = await apiFetch('/api/routes', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(data),

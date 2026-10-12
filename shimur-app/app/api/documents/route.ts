@@ -27,7 +27,7 @@ async function toRow(admin: Parameters<typeof siteDbId>[0], d: z.infer<typeof Do
 }
 
 export async function POST(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
   const parsed = DocInput.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return jsonError(zodMessage(parsed.error), 400);
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
   const id = new URL(request.url).searchParams.get('id');
   if (!id) return jsonError('מזהה מסמך חסר', 400);
@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
   const id = new URL(request.url).searchParams.get('id');
   if (!id) return jsonError('מזהה מסמך חסר', 400);

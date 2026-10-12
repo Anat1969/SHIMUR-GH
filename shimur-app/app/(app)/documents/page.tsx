@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSites } from '@/components/providers/SiteData';
 import type { SiteDocument } from '@/lib/types';
+import { apiFetch } from '@/lib/supabase/browser';
+import { EditorGate, useEditor } from '@/components/providers/Editor';
 
 interface Doc {
   id: string;
@@ -26,7 +28,7 @@ interface Photo {
 
 async function send(method: 'POST' | 'PATCH' | 'DELETE', query: string, body?: unknown): Promise<string | null> {
   try {
-    const res = await fetch(`/api/documents${query}`, {
+    const res = await apiFetch(`/api/documents${query}`, {
       method,
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
@@ -41,6 +43,7 @@ async function send(method: 'POST' | 'PATCH' | 'DELETE', query: string, body?: u
 
 export default function DocumentsPage() {
   const sites = useSites();
+  const { isEditor } = useEditor();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -142,6 +145,7 @@ export default function DocumentsPage() {
         </p>
       </div>
 
+      <EditorGate what="הוספה ועריכה של מסמכים"><span /></EditorGate>
       {actionError && (
         <p role="alert" className="text-sm p-3 rounded-lg" style={{ backgroundColor: '#FBEAE5', color: 'var(--rust)' }}>{actionError}</p>
       )}
@@ -172,7 +176,7 @@ export default function DocumentsPage() {
           </button>
         </div>
 
-        {tab === 'docs' ? (
+        {!isEditor ? null : tab === 'docs' ? (
           <button onClick={() => { setShowForm(s => !s); setEditId(null); setForm({ title: '', url: '', building_id: '', note: '', type: 'link' }); }}
             className="px-5 py-2 text-white font-medium rounded-lg text-sm"
             style={{ backgroundColor: 'var(--sage)' }}>
@@ -290,16 +294,16 @@ export default function DocumentsPage() {
                       </p>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <button onClick={() => startEdit(doc)}
+                      {isEditor && <button onClick={() => startEdit(doc)}
                         className="text-xs px-2 py-1 rounded"
                         style={{ border: '1px solid var(--stone-light)', color: 'var(--navy-soft)' }}>
                         ערוך
-                      </button>
-                      <button onClick={() => removeDoc(doc.id)}
+                      </button>}
+                      {isEditor && <button onClick={() => removeDoc(doc.id)}
                         className="text-xs px-2 py-1 rounded"
                         style={{ border: '1px solid var(--stone-light)', color: 'var(--rust)' }}>
                         מחק
-                      </button>
+                      </button>}
                     </div>
                   </div>
                 </div>
@@ -381,11 +385,11 @@ export default function DocumentsPage() {
                       <span className="text-xs" style={{ color: 'var(--navy-soft)' }}>
                         {new Date(photo.created_at).toLocaleDateString('he-IL')}
                       </span>
-                      <button onClick={() => removePhoto(photo.id)}
+                      {isEditor && <button onClick={() => removePhoto(photo.id)}
                         className="text-xs px-2 py-0.5 rounded"
                         style={{ color: 'var(--rust)' }}>
                         מחק
-                      </button>
+                      </button>}
                     </div>
                   </div>
                 </div>

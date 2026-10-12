@@ -42,3 +42,12 @@ npm run dev
 
 `/tour` — סיור מודרך במסך מלא. `/tour?route=route-1` — סיור במסלול. `/tour?site=5` — פתיחה באתר מסוים.
 מקשים: חיצים, F למסך מלא, P לניגון אוטומטי, Esc ליציאה.
+
+## עריכה: עורכים בלבד
+
+- קריאה: ציבורית. כתיבה (פרקים, ממצאים, מסלולים, מסמכים, מפות): רק למי שמחובר עם Google והאימייל שלו בטבלה `shimur_admins`.
+- הוספת עורך: `INSERT INTO shimur_admins (email) VALUES ('name@example.com');` (באותיות קטנות).
+- הפעלה חד-פעמית ב-Supabase (ASHDODMAP):
+  1. Authentication → Sign In / Providers → Google: להפעיל ולהזין Client ID ו-Secret מ-Google Cloud Console (OAuth client מסוג Web, עם Redirect URI: `https://cbhexpybdggwzyakgagd.supabase.co/auth/v1/callback`).
+  2. Authentication → URL Configuration → Redirect URLs: להוסיף `https://shimur-gh-fnng.vercel.app/**` ו-`https://*-shtanat5-gmailcoms-projects.vercel.app/**`.
+- עד ההפעלה: האתר מוצג במלואו, וכפתור "כניסה לעריכה" מציג הודעה ברורה.

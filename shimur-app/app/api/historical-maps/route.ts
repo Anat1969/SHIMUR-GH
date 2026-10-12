@@ -20,7 +20,7 @@ const MapInput = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
   const parsed = MapInput.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return jsonError(zodMessage(parsed.error), 400);
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
   const id = new URL(request.url).searchParams.get('id');
   if (!id) return jsonError('מזהה מפה חסר', 400);

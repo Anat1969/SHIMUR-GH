@@ -14,7 +14,7 @@ const RouteInput = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
 
   const parsed = RouteInput.safeParse(await request.json().catch(() => null));
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
   const slug = new URL(request.url).searchParams.get('id');
   if (!slug) return jsonError('מזהה מסלול חסר', 400);

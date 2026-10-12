@@ -24,6 +24,7 @@ export const T = {
   routeSites: 'shimur_route_sites',
   documents: 'shimur_documents',
   historicalMaps: 'shimur_historical_maps',
+  admins: 'shimur_admins',
 } as const;
 
 export const MISSING_KEY_ERROR =

@@ -8,10 +8,24 @@ export function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-/** לקוח כתיבה, או תגובת שגיאה ברורה אם המפתח לא הוגדר */
-export function adminOrError(): { admin: SupabaseClient; error?: undefined } | { admin?: undefined; error: NextResponse } {
+/** העורך המחובר (לפי אסימון Supabase ורשימת shimur_admins), או null */
+export async function editorFromRequest(request: Request): Promise<{ email: string } | null> {
+  const admin = getAdminClient();
+  const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  if (!admin || !token) return null;
+  const { data, error } = await admin.auth.getUser(token);
+  const email = data.user?.email?.toLowerCase();
+  if (error || !email) return null;
+  const { data: row } = await admin.from(T.admins).select('email').eq('email', email).maybeSingle();
+  return row ? { email } : null;
+}
+
+/** לקוח כתיבה לעורך מורשה בלבד, או תגובת שגיאה ברורה */
+export async function adminOrError(request: Request): Promise<{ admin: SupabaseClient; error?: undefined } | { admin?: undefined; error: NextResponse }> {
   const admin = getAdminClient();
   if (!admin) return { error: jsonError(MISSING_KEY_ERROR, 503) };
+  const editor = await editorFromRequest(request);
+  if (!editor) return { error: jsonError('נדרשת כניסה כעורכת של יחידת השימור. לחצי "כניסה לעריכה" ונסי שוב.', 401) };
   return { admin };
 }
 

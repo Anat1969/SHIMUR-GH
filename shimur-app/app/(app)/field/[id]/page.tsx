@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { use, useEffect, useState, useCallback } from 'react';
 import { Building } from '@/lib/types';
 import { useSites } from '@/components/providers/SiteData';
+import { apiFetch } from '@/lib/supabase/browser';
+import { EditorGate, useEditor } from '@/components/providers/Editor';
 
 interface Finding {
   id: string;
@@ -33,7 +35,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
   }, [id, sites]);
 
   const loadFindings = useCallback(async (registryId: string) => {
-    const res = await fetch(`/api/findings?city_registry_id=${encodeURIComponent(registryId)}`);
+    const res = await apiFetch(`/api/findings?city_registry_id=${encodeURIComponent(registryId)}`);
     const data = await res.json();
     setSavedFindings(data.findings || []);
   }, []);
@@ -65,7 +67,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     formData.append('notes', notes);
     if (photo) formData.append('photo', photo);
 
-    const res = await fetch('/api/findings', { method: 'POST', body: formData }).catch(() => null);
+    const res = await apiFetch('/api/findings', { method: 'POST', body: formData }).catch(() => null);
     const data = res ? await res.json().catch(() => ({ error: 'השרת החזיר תשובה לא תקינה — נסי שוב' })) : { error: 'אין חיבור לרשת — הממצא לא נשמר. נסי שוב כשיש קליטה.' };
     setLoading(false);
 
@@ -135,6 +137,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
 
+        <EditorGate what="רישום ממצאי שטח">
         {/* Finding form */}
         <div className="bg-white rounded-lg border border-stone-light p-6 space-y-4">
           <h2 className="text-lg font-serif font-bold text-ink">רישום ממצא חדש</h2>
@@ -174,6 +177,8 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
             {loading ? 'שומר...' : 'שמור ממצא'}
           </button>
         </div>
+
+        </EditorGate>
 
         {/* Saved findings */}
         {savedFindings.length > 0 && (

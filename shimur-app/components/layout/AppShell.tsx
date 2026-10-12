@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { DataSource } from '@/lib/types';
+import { EditorProvider, useEditor } from '@/components/providers/Editor';
 
 const PUBLIC_LINKS = [
   { href: '/overview', label: 'סקירה' },
@@ -41,7 +42,34 @@ function NavLink({ href, label, pathname, onClick }: { href: string; label: stri
   );
 }
 
-export function AppShell({ children, source }: { children: React.ReactNode; source: DataSource }) {
+export function AppShell(props: { children: React.ReactNode; source: DataSource }) {
+  return <EditorProvider><Shell {...props} /></EditorProvider>;
+}
+
+function EditorButton({ compact }: { compact?: boolean }) {
+  const { state, email, signIn, signOut } = useEditor();
+  if (state === 'loading') return null;
+  if (state === 'guest') {
+    return (
+      <button onClick={signIn} className={`${compact ? 'w-full mt-2' : 'ms-1'} px-4 py-2 rounded-lg text-sm`} style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>
+        כניסה לעריכה
+      </button>
+    );
+  }
+  return (
+    <button onClick={signOut} title={email ?? ''} className={`${compact ? 'w-full mt-2' : 'ms-1'} px-4 py-2 rounded-lg text-sm`} style={{ border: '1px solid var(--stone)', color: state === 'editor' ? 'var(--sage)' : 'var(--navy-soft)' }}>
+      {state === 'editor' ? 'מצב עריכה · יציאה' : 'יציאה'}
+    </button>
+  );
+}
+
+function EditorNotice() {
+  const { notice } = useEditor();
+  if (!notice) return null;
+  return <div role="status" className="no-print text-center text-sm py-2 px-4" style={{ backgroundColor: 'var(--ocean-pale)', color: 'var(--ocean-dark)' }}>{notice}</div>;
+}
+
+function Shell({ children, source }: { children: React.ReactNode; source: DataSource }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -68,6 +96,7 @@ export function AppShell({ children, source }: { children: React.ReactNode; sour
             <Link href="/tour" className="ms-3 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-transform hover:scale-[1.03]" style={{ backgroundColor: 'var(--navy)' }}>
               מצגת
             </Link>
+            <EditorButton />
           </div>
 
           <button
@@ -94,10 +123,12 @@ export function AppShell({ children, source }: { children: React.ReactNode; sour
             <Link href="/tour" className="mt-3 block text-center px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>
               מצגת: סיור מודרך באתרים
             </Link>
+            <EditorButton compact />
           </div>
         )}
       </nav>
 
+      <EditorNotice />
       {source === 'demo' && (
         <div className="no-print text-center text-xs py-1.5 px-4" style={{ backgroundColor: 'var(--amber-pale)', color: 'var(--amber-dark)' }}>
           המאגר אינו זמין כרגע — מוצגים נתוני הגיבוי המובנים

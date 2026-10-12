@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSites } from '@/components/providers/SiteData';
 import type { HistoricalMap } from '@/lib/types';
 import type { Basemap, OverlayLayer } from '@/components/map/BuildingsMap';
+import { apiFetch } from '@/lib/supabase/browser';
+import { EditorGate, useEditor } from '@/components/providers/Editor';
 import {
   CATEGORIES, COLOR_BY_LABELS, ColorBy, categoryOf, legendFor, markerColor, matchesQuery,
 } from '@/lib/sites';
@@ -25,6 +27,7 @@ const chip = (active: boolean) => ({
 
 export default function MapPage() {
   const sites = useSites();
+  const { isEditor } = useEditor();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [neighborhood, setNeighborhood] = useState<string | null>(null);
@@ -66,7 +69,7 @@ export default function MapPage() {
   const saveMap = async () => {
     if (!view) return;
     setSaving(true); setFormError(null);
-    const res = await fetch('/api/historical-maps', {
+    const res = await apiFetch('/api/historical-maps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, bounds: view }),
@@ -82,7 +85,7 @@ export default function MapPage() {
 
   const removeMap = async (id: string) => {
     if (!confirm('למחוק את המפה ההיסטורית?')) return;
-    const res = await fetch(`/api/historical-maps?id=${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/historical-maps?id=${id}`, { method: 'DELETE' });
     if (!res.ok) { const j = await res.json().catch(() => ({})); alert(j.error ?? 'המחיקה נכשלה'); return; }
     setMaps(m => m.filter(x => x.id !== id));
     setActive(a => { const n = { ...a }; delete n[id]; return n; });
@@ -231,10 +234,10 @@ export default function MapPage() {
                 <h2 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>מפות היסטוריות</h2>
                 <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>שכבות שקופות מעל המפה — מנדט, תכניות ישנות, תצלומי אוויר</p>
               </div>
-              <button onClick={() => { setShowForm(s => !s); setFormError(null); }}
+              {isEditor && <button onClick={() => { setShowForm(s => !s); setFormError(null); }}
                 className="px-5 py-2.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: 'var(--ocean)' }}>
                 {showForm ? 'ביטול' : 'הוספת מפה'}
-              </button>
+              </button>}
             </div>
 
             {showForm && (
@@ -281,7 +284,7 @@ export default function MapPage() {
                             onChange={e => setActive(a => ({ ...a, [m.id]: Number(e.target.value) }))} />
                         </label>
                       )}
-                      <button onClick={() => removeMap(m.id)} className="text-xs px-2 py-1" style={{ color: 'var(--rust)' }}>מחיקה</button>
+                      {isEditor && <button onClick={() => removeMap(m.id)} className="text-xs px-2 py-1" style={{ color: 'var(--rust)' }}>מחיקה</button>}
                     </li>
                   );
                 })}

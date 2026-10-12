@@ -187,3 +187,12 @@ ON CONFLICT (id) DO NOTHING;
 -- טבלאות פרטיות: לא נגישות כלל ל-anon/authenticated (גם לא ב-GraphQL)
 REVOKE ALL ON shimur_documentation_files, shimur_chapters, shimur_findings, shimur_photos FROM anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON shimur_buildings, shimur_routes, shimur_route_sites, shimur_documents, shimur_historical_maps FROM anon, authenticated;
+
+-- עורכים: כתיבה מותרת רק למי שהאימייל שלו כאן (נבדק בשרת)
+CREATE TABLE IF NOT EXISTS shimur_admins (
+  email TEXT PRIMARY KEY CHECK (email = lower(email)),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE shimur_admins ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON shimur_admins FROM anon, authenticated;
+INSERT INTO shimur_admins (email) VALUES ('shtanat5@gmail.com') ON CONFLICT DO NOTHING;

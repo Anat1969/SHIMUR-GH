@@ -14,7 +14,7 @@ const FindingInput = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
 
   const form = await request.formData();

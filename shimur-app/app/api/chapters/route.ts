@@ -29,7 +29,7 @@ const ChapterInput = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { admin, error: keyError } = adminOrError();
+  const { admin, error: keyError } = await adminOrError(request);
   if (keyError) return keyError;
 
   const parsed = ChapterInput.safeParse(await request.json().catch(() => null));
