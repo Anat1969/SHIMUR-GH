@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSites, useRoutes } from '@/components/providers/SiteData';
 import { Building } from '@/lib/types';
 import { SiteImage } from '@/components/sites/SiteImage';
@@ -41,72 +41,107 @@ export default function OverviewPage() {
   const maxPriority = Math.max(...Object.values(byPriority).map(a => a.length));
 
   const SelectedPanel = () => !selected ? null : (
-    <div className="fixed right-0 top-0 w-96 h-screen shadow-2xl z-40 p-6 overflow-y-auto flex flex-col gap-4"
-      style={{ background: 'linear-gradient(180deg, var(--stone-light) 0%, var(--parchment) 100%)' }}>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>{selected.label}</h3>
-        <button onClick={() => setSelected(null)} className="text-lg px-3 py-1 rounded hover:bg-white"
-          style={{ backgroundColor: 'var(--parchment-deep)', color: 'var(--stone-dark)' }}>×</button>
-      </div>
-      <p className="text-xs border-b pb-3 mb-2" style={{ color: 'var(--navy-soft)', borderColor: 'var(--stone)' }}>
-        {selected.sites.length} אתרים בחרו
-      </p>
-      <div className="space-y-2 flex-1">
-        {selected.sites.map(b => (
-          <Link key={b.id} href={`/buildings/${b.id}`}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors"
-            style={{ borderInlineStart: '4px solid var(--amber)', backgroundColor: '#FAFAF8' }}>
-            <SiteImage site={b} size="thumb" />
-            <span className="min-w-0">
-            <span className="font-mono text-xs block" style={{ color: 'var(--navy-soft)' }}>{b.city_registry_id}</span>
-            <span className="text-sm font-medium block mt-1" style={{ color: 'var(--navy)' }}>{b.name}</span>
-            <span className="text-xs block mt-1" style={{ color: 'var(--navy-soft)' }}>{b.address}</span>
-            </span>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <>
+      <div className="fixed inset-0 z-[1150] bg-black/20" onClick={() => setSelected(null)} aria-hidden="true" />
+      <aside role="dialog" aria-label={selected.label}
+        className="fixed right-0 top-0 w-full sm:w-96 h-screen shadow-2xl z-[1200] flex flex-col"
+        style={{ background: 'linear-gradient(180deg, var(--stone-light) 0%, var(--parchment) 100%)' }}>
+        <div className="flex items-center justify-between gap-3 p-5 border-b" style={{ borderColor: 'var(--stone)' }}>
+          <div className="min-w-0">
+            <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>{selected.label}</h3>
+            <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>{selected.sites.length === 1 ? 'אתר אחד' : `${selected.sites.length} אתרים`}</p>
+          </div>
+          <button onClick={() => setSelected(null)} autoFocus aria-label="סגירת החלון"
+            className="shrink-0 w-11 h-11 rounded-full text-xl font-bold transition-colors hover:bg-white"
+            style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>×</button>
+        </div>
+        <div className="space-y-2 flex-1 overflow-y-auto p-5">
+          {selected.sites.map(b => (
+            <Link key={b.id} href={`/buildings/${b.id}`}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors"
+              style={{ borderInlineStart: '4px solid var(--amber)', backgroundColor: '#FAFAF8' }}>
+              <SiteImage site={b} size="thumb" />
+              <span className="min-w-0">
+                <span className="text-sm font-medium block" style={{ color: 'var(--navy)' }}>{b.name}</span>
+                <span className="text-xs block mt-1" style={{ color: 'var(--navy-soft)' }}>{b.address}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+        <div className="p-5 border-t" style={{ borderColor: 'var(--stone)' }}>
+          <button onClick={() => setSelected(null)} className="w-full px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>חזרה לסקירה</button>
+        </div>
+      </aside>
+    </>
   );
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selected]);
 
   return (
     <>
-    <div className={selected ? 'blur-sm pointer-events-none' : ''}>
+    <div>
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="page-intro">
-        <p className="text-sm uppercase mb-3" style={{ color: 'var(--ocean)' }}>עיריית אשדוד — יחידת שימור</p>
-        <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>רשימת אתרי השימור של אשדוד</h1>
-        <p className="max-w-2xl leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
-          רשימת השימור העירונית נקבעת מכוח <span className="highlight-text">חוק התכנון והבנייה</span>, ומגדירה אתרים בעלי ערך
-          <span className="highlight-text">היסטורי, אדריכלי, תרבותי ואקולוגי</span>
-          המחייבים הגנה ותיעוד לפני כל שינוי.
+        <p className="text-sm mb-3" style={{ color: 'var(--ocean)' }}>עיריית אשדוד — יחידת השימור</p>
+        <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>אתרי השימור של אשדוד</h1>
+        <p className="max-w-3xl leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
+          אשדוד היא עיר צעירה (1956) על קרקע עתיקה. רשימת השימור שלה מספרת את שני הסיפורים יחד:
+          <span className="highlight-text">שכבות של אלפי שנים</span> לאורך החוף ונחל לכיש,
+          ו<span className="highlight-text">העיר המתוכננת של דור המייסדים</span> ברובע א׳ — שכונות, מבני ציבור ומרכז רובעי
+          שהם היום ה&quot;עתיק&quot; של העיר המודרנית.
         </p>
-        <p className="text-xs mt-2" style={{ color: 'var(--navy-soft)' }}>לחץ על כל נתון מספרי לצפייה ברשימת האתרים</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { num: buildings.length, label: 'אתרים ברשימה', sites: buildings, color: 'var(--amber)' },
-          { num: byProtection['א'].length, label: 'שימור רמה א׳', sites: byProtection['א'], color: 'var(--rust)' },
-          { num: byPriority['גבוהה'].length, label: 'עדיפות גבוהה', sites: byPriority['גבוהה'], color: 'var(--amber-dark)' },
-          { num: neighborhoods.length, label: 'אזורים', sites: [], color: 'var(--ocean)', disabled: true },
-        ].map(({ num, label, sites, color, disabled }) => {
-          const key = label;
-          const isActive = selected?.label === key;
-          return disabled ? (
-            <div key={key} className="glass-card p-6 text-center opacity-50 cursor-not-allowed">
+          { num: buildings.length, label: 'אתרים מתועדים במערכת', sites: buildings, color: 'var(--amber)' },
+          { num: byProtection['א'].length, label: 'דרגה א׳ מוצעת', sites: byProtection['א'], color: 'var(--rust)' },
+          { num: byPriority['גבוהה'].length, label: 'עדיפות תיעוד גבוהה', sites: byPriority['גבוהה'], color: 'var(--amber-dark)' },
+          { num: neighborhoods.length, label: 'מקבצים עירוניים', sites: buildings, color: 'var(--ocean)', anchor: '#clusters' },
+        ].map(({ num, label, sites, color, anchor }) => {
+          const isActive = selected?.label === label;
+          return anchor ? (
+            <a key={label} href={anchor} className="glass-card p-6 text-center transition-all hover:shadow-md">
               <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
-              <p className="text-xs uppercase" style={{ color: 'var(--navy-soft)' }}>{label}</p>
-            </div>
+              <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>{label}</p>
+            </a>
           ) : (
-            <button key={key} onClick={() => select(key, sites)}
+            <button key={label} onClick={() => select(label, sites)}
               className="glass-card p-6 text-center transition-all hover:shadow-md"
-              style={{ borderColor: isActive ? color : undefined, borderWidth: isActive ? 2 : undefined, cursor: 'pointer' }}>
+              style={{ borderColor: isActive ? color : undefined, borderWidth: isActive ? 2 : undefined }}>
               <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
-              <p className="text-xs uppercase" style={{ color: 'var(--navy-soft)' }}>{label}</p>
+              <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </button>
           );
         })}
       </div>
+
+      <section className="glass-card p-6 space-y-5" aria-labelledby="about-list">
+        <h2 id="about-list" className="text-xl font-serif font-bold" style={{ color: 'var(--navy)' }}>על הרשימה — מי קבע, ומה המספרים אומרים</h2>
+        <div className="grid md:grid-cols-2 gap-5 text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+          <div>
+            <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>מי קבע את הרשימה</h3>
+            <p>הוועדה העירונית לשימור אתרים, בישיבה 201601 מיום 17.8.2016, מכוח התוספת הרביעית לחוק התכנון והבנייה (סעיף 12). הוועדה אישרה &quot;רשימת אתרים וסביבתם לשימור בתחום העיר&quot;, מאורגנת במקבצים עירוניים — חוף הים, נחל לכיש, רובע א׳ ומסדרון אקולוגי — והחליטה להוסיף את כל בתי הכנסת המייצגים את תרבויות העיר ואת כל האנדרטאות.</p>
+          </div>
+          <div>
+            <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>למה 14 אתרים</h3>
+            <p>14 הם האתרים שתועדו עד כה במערכת, מתוך רשימת הוועדה הרחבה יותר. כל אתר נוסף מהרשימה נכנס למערכת עם תיק תיעוד משלו — המספר יגדל ככל שהתיעוד מתקדם.</p>
+          </div>
+          <div>
+            <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>מה פירוש דרגה א׳ / ב׳</h3>
+            <p>הוועדה החליטה (סעיף 3) שהצוות המקצועי יציע דרגת שימור לכל אתר, באישור הוועדה. הדרגות במערכת הן <strong>הצעת עבודה שטרם אושרה</strong>: <strong>א׳</strong> — שימור מלא של המבנה או האתר וערכיו; <strong>ב׳</strong> — שימור הערכים העיקריים, עם גמישות לשינויים ותוספות לפי תיק תיעוד.</p>
+          </div>
+          <div>
+            <h3 className="font-bold mb-1" style={{ color: 'var(--navy)' }}>מה פירוש עדיפות גבוהה</h3>
+            <p>עדיפות לסדר התיעוד, לא לחשיבות האתר: אתרים בעלי ערך לאומי או ארכאולוגי, או אתרים שעלולים להיפגע מפיתוח והתחדשות עירונית בסביבתם. גם זו הערכת עבודה של הצוות, שתוצג לוועדה.</p>
+          </div>
+        </div>
+      </section>
 
       <Link href="/tour" className="block rounded-2xl p-6 sm:p-8 text-white transition-transform hover:scale-[1.01]"
         style={{ background: 'linear-gradient(120deg, var(--navy) 0%, var(--ocean-dark) 100%)' }}>
@@ -231,7 +266,8 @@ export default function OverviewPage() {
       </div>
 
       <div className="glass-card p-6" style={{  }}>
-        <h2 className="text-lg font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>פיזור גיאוגרפי</h2>
+        <h2 id="clusters" className="text-lg font-serif font-bold mb-1 scroll-mt-24" style={{ color: 'var(--navy)' }}>מקבצים עירוניים</h2>
+        <p className="text-xs mb-4" style={{ color: 'var(--navy-soft)' }}>הרשימה בנויה ממקבצים ולא מאתרים בודדים: כל מקבץ הוא סביבה שלמה — רחובות, נוף ומבנים — שמספרת פרק בתולדות העיר. לחיצה מציגה את האתרים במקבץ.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {neighborhoods.map(n => {
             const sites = buildings.filter(b => b.neighborhood === n);

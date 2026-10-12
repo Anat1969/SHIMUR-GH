@@ -88,3 +88,6 @@ UPDATE shimur_buildings SET historical_periods = ARRAY['תקופה ממלוכי�
 UPDATE shimur_buildings SET historical_periods = ARRAY['תקופת הברונזה','תקופת הברזל','תקופה פרסית-הלניסטית'] WHERE site_no=13;
 UPDATE shimur_buildings SET historical_periods = ARRAY['תקופת הברזל','תקופה פרסית-הלניסטית','תקופה אסלאמית קדומה'] WHERE site_no=14;
 UPDATE shimur_buildings SET historical_periods = ARRAY['תקופה ישראלית'] WHERE site_no=12;
+
+UPDATE shimur_buildings SET neighborhood='נחל לכיש' WHERE site_no IN (12,13);
+UPDATE shimur_buildings SET neighborhood='חוף הים' WHERE neighborhood='חוף';

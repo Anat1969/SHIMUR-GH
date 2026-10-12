@@ -15,19 +15,14 @@ const RoutesMap = dynamic(
   { ssr: false, loading: () => <div className="w-full h-[500px] rounded-xl bg-stone-100 animate-pulse" /> }
 );
 
-type Filter = 'all' | 'public';
 
 export default function RoutesPage() {
-  const [filter, setFilter] = useState<Filter>('all');
   const [showBuilder, setShowBuilder] = useState(false);
 
   const router = useRouter();
   const { isEditor } = useEditor();
   const allBuildings = useSites();
-  const routes = useRoutes().filter((r) => {
-    if (filter === 'public') return r.is_public;
-    return true;
-  });
+  const routes = useRoutes();
 
   const getBuildingName = (buildingId: string) =>
     allBuildings.find((b) => b.id === buildingId)?.name ?? '';
@@ -56,21 +51,7 @@ export default function RoutesPage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {([['all', 'כל המסלולים'], ['public', 'ציבוריים']] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: filter === key ? 'var(--ocean)' : 'var(--ocean-pale)',
-                color: filter === key ? 'white' : 'var(--ocean-dark)',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>{routes.length} מסלולים · לחיצה על מסלול פותחת סיור מפורט</p>
 
         {isEditor && <button
           onClick={() => setShowBuilder(!showBuilder)}
