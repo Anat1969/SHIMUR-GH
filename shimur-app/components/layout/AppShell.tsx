@@ -95,12 +95,12 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
           </Link>
 
           <div className="hidden lg:flex items-center gap-0.5">
+            <Link href="/tour" className="me-3 px-5 py-2 rounded-lg text-sm font-semibold text-white transition-transform hover:scale-[1.03]" style={{ backgroundColor: 'var(--navy)' }}>
+              מצגת
+            </Link>
             {PUBLIC_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             <div className="w-px h-6 mx-2" style={{ backgroundColor: 'var(--stone)' }} />
             {PRO_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
-            <Link href="/tour" className="ms-3 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-transform hover:scale-[1.03]" style={{ backgroundColor: 'var(--navy)' }}>
-              מצגת
-            </Link>
             <EditorButton />
           </div>
 
@@ -117,7 +117,10 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
 
         {open && (
           <div id="mobile-menu" className="lg:hidden border-t px-4 pb-4 pt-2" style={{ borderColor: 'var(--stone-light)' }}>
-            <p className="text-[11px] font-semibold mt-2 mb-1" style={{ color: 'var(--navy-soft)' }}>לציבור</p>
+            <Link href="/tour" className="mt-2 block text-center px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>
+              מצגת: סיור מודרך באתרים
+            </Link>
+            <p className="text-[11px] font-semibold mt-3 mb-1" style={{ color: 'var(--navy-soft)' }}>לציבור</p>
             <div className="grid grid-cols-2 gap-1">
               {PUBLIC_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             </div>
@@ -125,9 +128,6 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
             <div className="grid grid-cols-2 gap-1">
               {PRO_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             </div>
-            <Link href="/tour" className="mt-3 block text-center px-6 py-3 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>
-              מצגת: סיור מודרך באתרים
-            </Link>
             <EditorButton compact />
           </div>
         )}
