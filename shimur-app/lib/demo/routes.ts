@@ -66,7 +66,7 @@ export const DEMO_ROUTES: Route[] = [
     sites: [
       { id: 'rs-14', route_id: 'route-4', building_id: '11', position: 1, narrative_text: 'פארק נחל לכיש — 650 דונם, בעלי חיים, שבילי הליכה. מסדרון אקולוגי חיוני.' },
       { id: 'rs-15', route_id: 'route-4', building_id: '12', position: 2, narrative_text: 'שדרת השקמים — עצים מקראיים. שכבה ביולוגית היסטורית של אזור אשדוד.' },
-      { id: 'rs-16', route_id: 'route-4', building_id: '1', position: 3, narrative_text: 'המגדלור בגבעת יונה — 138 מטר. הנקודה הגבוהה ביותר באשדוד. שלושה הבזקים כל 20 שניות.' },
+      { id: 'rs-16', route_id: 'route-4', building_id: '1', position: 3, narrative_text: 'המגדלור בגבעת יונה — מגדל בגובה 42 מ׳ על הגבעה הגבוהה בעיר. שלושה הבזקים כל 20 שניות.' },
     ],
   },
 ];

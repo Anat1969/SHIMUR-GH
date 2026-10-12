@@ -98,7 +98,7 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
         <button onClick={() => setExpanded(e => !e)}
           className="px-4 py-2 border rounded-md text-sm font-medium transition-colors mr-auto"
           style={{ borderColor: '#C8B89A', color: expanded ? '#4A5C45' : '#8B7355', backgroundColor: expanded ? '#F0F7F0' : 'white' }}>
-          {expanded ? '← תצוגה מצומצמת' : 'תצוגה מורחבת →'}
+          {expanded ? 'תצוגה מצומצמת' : 'תצוגה מורחבת'}
         </button>
       </div>
 
@@ -111,7 +111,7 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
                 <th key={c.key} onClick={() => handleSort(c.key)}
                   className="px-4 py-3 text-right font-semibold text-ink cursor-pointer select-none hover:bg-parchment transition-colors"
                   style={expanded ? { width: (c as any).width, whiteSpace: 'nowrap' } : {}}>
-                  {sortCol === c.key ? (sortDir === 'asc' ? '↑ ' : '↓ ') : ''}{c.label}
+                  {c.label}{sortCol === c.key ? (sortDir === 'asc' ? ' (עולה)' : ' (יורד)') : ''}
                 </th>
               ))}
               {expanded && <th className="px-4 py-3 text-right font-semibold text-ink" style={{ width: 220 }}>תיאור</th>}

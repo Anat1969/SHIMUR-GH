@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { useSites } from '@/components/providers/SiteData';
+import type { SiteDocument } from '@/lib/types';
 
 interface Doc {
   id: string;
@@ -23,22 +24,28 @@ interface Photo {
   created_at: string;
 }
 
-const DOCS_KEY = 'shimur_documents';
-const PHOTOS_KEY = 'shimur_photos';
-
-function loadData<T>(key: string): T[] {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(key) ?? '[]'); }
-  catch { return []; }
-}
-
-function saveData<T>(key: string, data: T[]) {
-  localStorage.setItem(key, JSON.stringify(data));
+async function send(method: 'POST' | 'PATCH' | 'DELETE', query: string, body?: unknown): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/documents${query}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.ok) return null;
+    const json = await res.json().catch(() => ({}));
+    return json.error ?? 'הפעולה נכשלה — נסי שוב';
+  } catch {
+    return 'אין חיבור לשרת — בדקי את הרשת ונסי שוב';
+  }
 }
 
 export default function DocumentsPage() {
+  const sites = useSites();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showPhotoForm, setShowPhotoForm] = useState(false);
   const [form, setForm] = useState({ title: '', url: '', building_id: '', note: '', type: 'link' as 'link' | 'note' });
@@ -48,27 +55,48 @@ export default function DocumentsPage() {
   const [tab, setTab] = useState<'docs' | 'gallery'>('docs');
   const [lightbox, setLightbox] = useState<Photo | null>(null);
 
-  useEffect(() => {
-    setDocs(loadData<Doc>(DOCS_KEY));
-    setPhotos(loadData<Photo>(PHOTOS_KEY));
+  const reload = useCallback(async () => {
+    try {
+      const res = await fetch('/api/documents', { cache: 'no-store' });
+      const json: { documents: SiteDocument[] } = await res.json();
+      setDocs(json.documents.filter(d => d.kind !== 'image').map(d => ({
+        id: d.id, title: d.title, url: d.url ?? undefined, type: d.kind as 'link' | 'note',
+        building_id: d.building_id ?? undefined, note: d.note ?? undefined, created_at: d.created_at,
+      })));
+      setPhotos(json.documents.filter(d => d.kind === 'image').map(d => ({
+        id: d.id, name: d.title, description: d.note ?? '', url: d.url ?? '',
+        building_id: d.building_id ?? undefined, created_at: d.created_at,
+      })));
+    } catch {
+      setActionError('טעינת המסמכים נכשלה — רענני את הדף');
+    } finally {
+      setLoaded(true);
+    }
   }, []);
+
+  useEffect(() => { reload(); }, [reload]);
+
+  const run = async (op: () => Promise<string | null>, onSuccess?: () => void) => {
+    setBusy(true); setActionError(null);
+    const err = await op();
+    setBusy(false);
+    if (err) { setActionError(err); return; }
+    onSuccess?.();
+    await reload();
+  };
 
   const saveDoc = () => {
     if (!form.title.trim()) return;
-    const newDocs = editId
-      ? docs.map(d => d.id === editId ? { ...d, ...form } : d)
-      : [...docs, { ...form, id: Date.now().toString(), created_at: new Date().toISOString() }];
-    setDocs(newDocs);
-    saveData(DOCS_KEY, newDocs);
-    setForm({ title: '', url: '', building_id: '', note: '', type: 'link' });
-    setShowForm(false);
-    setEditId(null);
+    const body = { kind: form.type, title: form.title, url: form.url, note: form.note, building_id: form.building_id || undefined };
+    run(
+      () => editId ? send('PATCH', `?id=${editId}`, body) : send('POST', '', body),
+      () => { setForm({ title: '', url: '', building_id: '', note: '', type: 'link' }); setShowForm(false); setEditId(null); },
+    );
   };
 
   const removeDoc = (id: string) => {
-    const newDocs = docs.filter(d => d.id !== id);
-    setDocs(newDocs);
-    saveData(DOCS_KEY, newDocs);
+    if (!confirm('למחוק את המסמך?')) return;
+    run(() => send('DELETE', `?id=${id}`));
   };
 
   const startEdit = (doc: Doc) => {
@@ -77,24 +105,17 @@ export default function DocumentsPage() {
     setShowForm(true);
   };
 
-  const savePhoto = useCallback(() => {
+  const savePhoto = () => {
     if (!photoForm.name.trim() || !photoForm.url.trim()) return;
-    const newPhoto: Photo = {
-      id: Date.now().toString(),
-      ...photoForm,
-      created_at: new Date().toISOString(),
-    };
-    const updated = [...photos, newPhoto];
-    setPhotos(updated);
-    saveData(PHOTOS_KEY, updated);
-    setPhotoForm({ name: '', description: '', url: '', building_id: '' });
-    setShowPhotoForm(false);
-  }, [photoForm, photos]);
+    run(
+      () => send('POST', '', { kind: 'image', title: photoForm.name, url: photoForm.url, note: photoForm.description, building_id: photoForm.building_id || undefined }),
+      () => { setPhotoForm({ name: '', description: '', url: '', building_id: '' }); setShowPhotoForm(false); },
+    );
+  };
 
   const removePhoto = (id: string) => {
-    const updated = photos.filter(p => p.id !== id);
-    setPhotos(updated);
-    saveData(PHOTOS_KEY, updated);
+    if (!confirm('למחוק את התמונה?')) return;
+    run(() => send('DELETE', `?id=${id}`));
   };
 
   const filtered = docs.filter(d =>
@@ -106,7 +127,7 @@ export default function DocumentsPage() {
     !filter || p.building_id === filter
   );
 
-  const getBuildingName = (id: string) => DEMO_BUILDINGS.find(b => b.id === id)?.name ?? '';
+  const getBuildingName = (id: string) => sites.find(b => b.id === id)?.name ?? '';
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -120,6 +141,11 @@ export default function DocumentsPage() {
           תיעוד מלא הוא הבסיס לכל תהליך שימור — צלם, רשום, שמור.
         </p>
       </div>
+
+      {actionError && (
+        <p role="alert" className="text-sm p-3 rounded-lg" style={{ backgroundColor: '#FBEAE5', color: 'var(--rust)' }}>{actionError}</p>
+      )}
+      {!loaded && <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>טוען מסמכים…</p>}
 
       {/* Tabs */}
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -167,7 +193,7 @@ export default function DocumentsPage() {
           className="px-4 py-2 rounded-lg text-sm max-w-xs"
           style={{ border: '1px solid var(--stone-light)', color: 'var(--navy)', backgroundColor: 'white' }}>
           <option value="">כל האתרים</option>
-          {DEMO_BUILDINGS.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          {sites.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       )}
 
@@ -209,14 +235,14 @@ export default function DocumentsPage() {
                   className="w-full px-4 py-2 rounded-lg text-sm"
                   style={{ border: '1px solid var(--stone-light)', color: 'var(--navy)' }}>
                   <option value="">כל האתרים</option>
-                  {DEMO_BUILDINGS.map(b => <option key={b.id} value={b.id}>{b.city_registry_id} — {b.name}</option>)}
+                  {sites.map(b => <option key={b.id} value={b.id}>{b.city_registry_id} — {b.name}</option>)}
                 </select>
               </div>
               <div className="flex gap-3">
-                <button onClick={saveDoc}
-                  className="px-6 py-2 text-white font-medium rounded-lg text-sm"
+                <button onClick={saveDoc} disabled={busy || !form.title.trim()}
+                  className="px-6 py-3 text-white font-medium rounded-lg text-sm disabled:opacity-40"
                   style={{ backgroundColor: 'var(--sage)' }}>
-                  {editId ? 'עדכן' : 'שמור'}
+                  {busy ? 'שומר…' : editId ? 'עדכן' : 'שמור'}
                 </button>
                 <button onClick={() => { setShowForm(false); setEditId(null); }}
                   className="px-4 py-2 rounded-lg text-sm"
@@ -229,8 +255,7 @@ export default function DocumentsPage() {
 
           {filtered.length === 0 ? (
             <div className="text-center py-16 glass-card">
-              <p className="text-4xl mb-3">📄</p>
-              <p style={{ color: 'var(--navy-soft)' }}>אין מסמכים עדיין</p>
+                            <p style={{ color: 'var(--navy-soft)' }}>אין מסמכים עדיין</p>
               <p className="text-sm mt-1" style={{ color: 'var(--navy-soft)' }}>לחץ "+ הוסף מסמך" כדי להתחיל</p>
             </div>
           ) : (
@@ -308,22 +333,21 @@ export default function DocumentsPage() {
                   className="w-full px-4 py-2 rounded-lg text-sm"
                   style={{ border: '1px solid var(--ocean-light)', color: 'var(--navy)' }}>
                   <option value="">ללא שיוך לאתר</option>
-                  {DEMO_BUILDINGS.map(b => <option key={b.id} value={b.id}>{b.city_registry_id} — {b.name}</option>)}
+                  {sites.map(b => <option key={b.id} value={b.id}>{b.city_registry_id} — {b.name}</option>)}
                 </select>
               </div>
               <button onClick={savePhoto}
-                disabled={!photoForm.name.trim() || !photoForm.url.trim()}
-                className="px-6 py-2 text-white font-medium rounded-lg text-sm disabled:opacity-40"
+                disabled={busy || !photoForm.name.trim() || !photoForm.url.trim()}
+                className="px-6 py-3 text-white font-medium rounded-lg text-sm disabled:opacity-40"
                 style={{ backgroundColor: 'var(--ocean)' }}>
-                שמור תמונה
+                {busy ? 'שומר…' : 'שמור תמונה'}
               </button>
             </div>
           )}
 
           {filteredPhotos.length === 0 ? (
             <div className="text-center py-16 glass-card">
-              <p className="text-4xl mb-3">📷</p>
-              <p style={{ color: 'var(--navy-soft)' }}>אין תמונות עדיין</p>
+                            <p style={{ color: 'var(--navy-soft)' }}>אין תמונות עדיין</p>
               <p className="text-sm mt-1" style={{ color: 'var(--navy-soft)' }}>לחץ "+ הוסף תמונה" כדי להתחיל</p>
             </div>
           ) : (
@@ -400,7 +424,7 @@ export default function DocumentsPage() {
                     <Link href={`/buildings/${lightbox.building_id}`}
                       className="text-sm mt-2 inline-block"
                       style={{ color: 'var(--ocean)' }}>
-                      {getBuildingName(lightbox.building_id)} →
+                      {getBuildingName(lightbox.building_id)}
                     </Link>
                   )}
                   <button

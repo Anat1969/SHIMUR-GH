@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSite } from '@/lib/data';
+import { getFileId, photoUrl } from '@/lib/data/files';
+import { T } from '@/lib/supabase/config';
 import { FileActions } from '@/components/file/FileActions';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { ConfigBanner } from '@/components/ConfigBanner';
@@ -31,13 +33,11 @@ const CHAPTERS_COMPLEX = [
 
 async function getChapterStatuses(cityRegistryId: string, chapterIds: string[]) {
   try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
     const admin = getAdminClient();
-    const { data: building } = await admin.from('buildings').select('id').eq('city_registry_id', cityRegistryId).maybeSingle();
-    if (!building) return {};
-    const { data: file } = await admin.from('documentation_files').select('id').eq('building_id', building.id).maybeSingle();
-    if (!file) return {};
-    const { data: chapters } = await admin.from('chapters').select('chapter_key, status').eq('file_id', file.id);
+    if (!admin) return {};
+    const fileId = await getFileId(admin, cityRegistryId);
+    if (!fileId) return {};
+    const { data: chapters } = await admin.from(T.chapters).select('chapter_key, status').eq('file_id', fileId);
     const map: Record<string, string> = {};
     (chapters || []).forEach(c => { map[c.chapter_key] = c.status; });
     return map;
@@ -48,7 +48,7 @@ interface Props { params: Promise<{ id: string }> }
 
 export default async function FilePage({ params }: Props) {
   const { id } = await params;
-  const building = DEMO_BUILDINGS.find(b => b.id === id);
+  const building = await getSite(id);
   if (!building) notFound();
 
   const chapters = building!.is_complex ? CHAPTERS_COMPLEX : CHAPTERS_SINGLE;
@@ -62,7 +62,7 @@ export default async function FilePage({ params }: Props) {
       <ConfigBanner type="file" />
       <div>
         <Link href={`/buildings/${id}`} className="text-sm mb-3 inline-block" style={{ color: '#8B7355' }}>
-          ← חזרה לאתר
+          חזרה לאתר
         </Link>
         <h1 className="text-3xl font-serif font-bold text-ink">{building!.name}</h1>
         <p className="text-ink-soft mt-1">

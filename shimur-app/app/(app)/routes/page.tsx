@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { DEMO_ROUTES } from '@/lib/demo/routes';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { useRouter } from 'next/navigation';
+import { useSites, useRoutes } from '@/components/providers/SiteData';
 import { RouteBuilder } from '@/components/routes/RouteBuilder';
 
 const RoutesMap = dynamic(
@@ -18,13 +18,15 @@ export default function RoutesPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [showBuilder, setShowBuilder] = useState(false);
 
-  const routes = DEMO_ROUTES.filter((r) => {
+  const router = useRouter();
+  const allBuildings = useSites();
+  const routes = useRoutes().filter((r) => {
     if (filter === 'public') return r.is_public;
     return true;
   });
 
   const getBuildingName = (buildingId: string) =>
-    DEMO_BUILDINGS.find((b) => b.id === buildingId)?.name ?? '';
+    allBuildings.find((b) => b.id === buildingId)?.name ?? '';
 
   const themeColors: Record<string, string> = {
     'תקופה': 'var(--amber)',
@@ -36,7 +38,7 @@ export default function RoutesPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="page-intro">
-        <p className="text-sm tracking-widest uppercase mb-3" style={{ color: 'var(--ocean)' }}>
+        <p className="text-sm uppercase mb-3" style={{ color: 'var(--ocean)' }}>
           מסלולי סיור
         </p>
         <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>
@@ -77,9 +79,19 @@ export default function RoutesPage() {
 
       {showBuilder && (
         <RouteBuilder
-          buildings={DEMO_BUILDINGS}
-          onSave={(data) => {
+          buildings={allBuildings}
+          onSave={async (data) => {
+            const res = await fetch('/api/routes', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+            const json = await res.json().catch(() => ({ error: 'תקלת תקשורת — נסי שוב' }));
+            if (!res.ok) return json.error ?? 'השמירה נכשלה';
             setShowBuilder(false);
+            router.push(`/routes/${json.id}`);
+            router.refresh();
+            return null;
           }}
         />
       )}
@@ -90,7 +102,7 @@ export default function RoutesPage() {
         </h2>
         <RoutesMap
           routes={routes}
-          buildings={DEMO_BUILDINGS}
+          buildings={allBuildings}
           themeColors={themeColors}
         />
         <div className="flex flex-wrap gap-3 justify-end pt-1">
@@ -144,8 +156,8 @@ export default function RoutesPage() {
               <span className="text-xs" style={{ color: 'var(--ocean-dark)' }}>אתרים</span>
               <span className="text-xs mx-1" style={{ color: 'var(--stone)' }}>·</span>
               <span className="text-xs" style={{ color: 'var(--navy-soft)' }}>
-                {(route.sites ?? []).slice(0, 3).map((s) => getBuildingName(s.building_id)).filter(Boolean).join(' → ')}
-                {(route.sites?.length ?? 0) > 3 && ' →…'}
+                {(route.sites ?? []).slice(0, 3).map((s) => getBuildingName(s.building_id)).filter(Boolean).join(' · ')}
+                {(route.sites?.length ?? 0) > 3 && ' ועוד'}
               </span>
             </div>
           </Link>

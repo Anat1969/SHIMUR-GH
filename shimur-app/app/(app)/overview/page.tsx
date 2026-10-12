@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
-import { DEMO_ROUTES } from '@/lib/demo/routes';
+import { useSites, useRoutes } from '@/components/providers/SiteData';
 import { Building } from '@/lib/types';
 
 type Selection = { label: string; sites: Building[] } | null;
 
 export default function OverviewPage() {
-  const buildings = DEMO_BUILDINGS;
+  const buildings = useSites();
+  const routes = useRoutes();
   const [selected, setSelected] = useState<Selection>(null);
 
   const select = (label: string, sites: Building[]) => {
@@ -69,7 +69,7 @@ export default function OverviewPage() {
     <div className={selected ? 'blur-sm pointer-events-none' : ''}>
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="page-intro">
-        <p className="text-sm tracking-widest uppercase mb-3" style={{ color: 'var(--ocean)' }}>עיריית אשדוד — יחידת שימור</p>
+        <p className="text-sm uppercase mb-3" style={{ color: 'var(--ocean)' }}>עיריית אשדוד — יחידת שימור</p>
         <h1 className="text-4xl font-serif font-bold mb-4" style={{ color: 'var(--navy)' }}>רשימת אתרי השימור של אשדוד</h1>
         <p className="max-w-2xl leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
           רשימת השימור העירונית נקבעת מכוח <span className="highlight-text">חוק התכנון והבנייה</span>, ומגדירה אתרים בעלי ערך
@@ -91,29 +91,37 @@ export default function OverviewPage() {
           return disabled ? (
             <div key={key} className="glass-card p-6 text-center opacity-50 cursor-not-allowed">
               <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--navy-soft)' }}>{label}</p>
+              <p className="text-xs uppercase" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </div>
           ) : (
             <button key={key} onClick={() => select(key, sites)}
               className="glass-card p-6 text-center transition-all hover:shadow-md"
               style={{ borderColor: isActive ? color : undefined, borderWidth: isActive ? 2 : undefined, cursor: 'pointer' }}>
               <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--navy-soft)' }}>{label}</p>
+              <p className="text-xs uppercase" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </button>
           );
         })}
       </div>
+
+      <Link href="/tour" className="block rounded-2xl p-6 sm:p-8 text-white transition-transform hover:scale-[1.01]"
+        style={{ background: 'linear-gradient(120deg, var(--navy) 0%, var(--ocean-dark) 100%)' }}>
+        <p className="text-sm font-medium" style={{ color: 'var(--amber-light)' }}>מצגת אינטראקטיבית</p>
+        <p className="text-2xl sm:text-3xl font-serif font-bold mt-1">סיור מודרך בין {buildings.length} אתרי השימור</p>
+        <p className="text-sm opacity-85 mt-2 max-w-xl">המפה טסה מאתר לאתר, עם תמונה וסיפור לכל נקודה. מתאים להצגה על מסך גדול — מקש F למסך מלא.</p>
+        <span className="inline-block mt-4 px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: 'var(--amber)', color: 'var(--navy)' }}>התחלת הסיור</span>
+      </Link>
 
       {/* מסלולים אחרונים */}
       <div className="rounded-xl p-6" style={{ background: 'linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%)', border: '1px solid var(--ocean-pale)' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-serif font-bold" style={{ color: 'var(--navy)' }}>מסלולי סיור</h2>
           <Link href="/routes" className="text-sm font-medium transition-colors" style={{ color: 'var(--ocean)' }}>
-            כל המסלולים →
+            לכל המסלולים
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {DEMO_ROUTES.slice(0, 3).map(route => (
+          {routes.slice(0, 3).map(route => (
             <Link key={route.id} href={`/routes/${route.id}`}
               className="bg-white rounded-lg p-4 transition-all hover:shadow-md"
               style={{ border: '1px solid var(--ocean-pale)' }}>

@@ -4,7 +4,7 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/buildings/StatusBadge';
 import { SiteCard } from '@/components/buildings/SiteCard';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { useSites } from '@/components/providers/SiteData';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -12,7 +12,7 @@ interface Props {
 
 export default function BuildingDetailPage({ params }: Props) {
   const { id } = use(params);
-  const building = DEMO_BUILDINGS.find(b => b.id === id);
+  const building = useSites().find(b => b.id === id);
   const [viewMode, setViewMode] = useState<'professional' | 'public'>('professional');
 
   if (!building) {
@@ -22,7 +22,7 @@ export default function BuildingDetailPage({ params }: Props) {
           אתר לא נמצא
         </h1>
         <Link href="/buildings" className="text-sm" style={{ color: 'var(--ocean)' }}>
-          ← חזרה לרשימה
+          חזרה לרשימה
         </Link>
       </div>
     );
@@ -32,7 +32,7 @@ export default function BuildingDetailPage({ params }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Link href="/buildings" className="text-sm transition-colors" style={{ color: 'var(--stone-dark)' }}>
-          ← חזרה לרשימה
+          חזרה לרשימה
         </Link>
         <div className="flex gap-2">
           <button
@@ -57,6 +57,11 @@ export default function BuildingDetailPage({ params }: Props) {
           </button>
         </div>
       </div>
+
+      {building.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={building.image_url} alt={building.name} className="w-full h-56 sm:h-80 object-cover rounded-2xl shadow-md" />
+      )}
 
       <SiteCard building={building} variant={viewMode} />
 
@@ -146,7 +151,7 @@ export default function BuildingDetailPage({ params }: Props) {
               {building.gov_sources!.map(url => (
                 <a key={url} href={url} target="_blank" rel="noopener noreferrer"
                   className="text-xs underline" style={{ color: 'var(--sage)' }}>
-                  מקור ממשלתי ↗
+                  מקור
                 </a>
               ))}
             </div>
@@ -164,6 +169,11 @@ export default function BuildingDetailPage({ params }: Props) {
           className="px-6 py-3 font-medium rounded-lg transition-colors text-sm"
           style={{ backgroundColor: 'white', color: 'var(--sage)', border: '1px solid var(--sage)' }}>
           מצב שטח
+        </Link>
+        <Link href={`/tour?site=${building.id}`}
+          className="px-6 py-3 font-medium rounded-lg transition-colors text-sm text-white"
+          style={{ backgroundColor: 'var(--navy)' }}>
+          הצגה במצגת
         </Link>
         <Link href={`/buildings/${building.id}/card`}
           className="px-6 py-3 font-medium rounded-lg transition-colors text-sm"

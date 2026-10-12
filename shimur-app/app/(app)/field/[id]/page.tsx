@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { use, useEffect, useState, useCallback } from 'react';
 import { Building } from '@/lib/types';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { useSites } from '@/components/providers/SiteData';
 
 interface Finding {
   id: string;
@@ -26,10 +26,11 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
   const [savedFindings, setSavedFindings] = useState<Finding[]>([]);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  const sites = useSites();
   useEffect(() => {
-    const found = DEMO_BUILDINGS.find(b => b.id === id);
+    const found = sites.find(b => b.id === id);
     if (found) setBuilding(found);
-  }, [id]);
+  }, [id, sites]);
 
   const loadFindings = useCallback(async (registryId: string) => {
     const res = await fetch(`/api/findings?city_registry_id=${encodeURIComponent(registryId)}`);
@@ -41,9 +42,10 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     if (building) loadFindings(building.city_registry_id);
   }, [building, loadFindings]);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const original = e.target.files?.[0];
+    if (!original) return;
+    const file = await shrinkImage(original);
     setPhoto(file);
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
@@ -63,14 +65,14 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     formData.append('notes', notes);
     if (photo) formData.append('photo', photo);
 
-    const res = await fetch('/api/findings', { method: 'POST', body: formData });
-    const data = await res.json();
+    const res = await fetch('/api/findings', { method: 'POST', body: formData }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({ error: 'השרת החזיר תשובה לא תקינה — נסי שוב' })) : { error: 'אין חיבור לרשת — הממצא לא נשמר. נסי שוב כשיש קליטה.' };
     setLoading(false);
 
     if (data.error) {
       setError(data.error);
     } else {
-      setSuccess('הממצא נשמר בהצלחה');
+      setSuccess(data.warning ?? 'הממצא נשמר בהצלחה');
       setLocationDesc(''); setNotes(''); setPhoto(null); setPhotoPreview(null);
       loadFindings(building.city_registry_id);
     }
@@ -81,7 +83,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-ink-soft">המבנה לא נמצא</p>
-          <Link href="/buildings" className="text-sm mt-4 inline-block" style={{ color: '#8B7355' }}>← חזרה</Link>
+          <Link href="/buildings" className="text-sm mt-4 inline-block" style={{ color: '#8B7355' }}>חזרה</Link>
         </div>
       </div>
     );
@@ -102,7 +104,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
               className="absolute -top-10 left-0 text-white text-sm px-3 py-1 rounded"
               style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
             >
-              סגור ✕
+              סגירה
             </button>
             <img src={lightboxUrl} alt="ממצא" className="w-full rounded-lg shadow-2xl object-contain max-h-[80vh]" />
           </div>
@@ -110,9 +112,9 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-stone-light p-4">
+      <div className="sticky top-16 z-10 bg-white border-b border-stone-light p-4">
         <div className="max-w-2xl mx-auto">
-          <Link href="/buildings" className="text-sm inline-flex items-center gap-2 mb-3" style={{ color: '#8B7355' }}>← חזרה</Link>
+          <Link href="/buildings" className="text-sm inline-flex items-center gap-2 mb-3" style={{ color: '#8B7355' }}>חזרה</Link>
           <h1 className="text-2xl font-serif font-bold text-ink">{building.name}</h1>
           <p className="text-sm text-ink-soft mt-1">{building.address}</p>
         </div>
@@ -164,7 +166,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           {error && <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(139,58,30,0.1)', color: '#8B3A1E' }}>{error}</div>}
-          {success && <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(74,92,69,0.1)', color: '#4A5C45' }}>✓ {success}</div>}
+          {success && <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(74,92,69,0.1)', color: '#4A5C45' }}>{success}</div>}
 
           <button onClick={handleSubmit} disabled={loading}
             className="w-full py-3 text-white font-medium rounded-md transition-colors disabled:opacity-60"
@@ -200,4 +202,22 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
       </div>
     </div>
   );
+}
+
+/** הקטנת תמונה בצד הלקוח: עד 1600px, JPEG — מתחת למגבלת ההעלאה של השרת */
+async function shrinkImage(file: File, maxSide = 1600, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/') || file.size < 900_000) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', quality));
+    if (!blob) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
 }

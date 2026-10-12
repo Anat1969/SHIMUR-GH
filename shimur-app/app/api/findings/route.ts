@@ -1,173 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { T, FINDINGS_BUCKET } from '@/lib/supabase/config';
+import { getFileId, photoUrl } from '@/lib/data/files';
+import { adminOrError, jsonError, zodMessage } from '@/lib/api';
 
-const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001';
-const BUCKET = 'findings-photos';
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
-async function ensureBucket() {
-  const admin = getAdminClient();
-  const { data: buckets } = await admin.storage.listBuckets();
-  const exists = buckets?.some(b => b.name === BUCKET);
-  if (!exists) {
-    await admin.storage.createBucket(BUCKET, { public: true });
-  }
-}
+const FindingInput = z.object({
+  city_registry_id: z.string().min(1, 'מספר רישום חסר'),
+  location_desc: z.string().trim().min(1, 'מיקום הממצא חסר — תארי היכן במבנה נמצא הממצא'),
+  notes: z.string().max(5000).optional(),
+});
 
 export async function POST(request: NextRequest) {
-  try {
-    // Check env vars
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY חסר — הוסיפי אותו ב-Vercel Environment Variables' }, { status: 500 });
-    }
+  const { admin, error: keyError } = adminOrError();
+  if (keyError) return keyError;
 
-    const formData = await request.formData();
-    const city_registry_id = formData.get('city_registry_id') as string;
-    const building_name    = formData.get('building_name') as string;
-    const building_address = formData.get('building_address') as string;
-    const location_desc    = formData.get('location_desc') as string;
-    const notes            = formData.get('notes') as string;
-    const photo            = formData.get('photo') as File | null;
+  const form = await request.formData();
+  const parsed = FindingInput.safeParse({
+    city_registry_id: form.get('city_registry_id'),
+    location_desc: form.get('location_desc'),
+    notes: form.get('notes') ?? undefined,
+  });
+  if (!parsed.success) return jsonError(zodMessage(parsed.error), 400);
+  const { city_registry_id, location_desc, notes } = parsed.data;
 
-    if (!location_desc?.trim()) {
-      return NextResponse.json({ error: 'מיקום הממצא חסר' }, { status: 400 });
-    }
+  const fileId = await getFileId(admin, city_registry_id);
+  if (!fileId) return jsonError('האתר לא נמצא במאגר. רענני את הדף ונסי שוב.', 404);
 
-    const admin = getAdminClient();
-
-    // 1. Upsert building
-    const { data: building, error: buildingError } = await admin
-      .from('buildings')
-      .upsert(
-        { city_registry_id, name: building_name, address: building_address, status: 'בתהליך' },
-        { onConflict: 'city_registry_id' }
-      )
-      .select('id')
-      .single();
-
-    if (buildingError || !building) {
-      return NextResponse.json({ error: 'שגיאה ברישום המבנה: ' + (buildingError?.message ?? 'לא נמצא') }, { status: 500 });
-    }
-
-    // 2. Find or create documentation_file
-    let fileId: string;
-    const { data: existingFile } = await admin
-      .from('documentation_files')
-      .select('id')
-      .eq('building_id', building.id)
-      .maybeSingle();
-
-    if (existingFile) {
-      fileId = existingFile.id;
+  let photoIds: string[] = [];
+  let photoWarning: string | null = null;
+  const photo = form.get('photo');
+  if (photo instanceof File && photo.size > 0) {
+    if (photo.size > MAX_PHOTO_BYTES) return jsonError('התמונה גדולה מ-10MB. צלמי שוב באיכות נמוכה יותר.', 400);
+    if (!photo.type.startsWith('image/')) return jsonError('הקובץ אינו תמונה.', 400);
+    const ext = (photo.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const path = `${fileId}/${Date.now()}.${ext}`;
+    const { error: upErr } = await admin.storage
+      .from(FINDINGS_BUCKET)
+      .upload(path, Buffer.from(await photo.arrayBuffer()), { contentType: photo.type });
+    if (upErr) {
+      photoWarning = 'הממצא נשמר, אך העלאת התמונה נכשלה: ' + upErr.message;
     } else {
-      const { data: newFile, error: fileError } = await admin
-        .from('documentation_files')
-        .insert({ building_id: building.id, file_type: 'מבנה', created_by: SYSTEM_USER_ID })
-        .select('id')
-        .single();
-
-      if (fileError || !newFile) {
-        return NextResponse.json({ error: 'שגיאה ביצירת תיק: ' + (fileError?.message ?? '') }, { status: 500 });
-      }
-      fileId = newFile.id;
+      const { data: rec, error: recErr } = await admin
+        .from(T.photos).insert({ file_id: fileId, storage_path: path, caption: notes ?? null })
+        .select('id').single();
+      if (recErr) photoWarning = 'הממצא נשמר, אך רישום התמונה נכשל: ' + recErr.message;
+      else photoIds = [rec.id as string];
     }
-
-    // 3. Upload photo
-    let photoIds: string[] = [];
-    if (photo && photo.size > 0) {
-      try {
-        await ensureBucket();
-        const ext      = photo.name.split('.').pop() || 'jpg';
-        const fileName = `${fileId}/${Date.now()}.${ext}`;
-        const buffer   = Buffer.from(await photo.arrayBuffer());
-
-        const { error: uploadError } = await admin.storage
-          .from(BUCKET)
-          .upload(fileName, buffer, { contentType: photo.type });
-
-        if (!uploadError) {
-          const { data: photoRecord } = await admin
-            .from('photos')
-            .insert({ file_id: fileId, storage_path: fileName, storage_bucket: BUCKET, caption: notes })
-            .select('id')
-            .single();
-          if (photoRecord) photoIds = [photoRecord.id];
-        }
-      } catch (_) {
-        // Photo upload failure is non-fatal — still save the finding
-      }
-    }
-
-    // 4. Save finding
-    const { data: finding, error: findingError } = await admin
-      .from('findings')
-      .insert({ file_id: fileId, location_desc, notes: notes || null, photo_ids: photoIds })
-      .select('id, location_desc, notes, created_at')
-      .single();
-
-    if (findingError || !finding) {
-      return NextResponse.json({ error: 'שגיאה בשמירת הממצא: ' + (findingError?.message ?? '') }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, finding });
-
-  } catch (err: any) {
-    return NextResponse.json({ error: 'שגיאה: ' + (err?.message ?? String(err)) }, { status: 500 });
   }
+
+  const { data: finding, error } = await admin
+    .from(T.findings)
+    .insert({ file_id: fileId, location_desc, notes: notes || null, photo_ids: photoIds })
+    .select('id, location_desc, notes, created_at')
+    .single();
+  if (error) return jsonError('שמירת הממצא נכשלה: ' + error.message, 500);
+
+  await admin.from(T.buildings).update({ status: 'בתהליך' })
+    .eq('city_registry_id', city_registry_id).eq('status', 'לא_התחיל');
+
+  return NextResponse.json({ success: true, finding, warning: photoWarning });
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ findings: [] });
-    }
+  const cityRegistryId = new URL(request.url).searchParams.get('city_registry_id');
+  const admin = getAdminClient();
+  if (!admin || !cityRegistryId) return NextResponse.json({ findings: [] });
 
-    const { searchParams } = new URL(request.url);
-    const city_registry_id = searchParams.get('city_registry_id');
-    if (!city_registry_id) return NextResponse.json({ findings: [] });
+  const fileId = await getFileId(admin, cityRegistryId);
+  if (!fileId) return NextResponse.json({ findings: [] });
 
-    const admin = getAdminClient();
+  const { data: findings, error } = await admin
+    .from(T.findings)
+    .select('id, location_desc, notes, created_at, photo_ids')
+    .eq('file_id', fileId)
+    .order('created_at', { ascending: false });
+  if (error) return jsonError('טעינת הממצאים נכשלה: ' + error.message, 500);
 
-    const { data: building } = await admin
-      .from('buildings')
-      .select('id')
-      .eq('city_registry_id', city_registry_id)
-      .maybeSingle();
-
-    if (!building) return NextResponse.json({ findings: [] });
-
-    const { data: file } = await admin
-      .from('documentation_files')
-      .select('id')
-      .eq('building_id', building.id)
-      .maybeSingle();
-
-    if (!file) return NextResponse.json({ findings: [] });
-
-    const { data: findings } = await admin
-      .from('findings')
-      .select('id, location_desc, notes, created_at, photo_ids')
-      .eq('file_id', file.id)
-      .order('created_at', { ascending: false });
-
-    // Enrich with photo URLs
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const enriched = await Promise.all((findings || []).map(async (f) => {
-      let photo_url: string | null = null;
-      if (f.photo_ids?.length > 0) {
-        const { data: photo } = await admin
-          .from('photos')
-          .select('storage_path')
-          .eq('id', f.photo_ids[0])
-          .maybeSingle();
-        if (photo) {
-          photo_url = `${supabaseUrl}/storage/v1/object/public/findings-photos/${photo.storage_path}`;
-        }
-      }
-      return { ...f, photo_url };
-    }));
-
-    return NextResponse.json({ findings: enriched });
-  } catch {
-    return NextResponse.json({ findings: [] });
+  const ids = (findings ?? []).flatMap(f => (f.photo_ids as string[]).slice(0, 1));
+  const paths: Record<string, string> = {};
+  if (ids.length) {
+    const { data: photos } = await admin.from(T.photos).select('id, storage_path').in('id', ids);
+    (photos ?? []).forEach(p => { paths[p.id as string] = p.storage_path as string; });
   }
+  const enriched = (findings ?? []).map(f => {
+    const first = (f.photo_ids as string[])[0];
+    return { ...f, photo_url: first && paths[first] ? photoUrl(paths[first]) : null };
+  });
+  return NextResponse.json({ findings: enriched });
 }

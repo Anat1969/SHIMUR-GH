@@ -1,70 +1,45 @@
 import { BuildingsTable } from '@/components/buildings/BuildingsTable';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSites } from '@/lib/data';
+import { T } from '@/lib/supabase/config';
 import { getAdminClient } from '@/lib/supabase/admin';
 
 async function getActivity(): Promise<Record<string, { date: string; note: string }>> {
+  const admin = getAdminClient();
+  if (!admin) return {};
   try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
-    const admin = getAdminClient();
+    // קובץ → מספר רישום, בשאילתה אחת
+    const { data: files, error } = await admin
+      .from(T.files)
+      .select('id, shimur_buildings(city_registry_id)');
+    if (error) throw error;
+    const fileToReg: Record<string, string> = {};
+    (files as unknown as { id: string; shimur_buildings: { city_registry_id: string } | null }[] ?? [])
+      .forEach(f => { if (f.shimur_buildings) fileToReg[f.id] = f.shimur_buildings.city_registry_id; });
 
-    // Step 1: get all buildings from Supabase to map id → city_registry_id
-    const { data: dbBuildings } = await admin
-      .from('buildings')
-      .select('id, city_registry_id');
-    if (!dbBuildings?.length) return {};
-
-    const idToReg: Record<string, string> = {};
-    dbBuildings.forEach(b => { idToReg[b.id] = b.city_registry_id; });
-
-    // Step 2: get all documentation_files to map file_id → building_id
-    const { data: files } = await admin
-      .from('documentation_files')
-      .select('id, building_id');
-    if (!files?.length) return {};
-
-    const fileToBuilding: Record<string, string> = {};
-    files.forEach(f => { fileToBuilding[f.id] = f.building_id; });
+    const [{ data: chapters }, { data: findings }] = await Promise.all([
+      admin.from(T.chapters).select('file_id, updated_at, title').order('updated_at', { ascending: false }).limit(200),
+      admin.from(T.findings).select('file_id, created_at, location_desc').order('created_at', { ascending: false }).limit(200),
+    ]);
 
     const activity: Record<string, { date: string; note: string }> = {};
-
-    // Step 3: latest chapter per file
-    const { data: chapters } = await admin
-      .from('chapters')
-      .select('file_id, updated_at, title')
-      .order('updated_at', { ascending: false })
-      .limit(100);
-
-    (chapters || []).forEach(c => {
-      const buildingId = fileToBuilding[c.file_id];
-      const regId = buildingId ? idToReg[buildingId] : null;
-      if (!regId || activity[regId]) return;
-      activity[regId] = { date: c.updated_at, note: `עודכן: ${c.title}` };
-    });
-
-    // Step 4: latest finding per file
-    const { data: findings } = await admin
-      .from('findings')
-      .select('file_id, created_at, location_desc')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    (findings || []).forEach(f => {
-      const buildingId = fileToBuilding[f.file_id];
-      const regId = buildingId ? idToReg[buildingId] : null;
-      if (!regId) return;
-      const existing = activity[regId];
-      if (!existing || new Date(f.created_at) > new Date(existing.date)) {
-        activity[regId] = { date: f.created_at, note: `ממצא: ${f.location_desc}` };
-      }
-    });
-
+    const consider = (fileId: string, date: string, note: string) => {
+      const reg = fileToReg[fileId];
+      if (!reg) return;
+      const cur = activity[reg];
+      if (!cur || new Date(date) > new Date(cur.date)) activity[reg] = { date, note };
+    };
+    (chapters ?? []).forEach(c => consider(c.file_id, c.updated_at, `עודכן: ${c.title}`));
+    (findings ?? []).forEach(f => consider(f.file_id, f.created_at, `ממצא: ${f.location_desc}`));
     return activity;
-  } catch { return {}; }
+  } catch (err) {
+    console.error('[buildings] activity:', err);
+    return {};
+  }
 }
 
 export default async function BuildingsPage() {
-  const activity = await getActivity();
-  const buildings = DEMO_BUILDINGS.map(b => ({
+  const [activity, { sites }] = await Promise.all([getActivity(), getSites()]);
+  const buildings = sites.map(b => ({
     ...b,
     lastActivity: activity[b.city_registry_id] ?? null,
   }));

@@ -92,7 +92,7 @@ export function ChapterEditor({
         >
           {saving ? 'שומר...' : 'שמור פרק'}
         </button>
-        {saved && <span className="text-sm" style={{ color: '#4A5C45' }}>✓ נשמר בהצלחה</span>}
+        {saved && <span className="text-sm" style={{ color: '#4A5C45' }}>נשמר</span>}
         {error && <span className="text-sm" style={{ color: '#8B3A1E' }}>שגיאה: {error}</span>}
         <span className="text-xs text-ink-soft mr-auto">שמירה אוטומטית אחרי 2 שניות</span>
       </div>

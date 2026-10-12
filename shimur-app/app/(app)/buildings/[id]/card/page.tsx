@@ -1,35 +1,33 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { DEMO_BUILDINGS } from '@/lib/demo/buildings';
+import { getSite } from '@/lib/data';
+import { getFileId, photoUrl } from '@/lib/data/files';
+import { T } from '@/lib/supabase/config';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { PrintButton } from '@/components/PrintButton';
 
 async function loadCardData(cityRegistryId: string) {
   try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { chapters: {}, findings: [] };
     const admin = getAdminClient();
+    if (!admin) return { chapters: {}, findings: [] };
 
-    const { data: building } = await admin.from('buildings').select('id').eq('city_registry_id', cityRegistryId).maybeSingle();
-    if (!building) return { chapters: {}, findings: [] };
-
-    const { data: file } = await admin.from('documentation_files').select('id').eq('building_id', building.id).maybeSingle();
-    if (!file) return { chapters: {}, findings: [] };
+    const fileId = await getFileId(admin, cityRegistryId);
+    if (!fileId) return { chapters: {}, findings: [] };
 
     const [{ data: chaptersRaw }, { data: findingsRaw }] = await Promise.all([
-      admin.from('chapters').select('chapter_key, title, content').eq('file_id', file.id),
-      admin.from('findings').select('id, location_desc, notes, photo_ids, created_at').eq('file_id', file.id).order('created_at', { ascending: false }),
+      admin.from(T.chapters).select('chapter_key, title, content').eq('file_id', fileId),
+      admin.from(T.findings).select('id, location_desc, notes, photo_ids, created_at').eq('file_id', fileId).order('created_at', { ascending: false }),
     ]);
 
     const chapters: Record<string, Record<string, string>> = {};
     (chaptersRaw || []).forEach(c => { chapters[c.chapter_key] = c.content as Record<string, string>; });
 
     // Enrich findings with photo URLs
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const findings = await Promise.all((findingsRaw || []).map(async (f) => {
       let photo_url: string | null = null;
       if (f.photo_ids?.length > 0) {
-        const { data: photo } = await admin.from('photos').select('storage_path').eq('id', f.photo_ids[0]).maybeSingle();
-        if (photo) photo_url = `${supabaseUrl}/storage/v1/object/public/findings-photos/${photo.storage_path}`;
+        const { data: photo } = await admin.from(T.photos).select('storage_path').eq('id', f.photo_ids[0]).maybeSingle();
+        if (photo) photo_url = photoUrl(photo.storage_path);
       }
       return { ...f, photo_url };
     }));
@@ -71,7 +69,7 @@ interface Props { params: Promise<{ id: string }> }
 
 export default async function CardPage({ params }: Props) {
   const { id } = await params;
-  const building = DEMO_BUILDINGS.find(b => b.id === id);
+  const building = await getSite(id);
   if (!building) notFound();
 
   const { chapters, findings } = await loadCardData(building!.city_registry_id);
@@ -99,7 +97,7 @@ export default async function CardPage({ params }: Props) {
           <PrintButton label="הדפס מצגת (Landscape)" />
           <Link href={`/buildings/${id}`}
             style={{ padding: '0.6rem 1.5rem', border: '1px solid #C8B89A', borderRadius: 6, color: '#8B7355', textDecoration: 'none' }}>
-            ← חזרה למבנה
+            חזרה לאתר
           </Link>
         </div>
 
@@ -249,7 +247,7 @@ export default async function CardPage({ params }: Props) {
             <div>
               <p style={{ ...FIELD_LABEL, fontSize: '0.85rem', marginBottom: '0.75rem', color: '#8B3A1E' }}>פרקים חסרים או חלקיים</p>
               {emptyChapters.length === 0 ? (
-                <p style={{ color: '#4A5C45', fontWeight: 600 }}>✓ כל הפרקים מולאו</p>
+                <p style={{ color: '#4A5C45', fontWeight: 600 }}>כל הפרקים מולאו</p>
               ) : (
                 emptyChapters.map(k => (
                   <div key={k} style={{ ...FIELD_BOX, backgroundColor: 'rgba(139,58,30,0.07)' }}>

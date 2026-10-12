@@ -11,7 +11,8 @@ interface RouteSiteEntry {
 interface RouteBuilderProps {
   buildings: Building[];
   initialSites?: RouteSiteEntry[];
-  onSave: (data: { title: string; description: string; theme: string; sites: RouteSiteEntry[] }) => void;
+  /** מחזיר הודעת שגיאה, או null בהצלחה */
+  onSave: (data: { title: string; description: string; theme: string; sites: RouteSiteEntry[] }) => Promise<string | null>;
 }
 
 export function RouteBuilder({ buildings, initialSites = [], onSave }: RouteBuilderProps) {
@@ -19,6 +20,15 @@ export function RouteBuilder({ buildings, initialSites = [], onSave }: RouteBuil
   const [description, setDescription] = useState('');
   const [theme, setTheme] = useState('');
   const [sites, setSites] = useState<RouteSiteEntry[]>(initialSites);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setSaving(true); setError(null);
+    const err = await onSave({ title, description, theme, sites });
+    setSaving(false);
+    if (err) setError(err);
+  };
 
   const availableBuildings = buildings.filter(
     (b) => !sites.some((s) => s.building_id === b.id)
@@ -158,7 +168,7 @@ export function RouteBuilder({ buildings, initialSites = [], onSave }: RouteBuil
                   className="text-xs px-2 py-1 rounded disabled:opacity-30"
                   style={{ backgroundColor: 'white', color: 'var(--ocean)' }}
                 >
-                  ▲
+                  למעלה
                 </button>
                 <button
                   onClick={() => moveSite(index, 1)}
@@ -166,14 +176,14 @@ export function RouteBuilder({ buildings, initialSites = [], onSave }: RouteBuil
                   className="text-xs px-2 py-1 rounded disabled:opacity-30"
                   style={{ backgroundColor: 'white', color: 'var(--ocean)' }}
                 >
-                  ▼
+                  למטה
                 </button>
                 <button
                   onClick={() => removeSite(index)}
                   className="text-xs px-2 py-1 rounded"
                   style={{ backgroundColor: 'white', color: 'var(--rust)' }}
                 >
-                  ✕
+                  הסרה
                 </button>
               </div>
             </div>
@@ -205,13 +215,16 @@ export function RouteBuilder({ buildings, initialSites = [], onSave }: RouteBuil
         )}
       </div>
 
+      {error && (
+        <p role="alert" className="text-sm p-3 rounded-lg" style={{ backgroundColor: '#FBEAE5', color: 'var(--rust)' }}>{error}</p>
+      )}
       <button
-        onClick={() => onSave({ title, description, theme, sites })}
-        disabled={!canSave}
+        onClick={handleSave}
+        disabled={!canSave || saving}
         className="w-full px-6 py-3 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-40"
         style={{ backgroundColor: 'var(--ocean)' }}
       >
-        {canSave ? 'שמור מסלול' : 'הוסף לפחות 2 אתרים ושם מסלול'}
+        {saving ? 'שומר…' : canSave ? 'שמור מסלול' : 'הוסף לפחות 2 אתרים ושם מסלול'}
       </button>
     </div>
   );
