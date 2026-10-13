@@ -92,8 +92,8 @@ export default function OverviewPage() {
     <>
       <div className="fixed inset-0 z-[1150] bg-black/20" onClick={() => setSelected(null)} aria-hidden="true" />
       <aside role="dialog" aria-label={selected.label}
-        className="fixed right-0 top-0 w-full sm:w-96 h-screen shadow-2xl z-[1200] flex flex-col"
-        style={{ background: 'linear-gradient(180deg, var(--stone-light) 0%, var(--parchment) 100%)' }}>
+        className="fixed right-0 top-0 w-full sm:w-96 h-screen z-[1200] flex flex-col"
+        style={{ backgroundColor: 'var(--surface-solid)', backgroundImage: 'var(--grain)', boxShadow: 'var(--shadow-lift)', borderInlineEnd: '1px solid var(--hairline)' }}>
         <div className="flex items-center justify-between gap-3 p-5 border-b" style={{ borderColor: 'var(--stone)' }}>
           <div className="min-w-0">
             <h3 className="font-serif font-bold text-lg" style={{ color: 'var(--navy)' }}>{selected.label}</h3>
@@ -154,15 +154,15 @@ export default function OverviewPage() {
         ].map(({ num, label, sites, color, anchor }) => {
           const isActive = selected?.label === label;
           return anchor ? (
-            <a key={label} href={anchor} className="glass-card p-6 text-center transition-all hover:shadow-md">
-              <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
+            <a key={label} href={anchor} className="glass-card p-6 text-center" style={{ borderTop: `2px solid ${color}` }}>
+              <p className="text-4xl font-serif font-bold mb-1" style={{ color: 'var(--navy)' }}>{num}</p>
               <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </a>
           ) : (
             <button key={label} onClick={() => select(label, sites)}
-              className="glass-card p-6 text-center transition-all hover:shadow-md"
-              style={{ borderColor: isActive ? color : undefined, borderWidth: isActive ? 2 : undefined }}>
-              <p className="text-4xl font-serif font-bold mb-1" style={{ color }}>{num}</p>
+              className="glass-card p-6 text-center"
+              style={{ borderTop: `2px solid ${color}`, outline: isActive ? `1px solid ${color}` : undefined }}>
+              <p className="text-4xl font-serif font-bold mb-1" style={{ color: 'var(--navy)' }}>{num}</p>
               <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>{label}</p>
             </button>
           );
@@ -248,16 +248,15 @@ export default function OverviewPage() {
         </a>
       </section>
 
-      <Link href="/tour" className="block rounded-2xl p-6 sm:p-8 text-white transition-transform hover:scale-[1.01]"
-        style={{ background: 'linear-gradient(120deg, var(--navy) 0%, var(--ocean-dark) 100%)' }}>
-        <p className="text-sm font-medium" style={{ color: 'var(--amber-light)' }}>מצגת אינטראקטיבית</p>
+      <Link href="/tour" className="panel-ink block p-6 sm:p-8 text-white transition-transform hover:-translate-y-0.5">
+        <p className="text-sm font-medium" style={{ color: 'var(--stone)' }}>מצגת אינטראקטיבית</p>
         <p className="text-2xl sm:text-3xl font-serif font-bold mt-1">סיור מודרך בין {buildings.length} אתרי השימור</p>
         <p className="text-sm opacity-85 mt-2 max-w-xl">המפה טסה מאתר לאתר, עם תמונה וסיפור לכל נקודה. מתאים להצגה על מסך גדול — מקש F למסך מלא.</p>
-        <span className="inline-block mt-4 px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: 'var(--amber)', color: 'var(--navy)' }}>התחלת הסיור</span>
+        <span className="inline-block mt-4 px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: 'var(--parchment)', color: 'var(--navy)' }}>התחלת הסיור</span>
       </Link>
 
       {/* מסלולים אחרונים */}
-      <div className="rounded-xl p-6" style={{ background: 'linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%)', border: '1px solid var(--ocean-pale)' }}>
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-serif font-bold" style={{ color: 'var(--navy)' }}>מסלולי סיור</h2>
           <Link href="/routes" className="text-sm font-medium transition-colors" style={{ color: 'var(--ocean)' }}>

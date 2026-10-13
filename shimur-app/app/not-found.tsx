@@ -19,7 +19,7 @@ export default function NotFound() {
           {[
             { href: '/map', label: 'מפת מבנים', desc: 'כל המבנים על המפה' },
             { href: '/buildings', label: 'רשימת מבנים', desc: 'טבלת כל המבנים' },
-            { href: '/field', label: 'מצב שטח', desc: 'תיעוד בשטח' },
+            { href: '/field', label: 'תיעוד בשטח', desc: 'מהנייד, ליד האתר' },
           ].map(({ href, label, desc }) => (
             <Link
               key={href}

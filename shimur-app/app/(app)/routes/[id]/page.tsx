@@ -44,11 +44,8 @@ export default function RouteDetailPage({ params }: { params: Promise<{ id: stri
         </Link>
 
         <div
-          className="rounded-xl p-8"
-          style={{
-            background: 'linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%)',
-            borderBottom: '3px solid var(--ocean)',
-          }}
+          className="glass-card p-8"
+          style={{ borderBottom: '2px solid var(--ocean)' }}
         >
           {route.theme && (
             <span

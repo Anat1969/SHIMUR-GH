@@ -20,9 +20,9 @@ const PUBLIC_LINKS = [
 ];
 
 const PRO_LINKS = [
-  { href: '/buildings', label: 'ניהול רשומות' },
   { href: '/buildings/detail', label: 'פירוט אתרים' },
-  { href: '/field', label: 'שטח' },
+  { href: '/buildings', label: 'ניהול רשומות' },
+  { href: '/field', label: 'תיעוד בשטח' },
 ];
 
 function isActive(pathname: string, href: string): boolean {
