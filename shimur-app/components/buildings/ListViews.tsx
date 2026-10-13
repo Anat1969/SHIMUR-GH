@@ -1,12 +1,12 @@
 import Link from 'next/link';
 
-// שלוש תצוגות של אותה רשימת אתרים. כל אחת עונה על שאלה אחרת, ולכן נראית אחרת.
+// שלוש תצוגות של אותה רשימת אתרים, בסדר העבודה: מה ברשימה, מה מצב התיק, ותיעוד בשטח.
 export type ListView = 'manage' | 'register' | 'field';
 
 const VIEWS: { id: ListView; href: string; label: string; question: string; accent: string }[] = [
-  { id: 'manage', href: '/buildings', label: 'ניהול רשומות', question: 'איפה עומד כל תיק, ומה הצעד הבא?', accent: 'var(--amber)' },
   { id: 'register', href: '/buildings/detail', label: 'פירוט אתרים', question: 'מה כתוב ברשימה הרשמית, בכל הפרמטרים?', accent: 'var(--navy)' },
-  { id: 'field', href: '/field', label: 'שטח', question: 'איזה אתר קרוב אליי, ואיך מתעדים אותו?', accent: 'var(--sage)' },
+  { id: 'manage', href: '/buildings', label: 'ניהול רשומות', question: 'איפה עומד כל תיק, ומה הצעד הבא?', accent: 'var(--amber)' },
+  { id: 'field', href: '/field', label: 'תיעוד בשטח', question: 'איזה אתר קרוב אליי, ואיך מתעדים אותו?', accent: 'var(--sage)' },
 ];
 
 export function ListViews({ current }: { current: ListView }) {

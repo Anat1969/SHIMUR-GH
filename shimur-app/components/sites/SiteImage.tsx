@@ -6,7 +6,7 @@ type Size = 'thumb' | 'card' | 'hero';
 const SIZE_CLASS: Record<Size, string> = {
   thumb: 'w-12 h-12 rounded-lg',
   card: 'w-full h-40 rounded-t-xl',
-  hero: 'w-full h-56 sm:h-80 rounded-2xl',
+  hero: 'w-full h-56 sm:h-80 rounded-xl',
 };
 
 /**
@@ -41,8 +41,11 @@ export function SiteImage({ site, size = 'card', className = '', priority = fals
       aria-label={`${site.name} — אין עדיין תמונה`}
       className={`${cls} flex items-end`}
       style={{
-        background: `linear-gradient(135deg, ${color} 0%, ${color}CC 45%, var(--navy) 140%)`,
-        boxShadow: 'inset 0 -40px 60px -30px rgba(0,0,0,0.35)',
+        // משטח בצבע הקטגוריה, מעומעם כדי לשבת ליד התמונות המונוכרומיות, עם גרעין נייר
+        backgroundColor: color,
+        backgroundImage: 'var(--grain), linear-gradient(rgba(247,240,227,0.16), rgba(247,240,227,0.16))',
+        filter: 'saturate(0.7)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -24px 40px -28px rgba(0,0,0,0.35)',
       }}
     >
       {size === 'thumb' ? (

@@ -196,7 +196,7 @@ export default function BuildingDetailPage({ params }: Props) {
         <Link href={`/field/${building.id}`}
           className="px-6 py-3 font-medium rounded-lg transition-colors text-sm"
           style={{ backgroundColor: 'white', color: 'var(--sage)', border: '1px solid var(--sage)' }}>
-          מצב שטח
+          תיעוד בשטח
         </Link>
         <Link href={`/tour?site=${building.id}`}
           className="px-6 py-3 font-medium rounded-lg transition-colors text-sm text-white"

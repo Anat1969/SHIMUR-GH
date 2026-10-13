@@ -217,7 +217,7 @@ function Timeline() {
 
       {/* כותרת */}
       {period ? (
-        <header className="rounded-2xl p-6 sm:p-8 text-white shadow-lg" style={{ background: `linear-gradient(120deg, ${period.color} 0%, var(--navy) 130%)` }}>
+        <header className="panel-ink p-6 sm:p-8 text-white" style={{ backgroundColor: period.color }}>
           <p className="text-sm opacity-85">{fmtYear(period.startYear)} — {fmtYear(period.endYear)}</p>
           <h1 className="text-3xl sm:text-4xl font-serif font-bold mt-1">התקופה ה{period.label}</h1>
           <p className="mt-3 max-w-2xl leading-relaxed opacity-95">{period.desc}</p>

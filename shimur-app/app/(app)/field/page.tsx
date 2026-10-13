@@ -54,11 +54,11 @@ export default function FieldListPage() {
 
       <div>
         <p className="text-sm mb-1" style={{ color: 'var(--sage)' }}>לעבודה מהנייד</p>
-        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>שטח</h1>
+        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>תיעוד בשטח</h1>
         <p style={{ color: 'var(--navy-soft)' }}>מוצאים את האתר הקרוב, מנווטים אליו, ומתעדים ממצאים עם תמונה ישירות לתיק.</p>
       </div>
 
-      <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ backgroundColor: 'var(--sage)', color: 'white' }}>
+      <div className="panel-ink p-4 flex flex-wrap items-center gap-3" style={{ backgroundColor: 'var(--sage)', color: 'white' }}>
         <button onClick={locate} disabled={loc.state === 'loading'}
           className="flex-1 min-w-[200px] px-6 py-4 rounded-xl text-base font-bold disabled:opacity-70"
           style={{ backgroundColor: 'white', color: 'var(--sage)' }}>
@@ -96,7 +96,7 @@ export default function FieldListPage() {
 function FieldCard({ b, distance }: { b: Building; distance?: string }) {
   const nav = b.lat != null && b.lng != null ? `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}` : null;
   return (
-    <li className="bg-white rounded-2xl p-4 space-y-3" style={{ border: '1px solid var(--stone-light)', boxShadow: '0 2px 10px rgba(27,42,74,0.06)' }}>
+    <li className="rounded-xl p-4 space-y-3" style={{ backgroundColor: 'var(--surface-solid)', border: '1px solid var(--hairline)', boxShadow: 'var(--shadow-soft)' }}>
       <div className="flex items-start gap-3">
         <SiteImage site={b} size="thumb" className="!w-16 !h-16" />
         <div className="flex-1 min-w-0">

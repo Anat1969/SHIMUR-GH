@@ -99,8 +99,8 @@ export function WorkflowBoard({ buildings }: { buildings: BuildingWithActivity[]
           </header>
           <ul className="space-y-2">
             {list.map(b => (
-              <li key={b.id} className="bg-white rounded-xl flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 sm:p-4"
-                style={{ border: '1px solid var(--stone-light)', borderInlineStartWidth: 5, borderInlineStartColor: PRIORITY_COLORS[b.priority_level ?? ''] ?? 'var(--stone)' }}>
+              <li key={b.id} className="rounded-xl flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 sm:p-4"
+                style={{ backgroundColor: 'var(--surface-solid)', boxShadow: 'var(--shadow-soft)', border: '1px solid var(--hairline)', borderInlineStartWidth: 5, borderInlineStartColor: PRIORITY_COLORS[b.priority_level ?? ''] ?? 'var(--stone)' }}>
                 <SiteImage site={b} size="thumb" />
                 <div className="flex-1 min-w-0">
                   <Link href={`/buildings/${b.id}`} className="font-semibold hover:underline" style={{ color: 'var(--navy)' }}>{b.name}</Link>
@@ -119,7 +119,7 @@ export function WorkflowBoard({ buildings }: { buildings: BuildingWithActivity[]
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto shrink-0">
                   <Link href={`/buildings/${b.id}/file`} className="flex-1 sm:flex-none text-center px-4 py-2 rounded-lg text-sm font-semibold text-white whitespace-nowrap" style={{ backgroundColor: 'var(--amber-dark)' }}>תיק תיעוד</Link>
-                  <Link href={`/field/${b.id}`} className="flex-1 sm:flex-none text-center px-4 py-2 rounded-lg text-sm whitespace-nowrap" style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>שטח</Link>
+                  <Link href={`/field/${b.id}`} className="flex-1 sm:flex-none text-center px-4 py-2 rounded-lg text-sm whitespace-nowrap" style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>תיעוד בשטח</Link>
                 </div>
               </li>
             ))}

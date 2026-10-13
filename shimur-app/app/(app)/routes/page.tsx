@@ -105,11 +105,8 @@ export default function RoutesPage() {
           <Link
             key={route.id}
             href={`/routes/${route.id}`}
-            className="group block rounded-xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
-            style={{
-              background: 'linear-gradient(135deg, var(--ocean-pale) 0%, var(--parchment) 100%)',
-              border: '1px solid var(--ocean-pale)',
-            }}
+            className="glass-card group block overflow-hidden"
+
           >
             <div className="flex h-28">
               {(route.sites ?? []).slice(0, 4).map(s => {
