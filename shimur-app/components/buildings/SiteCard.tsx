@@ -54,16 +54,17 @@ function ProfessionalCard({ building, showActions }: { building: Building; showA
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2 shrink-0">
+        {/* סטטוס ועדיפות בשורה אחת */}
+        <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
           <span
-            className="text-xs px-3 py-1 rounded-full font-medium text-white"
+            className="inline-block leading-none text-xs px-3 py-1.5 rounded-full font-medium text-white"
             style={{ backgroundColor: statusColor }}
           >
             {statusLabel}
           </span>
           {building.priority_level && (
             <span className="text-xs" style={{ color: 'var(--stone-dark)' }}>
-              עדיפות: {building.priority_level}
+              עדיפות {building.priority_level}
             </span>
           )}
         </div>

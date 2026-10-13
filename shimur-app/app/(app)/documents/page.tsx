@@ -384,7 +384,7 @@ export default function DocumentsPage() {
                     <img
                       src={photo.url}
                       alt={photo.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      className="w-full h-full object-cover photo-mono transition-transform group-hover:scale-105"
                       onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150"><rect fill="%23E8F4F7" width="200" height="150"/><text x="100" y="80" text-anchor="middle" fill="%231B6B7D" font-size="14">תמונה</text></svg>'; }}
                     />
                   </button>
@@ -431,7 +431,7 @@ export default function DocumentsPage() {
                 <img
                   src={lightbox.url}
                   alt={lightbox.name}
-                  className="w-full max-h-[60vh] object-contain"
+                  className="w-full max-h-[60vh] object-contain photo-mono"
                   style={{ backgroundColor: 'var(--navy)' }}
                 />
                 <div className="p-5">

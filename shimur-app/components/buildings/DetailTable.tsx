@@ -3,69 +3,80 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { SiteImage } from '@/components/sites/SiteImage';
-import { Building, LIST_STATUS_LABELS, ListStatus } from '@/lib/types';
 import { VerifyTag, needsVerification } from '@/components/sites/ListInfo';
+import { CLUSTERS } from '@/lib/clusters';
+import { Building, LIST_STATUS_LABELS, ListStatus } from '@/lib/types';
 
-type Col = 'city_registry_id' | 'committee_no' | 'name' | 'neighborhood' | 'building_type' | 'historical_periods' |
-           'owner' | 'preservation_reasons' | 'current_use' | 'priority_level' | 'protection_level' | 'parcel';
+// המרשם: הטבלה הרשמית, בעמודות של טבלאות הוועדה (מקבץ, אתר, כתובת, גוש/חלקה, בעלים, טעמי שימור).
+type Col = 'committee_no' | 'name' | 'address' | 'parcel' | 'owner' | 'preservation_reasons' | 'protection_level'
+  | 'historical_periods' | 'building_type' | 'current_use' | 'priority_level' | 'list_status' | 'city_registry_id' | 'full_description';
 
-const COMPACT_COLS: { key: Col; label: string }[] = [
-  { key: 'city_registry_id', label: 'מס׳' },
-  { key: 'name', label: 'שם האתר' },
-  { key: 'neighborhood', label: 'אזור' },
-  { key: 'building_type', label: 'סוג' },
-  { key: 'priority_level', label: 'עדיפות' },
-  { key: 'protection_level', label: 'רמה' },
+interface ColDef { key: Col; label: string; width?: number; full?: boolean }
+
+const COLS: ColDef[] = [
+  { key: 'committee_no', label: 'מס׳', width: 52 },
+  { key: 'name', label: 'שם האתר', width: 220 },
+  { key: 'address', label: 'כתובת', width: 170 },
+  { key: 'parcel', label: 'גוש/חלקה', width: 110 },
+  { key: 'owner', label: 'בעלים', width: 150 },
+  { key: 'preservation_reasons', label: 'טעמי שימור', width: 160 },
+  { key: 'protection_level', label: 'דרגה', width: 56 },
+  { key: 'historical_periods', label: 'תקופה', width: 150, full: true },
+  { key: 'building_type', label: 'סוג', width: 130, full: true },
+  { key: 'current_use', label: 'מצב קיים', width: 140, full: true },
+  { key: 'priority_level', label: 'עדיפות', width: 80, full: true },
+  { key: 'list_status', label: 'מעמד ברשימה', width: 120, full: true },
+  { key: 'city_registry_id', label: 'מס׳ רישום', width: 90, full: true },
+  { key: 'full_description', label: 'תיאור', width: 260, full: true },
 ];
 
-const ALL_COLS: { key: Col; label: string; width?: string }[] = [
-  { key: 'city_registry_id', label: 'מס׳', width: '80px' },
-  { key: 'committee_no', label: 'מס׳ בוועדה', width: '80px' },
-  { key: 'name', label: 'שם האתר', width: '180px' },
-  { key: 'neighborhood', label: 'אזור', width: '100px' },
-  { key: 'building_type', label: 'סוג', width: '130px' },
-  { key: 'historical_periods', label: 'תקופה', width: '130px' },
-  { key: 'owner', label: 'בעלות', width: '140px' },
-  { key: 'preservation_reasons', label: 'סיבות שימור', width: '150px' },
-  { key: 'current_use', label: 'מצב קיים', width: '130px' },
-  { key: 'priority_level', label: 'עדיפות', width: '80px' },
-  { key: 'protection_level', label: 'רמה', width: '60px' },
-  { key: 'parcel', label: 'חלקה', width: '110px' },
-];
+const PRIORITY_COLORS: Record<string, string> = { 'גבוהה': '#8B3A1E', 'בינונית': '#A67318', 'נמוכה': '#8B7355' };
 
-const PRIORITY_COLORS: Record<string, string> = {
-  'גבוהה': '#8B3A1E', 'בינונית': '#C4582A', 'נמוכה': '#8B7355',
-};
-
-// Alternating background colors for visual groups
-const GROUP_BG = ['#FFFFFF', '#F7F2EA'];
+function text(b: Building, col: Col): string {
+  if (col === 'list_status') return b.list_status ? LIST_STATUS_LABELS[b.list_status] : '';
+  const v = b[col as keyof Building];
+  if (Array.isArray(v)) return v.join(', ');
+  return v == null ? '' : String(v);
+}
 
 export function DetailTable({ buildings }: { buildings: Building[] }) {
-  const [expanded, setExpanded] = useState(false);
-  const [sortCol, setSortCol] = useState<Col>('city_registry_id');
+  const [full, setFull] = useState(false);
+  const [grouped, setGrouped] = useState(true);
+  const [sortCol, setSortCol] = useState<Col>('committee_no');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [search, setSearch] = useState('');
   const [listStatus, setListStatus] = useState<ListStatus | 'verify' | null>(null);
+
+  const cols = full ? COLS : COLS.filter(c => !c.full);
 
   const handleSort = (col: Col) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortCol(col); setSortDir('asc'); }
   };
 
-  const getValue = (b: Building, col: Col): string => {
-    const v = b[col];
-    if (Array.isArray(v)) return v.join(', ');
-    return (v as string) ?? '';
-  };
-
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = search.trim();
     return buildings.filter(b =>
       (!listStatus || (listStatus === 'verify' ? needsVerification(b) : b.list_status === listStatus)) &&
-      (!q || ALL_COLS.some(c => getValue(b, c.key).toLowerCase().includes(q)) ||
-      (b.full_description ?? '').toLowerCase().includes(q))
-    );
+      (!q || COLS.some(c => text(b, c.key).includes(q)) || (b.neighborhood ?? '').includes(q)));
   }, [buildings, search, listStatus]);
+
+  const sorted = useMemo(() => [...filtered].sort((a, b) => {
+    const av = text(a, sortCol), bv = text(b, sortCol);
+    // אתר בלי ערך (למשל בלי מספר בוועדה) תמיד בסוף
+    if (!av !== !bv) return av ? -1 : 1;
+    const r = av.localeCompare(bv, 'he', { numeric: true }) || Number(a.id) - Number(b.id);
+    return sortDir === 'asc' ? r : -r;
+  }), [filtered, sortCol, sortDir]);
+
+  // קבוצות לפי מקבץ, בסדר המקבצים של הוועדה
+  const groups = useMemo(() => {
+    if (!grouped) return [{ name: '', list: sorted }];
+    const order = [...CLUSTERS.map(c => c.name), ...new Set(sorted.map(b => b.neighborhood ?? 'ללא מקבץ'))];
+    return [...new Set(order)]
+      .map(name => ({ name, list: sorted.filter(b => (b.neighborhood ?? 'ללא מקבץ') === name) }))
+      .filter(g => g.list.length > 0);
+  }, [sorted, grouped]);
 
   const statusOptions = useMemo(
     () => (Object.keys(LIST_STATUS_LABELS) as ListStatus[])
@@ -75,43 +86,53 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
   );
   const verifyCount = useMemo(() => buildings.filter(needsVerification).length, [buildings]);
 
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      const av = getValue(a, sortCol);
-      const bv = getValue(b, sortCol);
-      return sortDir === 'asc' ? av.localeCompare(bv, 'he', { numeric: true }) : bv.localeCompare(av, 'he', { numeric: true });
-    });
-  }, [filtered, sortCol, sortDir]);
+  const chip = (active: boolean, color = '#1B2A4A') => ({
+    borderColor: active ? color : '#C8B89A', backgroundColor: active ? color : 'white', color: active ? 'white' : '#3D3228',
+  });
 
-  // Compute group index per row (changes when value changes)
-  const groupIndices = useMemo(() => {
-    const indices: number[] = [];
-    let groupIdx = 0;
-    let prevVal = '';
-    sorted.forEach((b, i) => {
-      const val = getValue(b, sortCol);
-      if (i > 0 && val !== prevVal) groupIdx++;
-      indices.push(groupIdx);
-      prevVal = val;
-    });
-    return indices;
-  }, [sorted, sortCol]);
-
-  const cols = expanded ? ALL_COLS : COMPACT_COLS;
+  const cell = (b: Building, c: ColDef) => {
+    switch (c.key) {
+      case 'name':
+        return (
+          <Link href={`/buildings/${b.id}`} className="flex items-center gap-2.5 font-semibold hover:underline" style={{ color: '#1A1410' }}>
+            <SiteImage site={b} size="thumb" className="!w-9 !h-9 !rounded" />
+            <span className="min-w-0">{b.name} <VerifyTag site={b} /></span>
+          </Link>
+        );
+      case 'committee_no':
+        return <span className="font-mono">{b.committee_no ?? '—'}</span>;
+      case 'protection_level':
+        return <span className="font-bold" style={{ color: '#8B3A1E' }}>{b.protection_level ?? '—'}</span>;
+      case 'priority_level':
+        return <span className="font-semibold" style={{ color: PRIORITY_COLORS[b.priority_level ?? ''] ?? '#8B7355' }}>{b.priority_level ?? '—'}</span>;
+      case 'preservation_reasons':
+        return (b.preservation_reasons ?? []).length
+          ? <span className="flex flex-wrap gap-1">{b.preservation_reasons!.map(r => <span key={r} className="px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap" style={{ backgroundColor: '#F7F0E3', color: '#4A5C45', border: '1px solid #EDE0CC' }}>{r}</span>)}</span>
+          : '—';
+      case 'parcel':
+      case 'city_registry_id':
+        return <span className="font-mono text-xs">{text(b, c.key) || '—'}</span>;
+      case 'full_description':
+        return <span title={b.full_description ?? ''} className="line-clamp-2">{b.full_description ?? '—'}</span>;
+      default:
+        return text(b, c.key) || '—';
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
-      <div className="no-print flex items-center gap-4 flex-wrap">
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="חיפוש חופשי בכל השדות..."
-          className="px-4 py-2 border rounded-md text-sm flex-1 max-w-sm"
-          style={{ borderColor: '#EDE0CC', direction: 'rtl' }} />
-        {(search || listStatus) && <span className="text-xs text-ink-soft">{filtered.length} תוצאות</span>}
-        <button onClick={() => setExpanded(e => !e)}
-          className="px-4 py-2 border rounded-md text-sm font-medium transition-colors mr-auto"
-          style={{ borderColor: '#C8B89A', color: expanded ? '#4A5C45' : '#8B7355', backgroundColor: expanded ? '#F0F7F0' : 'white' }}>
-          {expanded ? 'תצוגה מצומצמת' : 'תצוגה מורחבת'}
+      <div className="no-print flex items-center gap-2 flex-wrap">
+        <input type="search" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="חיפוש בכל השדות" aria-label="חיפוש ברשימה"
+          className="px-3 py-2.5 border rounded-lg text-sm flex-1 min-w-0 sm:max-w-sm"
+          style={{ borderColor: '#C8B89A', backgroundColor: 'white' }} />
+        <button onClick={() => setGrouped(g => !g)} aria-pressed={grouped}
+          className="px-4 py-2.5 border rounded-lg text-sm whitespace-nowrap" style={chip(grouped)}>
+          לפי מקבץ
+        </button>
+        <button onClick={() => setFull(f => !f)} aria-pressed={full}
+          className="px-4 py-2.5 border rounded-lg text-sm whitespace-nowrap" style={chip(full)}>
+          {full ? 'כל העמודות (14)' : 'עמודות הוועדה (7)'}
         </button>
       </div>
 
@@ -119,99 +140,58 @@ export function DetailTable({ buildings }: { buildings: Building[] }) {
         <span className="text-xs font-semibold text-ink-soft">מעמד ברשימה:</span>
         {statusOptions.map(({ s, n }) => (
           <button key={s} onClick={() => setListStatus(v => v === s ? null : s)} aria-pressed={listStatus === s}
-            className="px-3 py-1.5 rounded-full text-xs border transition-colors"
-            style={{ borderColor: '#C8B89A', backgroundColor: listStatus === s ? '#1B2A4A' : 'white', color: listStatus === s ? 'white' : '#3D3228' }}>
+            className="px-3 py-1.5 rounded-full text-xs border transition-colors whitespace-nowrap" style={chip(listStatus === s)}>
             {LIST_STATUS_LABELS[s]} ({n})
           </button>
         ))}
         {verifyCount > 0 && (
           <button onClick={() => setListStatus(v => v === 'verify' ? null : 'verify')} aria-pressed={listStatus === 'verify'}
-            className="px-3 py-1.5 rounded-full text-xs border transition-colors"
-            style={{ borderColor: '#E8C48A', backgroundColor: listStatus === 'verify' ? '#8B3A1E' : '#FBEFD9', color: listStatus === 'verify' ? 'white' : '#8B3A1E' }}>
+            className="px-3 py-1.5 rounded-full text-xs border transition-colors whitespace-nowrap"
+            style={listStatus === 'verify' ? chip(true, '#8B3A1E') : { borderColor: '#E8C48A', backgroundColor: '#FBEFD9', color: '#8B3A1E' }}>
             לאימות ({verifyCount})
           </button>
         )}
         {listStatus && <button onClick={() => setListStatus(null)} className="text-xs underline" style={{ color: '#8B3A1E' }}>ניקוי</button>}
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto" style={{ borderRadius: 8, border: '1px solid #EDE0CC' }}>
-        <table className="bg-white text-sm w-full" style={expanded ? { minWidth: 1300 } : {}}>
-          <thead>
-            <tr className="border-b border-stone-light bg-parchment-deep">
+      <div className="overflow-x-auto bg-white" style={{ borderRadius: 8, border: '1px solid #C8B89A' }}>
+        <table className="text-sm w-full border-collapse" style={{ minWidth: cols.reduce((a, c) => a + (c.width ?? 100), 0), fontVariantNumeric: 'tabular-nums' }}>
+          <thead className="sticky top-0 z-10">
+            <tr style={{ backgroundColor: '#1B2A4A' }}>
               {cols.map(c => (
-                <th key={c.key} onClick={() => handleSort(c.key)}
-                  className="px-4 py-3 text-right font-semibold text-ink cursor-pointer select-none hover:bg-parchment transition-colors"
-                  style={expanded ? { width: (c as any).width, whiteSpace: 'nowrap' } : {}}>
-                  {c.label}{sortCol === c.key ? (sortDir === 'asc' ? ' (עולה)' : ' (יורד)') : ''}
+                <th key={c.key} scope="col" style={{ width: c.width }}
+                  className="px-3 py-2.5 text-right text-xs font-semibold text-white whitespace-nowrap">
+                  <button onClick={() => handleSort(c.key)} className="hover:underline" aria-label={`מיון לפי ${c.label}`}>
+                    {c.label}{sortCol === c.key ? (sortDir === 'asc' ? ' (עולה)' : ' (יורד)') : ''}
+                  </button>
                 </th>
               ))}
-              {expanded && <th className="px-4 py-3 text-right font-semibold text-ink" style={{ width: 220 }}>תיאור</th>}
             </tr>
           </thead>
-          <tbody>
-            {sorted.map((b, i) => {
-              const gIdx = groupIndices[i];
-              const isGroupStart = i > 0 && gIdx !== groupIndices[i - 1];
-              const bg = GROUP_BG[gIdx % 2];
-
-              return (
-                <tr key={b.id}
-                  style={{
-                    backgroundColor: bg,
-                    borderTop: isGroupStart ? '2px solid #C8B89A' : '1px solid #EDE0CC',
-                  }}>
-                  <td className="px-4 py-3 font-mono text-xs text-ink-soft">{b.city_registry_id}</td>
-                  {expanded && <td className="px-4 py-3 font-mono text-xs text-ink-soft">{b.committee_no ?? '—'}</td>}
-                  <td className="px-4 py-3 font-medium" style={expanded ? { minWidth: 180 } : {}}>
-                    <Link href={`/buildings/${b.id}`} className="flex items-center gap-3 hover:underline" style={{ color: '#1A1410' }}>
-                      <SiteImage site={b} size="thumb" className="!w-10 !h-10" />
-                      {b.name}
-                      <VerifyTag site={b} />
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-ink-soft text-sm">{b.neighborhood ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-block px-2 py-0.5 rounded text-xs" style={{ backgroundColor: '#EDE3D0', color: '#3D3228' }}>
-                      {b.building_type ?? b.style ?? '—'}
-                    </span>
-                  </td>
-
-                  {expanded && <>
-                    <td className="px-4 py-3 text-ink-soft text-xs">{(b.historical_periods ?? []).join(', ') || '—'}</td>
-                    <td className="px-4 py-3 text-ink-soft text-xs">{b.owner ?? '—'}</td>
-                    <td className="px-4 py-3 text-xs">
-                      {(b.preservation_reasons ?? []).map(r => (
-                        <span key={r} className="inline-block px-1.5 py-0.5 rounded ml-1 mb-1"
-                          style={{ backgroundColor: '#F7F0E3', color: '#4A5C45', border: '1px solid #EDE0CC' }}>{r}</span>
-                      ))}
-                    </td>
-                    <td className="px-4 py-3 text-ink-soft text-xs">{b.current_use ?? '—'}</td>
-                  </>}
-
-                  <td className="px-4 py-3 text-xs font-semibold" style={{ color: PRIORITY_COLORS[b.priority_level ?? ''] ?? '#8B7355' }}>
-                    {b.priority_level ?? '—'}
-                  </td>
-                  <td className="px-4 py-3 text-center font-bold text-sm" style={{ color: '#8B3A1E' }}>{b.protection_level ?? '—'}</td>
-
-                  {expanded && <>
-                    <td className="px-4 py-3 text-ink-soft text-xs font-mono">{b.parcel ?? '—'}</td>
-                    <td className="px-4 py-3 text-ink-soft text-xs" style={{ maxWidth: 220 }}>
-                      <span title={b.full_description ?? ''} className="line-clamp-2 block">
-                        {b.full_description ?? b.documentation_reason ?? '—'}
-                      </span>
-                    </td>
-                  </>}
+          {groups.map(g => (
+            <tbody key={g.name || 'all'}>
+              {grouped && (
+                <tr style={{ backgroundColor: '#EDE3D0' }}>
+                  <th colSpan={cols.length} scope="rowgroup" className="px-3 py-2 text-right">
+                    <span className="font-serif font-bold" style={{ color: '#1B2A4A' }}>{g.name}</span>
+                    <span className="text-xs font-normal ms-2" style={{ color: '#4A5A7A' }}>{g.list.length === 1 ? 'אתר אחד' : `${g.list.length} אתרים`}</span>
+                  </th>
                 </tr>
-              );
-            })}
-          </tbody>
+              )}
+              {g.list.map((b, i) => (
+                <tr key={b.id} style={{ backgroundColor: i % 2 ? '#FBF8F2' : 'white', borderTop: '1px solid #EDE0CC' }}>
+                  {cols.map(c => (
+                    <td key={c.key} className="px-3 py-2.5 align-top text-ink-soft" style={{ width: c.width }}>{cell(b, c)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          ))}
         </table>
       </div>
 
       <p className="text-xs text-ink-soft no-print">
-        {sorted.length} מתוך {buildings.length} אתרים | לחץ על כותרת עמודה למיון | שם האתר = קישור לכרטיס
-        {!expanded && ' | לחץ "תצוגה מורחבת" לכל הפרמטרים'}
+        {sorted.length} מתוך {buildings.length} אתרים · לחיצה על כותרת עמודה ממיינת · שם האתר מוביל לכרטיס שלו
       </p>
     </div>
   );

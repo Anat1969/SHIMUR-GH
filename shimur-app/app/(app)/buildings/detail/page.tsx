@@ -3,25 +3,33 @@ import { getSites } from '@/lib/data';
 import type { Building } from '@/lib/types';
 import { LIST_STATUS_LABELS } from '@/lib/types';
 import { PrintButton } from '@/components/PrintButton';
+import { ListViews } from '@/components/buildings/ListViews';
+import { SOURCE_CREDIT } from '@/lib/clusters';
 
 export default async function DetailPage() {
   const { sites } = await getSites();
   return (
     <div className="space-y-6">
+      <ListViews current="register" />
       <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-ink mb-1">פירוט מבנים — אתרי שימור אשדוד</h1>
-          <p className="text-ink-soft">{sites.length} אתרים | ועדת השימור העירונית</p>
+        <div className="max-w-3xl">
+          <p className="text-sm mb-1" style={{ color: 'var(--navy-soft)' }}>לוועדה ולמסמכים</p>
+          <h1 className="text-3xl font-serif font-bold text-ink mb-2">פירוט אתרים — המרשם</h1>
+          <p className="text-ink-soft">
+            רשימת השימור של אשדוד כפי שהיא מופיעה בטבלאות הוועדה: {sites.length} אתרים, מקובצים לפי מקבץ עירוני,
+            עם כתובת, גוש/חלקה, בעלים וטעמי שימור. אפשר להרחיב לכל 14 העמודות, לייצא לגיליון ולהדפיס.
+          </p>
+          <p className="text-xs mt-2 text-ink-soft print-only">{SOURCE_CREDIT}</p>
         </div>
-        <div className="flex gap-3 items-center no-print">
+        <div className="flex gap-2 items-center no-print">
           <PrintButton label="הדפסה" />
           <a
             href={`data:text/csv;charset=utf-8,%EF%BB%BF${encodeURIComponent(buildCsv(sites))}`}
             download="אתרי_שימור_אשדוד.csv"
-            className="px-5 py-2 border rounded-md text-sm font-medium"
-            style={{ borderColor: '#C8B89A', color: '#8B7355' }}
+            className="px-5 py-2.5 border rounded-lg text-sm font-medium"
+            style={{ borderColor: '#C8B89A', color: '#8B7355', backgroundColor: 'white' }}
           >
-            ייצוא CSV
+            ייצוא לגיליון (CSV)
           </a>
         </div>
       </div>
