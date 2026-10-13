@@ -27,6 +27,7 @@ export const T = {
   documents: 'shimur_documents',
   historicalMaps: 'shimur_historical_maps',
   admins: 'shimur_admins',
+  editorKeys: 'shimur_editor_keys',
 } as const;
 
 export const MISSING_KEY_ERROR =

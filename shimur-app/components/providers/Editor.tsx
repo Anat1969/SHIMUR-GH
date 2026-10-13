@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { getBrowserClient, apiFetch } from '@/lib/supabase/browser';
+import { getBrowserClient, apiFetch, getEditorKey, setEditorKey } from '@/lib/supabase/browser';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/lib/supabase/config';
 
 type EditorState = 'loading' | 'guest' | 'signed-in' | 'editor';
@@ -23,6 +23,21 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   const [notice, setNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    // קישור כניסה אישי (...#editor=מפתח): המפתח נשמר בדפדפן ונמחק מהכתובת מיד
+    const m = window.location.hash.match(/editor=([A-Za-z0-9_-]{20,})/);
+    if (m) {
+      setEditorKey(m[1]);
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    if (getEditorKey()) {
+      const res = await apiFetch('/api/me').catch(() => null);
+      const json = res ? await res.json().catch(() => ({})) : {};
+      if (json.editor) { setEmail(json.email ?? null); setState('editor'); return; }
+      if (res?.ok) {
+        setEditorKey(null);
+        setNotice('קישור הכניסה האישי בוטל או אינו תקין. בקשי קישור חדש, או היכנסי עם אימייל וסיסמה.');
+      }
+    }
     const { data } = await getBrowserClient().auth.getSession();
     const session = data.session;
     if (!session) { setEmail(null); setState('guest'); return; }
@@ -44,8 +59,11 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   const signIn = useCallback(async () => { setNotice(null); setDialog(true); }, []);
 
   const signOut = useCallback(async () => {
+    setEditorKey(null);
     await getBrowserClient().auth.signOut();
     setNotice(null);
+    setEmail(null);
+    setState('guest');
   }, []);
 
   return (
