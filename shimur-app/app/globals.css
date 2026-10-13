@@ -179,3 +179,15 @@ button:disabled { cursor: not-allowed; }
 .brand-dna i { display: block; flex: 1; border-radius: 2px; transition: transform 0.3s ease, height 0.3s ease; transform-origin: bottom; }
 .brand:hover .brand-dna i { transform: scaleY(1.8); }
 .brand:hover .brand-dna i:nth-child(odd) { transform: scaleY(2.4); }
+
+/* תמונות אתרים — שפה מונוכרומית אחידה בכל האפליקציה (חום-אפור חם, בהתאמה לפלטה).
+   תמונות ממצאים מהשטח נשארות בצבע: הן תיעוד, וצבע החומר הוא מידע. */
+.photo-mono,
+.leaflet-popup-content img,
+.site-hover img {
+  filter: grayscale(1) sepia(0.18) contrast(1.06) brightness(1.02);
+}
+
+/* טקסט שמופיע רק בהדפסה (למשל קרדיט מקור בראש המרשם) */
+.print-only { display: none; }
+@media print { .print-only { display: block; } }

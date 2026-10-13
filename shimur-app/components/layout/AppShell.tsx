@@ -10,18 +10,19 @@ import { EditorProvider, useEditor } from '@/components/providers/Editor';
 // לוח הצבעים של האפליקציה — ה-DNA העיצובי, מוצג ליד השם
 const PALETTE = ['#C8B89A', '#8B7355', '#8B3A1E', '#D4922A', '#4A5C45', '#1B6B7D', '#1B2A4A'];
 
+// סדר הסרגל (מימין לשמאל): מצגת (כפתור ראשי), ואז הדפים הציבוריים, ואחרי המפריד — שלוש תצוגות העבודה על רשימת האתרים
 const PUBLIC_LINKS = [
-  { href: '/overview', label: 'סקירה' },
   { href: '/map', label: 'מפה' },
-  { href: '/routes', label: 'מסלולים' },
   { href: '/timeline', label: 'ציר זמן' },
+  { href: '/routes', label: 'מסלולים' },
+  { href: '/overview', label: 'סקירה' },
+  { href: '/documents', label: 'מסמכים' },
 ];
 
 const PRO_LINKS = [
   { href: '/buildings', label: 'ניהול רשומות' },
   { href: '/buildings/detail', label: 'פירוט אתרים' },
   { href: '/field', label: 'שטח' },
-  { href: '/documents', label: 'מסמכים' },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -124,7 +125,7 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
             <div className="grid grid-cols-2 gap-1">
               {PUBLIC_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             </div>
-            <p className="text-[11px] font-semibold mt-3 mb-1" style={{ color: 'var(--navy-soft)' }}>מקצועי</p>
+            <p className="text-[11px] font-semibold mt-3 mb-1" style={{ color: 'var(--navy-soft)' }}>עבודה על הרשימה</p>
             <div className="grid grid-cols-2 gap-1">
               {PRO_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             </div>

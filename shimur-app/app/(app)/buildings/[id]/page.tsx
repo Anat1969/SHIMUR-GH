@@ -69,7 +69,7 @@ export default function BuildingDetailPage({ params }: Props) {
           {gallery.map(g => (
             <button key={g.url} onClick={() => setLightbox(g)} className="shrink-0 group relative rounded-xl overflow-hidden shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={g.url} alt={g.title} loading="lazy" className="h-28 w-40 object-cover transition-transform group-hover:scale-105" />
+              <img src={g.url} alt={g.title} loading="lazy" className="h-28 w-40 object-cover photo-mono transition-transform group-hover:scale-105" />
               <span className="absolute inset-x-0 bottom-0 px-2 py-1 text-[11px] text-white text-right" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.6), transparent)' }}>{g.title}</span>
             </button>
           ))}
@@ -80,7 +80,7 @@ export default function BuildingDetailPage({ params }: Props) {
         <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(26,20,16,0.9)' }} onClick={() => setLightbox(null)} role="dialog" aria-label={lightbox.title}>
           <figure className="max-w-4xl w-full" onClick={e => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={lightbox.url} alt={lightbox.title} className="w-full max-h-[80vh] object-contain rounded-lg" />
+            <img src={lightbox.url} alt={lightbox.title} className="w-full max-h-[80vh] object-contain rounded-lg photo-mono" />
             <figcaption className="flex justify-between items-center mt-3 text-white text-sm">
               <span>{lightbox.title}</span>
               <button onClick={() => setLightbox(null)} className="px-5 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>סגירה</button>

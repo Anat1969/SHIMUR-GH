@@ -28,7 +28,7 @@ export function SiteImage({ site, size = 'card', className = '', priority = fals
         alt={site.name}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
-        className={`${cls} object-cover`}
+        className={`${cls} object-cover photo-mono`}
         style={{ backgroundColor: 'var(--parchment-deep)' }}
       />
     );

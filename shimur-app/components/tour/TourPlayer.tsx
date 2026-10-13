@@ -144,7 +144,7 @@ export function TourPlayer() {
         <article key={current.site.id} className="absolute z-[600] tour-slide inset-x-3 bottom-20 sm:inset-x-auto sm:bottom-auto sm:top-6 sm:right-6 sm:w-[420px] max-h-[48vh] sm:max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl shadow-2xl" style={{ backgroundColor: 'rgba(247,240,227,0.97)' }}>
           {current.site.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={current.site.image_url} alt={current.site.name} className="w-full h-28 sm:h-56 object-cover rounded-t-2xl" />
+            <img src={current.site.image_url} alt={current.site.name} className="w-full h-28 sm:h-56 object-cover rounded-t-2xl photo-mono" />
           )}
           <div className="p-5 sm:p-6 space-y-3">
             <div className="flex items-center gap-2 text-xs">

@@ -10,7 +10,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span
-      className="px-3 py-1 rounded-full text-xs font-medium text-white"
+      className="inline-block shrink-0 whitespace-nowrap leading-none px-3 py-1.5 rounded-full text-xs font-medium text-white"
       style={{ backgroundColor: color }}
     >
       {label}

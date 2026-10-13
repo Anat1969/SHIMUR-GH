@@ -29,7 +29,7 @@ export function VerifyTag({ site, className = '' }: { site: Building; className?
   return (
     <span
       title={site.data_conflict ?? 'יש בשדה אחד לפחות ערך שטרם אומת מול מקור'}
-      className={`inline-block align-middle px-2 py-0.5 rounded text-[11px] font-bold ${className}`}
+      className={`inline-block align-middle whitespace-nowrap px-2 py-0.5 rounded text-[11px] font-bold ${className}`}
       style={{ backgroundColor: '#FBEFD9', color: '#8B3A1E', border: '1px solid #E8C48A' }}
     >
       לאימות
@@ -40,7 +40,7 @@ export function VerifyTag({ site, className = '' }: { site: Building; className?
 export function ListStatusBadge({ status }: { status?: ListStatus }) {
   if (!status) return null;
   return (
-    <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold text-white" style={{ backgroundColor: LIST_STATUS_COLORS[status] }}>
+    <span className="inline-block whitespace-nowrap px-2 py-0.5 rounded text-[11px] font-semibold text-white" style={{ backgroundColor: LIST_STATUS_COLORS[status] }}>
       {LIST_STATUS_LABELS[status]}
     </span>
   );

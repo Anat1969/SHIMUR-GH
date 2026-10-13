@@ -1,4 +1,5 @@
-import { BuildingsTable } from '@/components/buildings/BuildingsTable';
+import { WorkflowBoard } from '@/components/buildings/WorkflowBoard';
+import { ListViews } from '@/components/buildings/ListViews';
 import { getSites } from '@/lib/data';
 import { T } from '@/lib/supabase/config';
 import { getAdminClient } from '@/lib/supabase/admin';
@@ -46,15 +47,16 @@ export default async function BuildingsPage() {
 
   return (
     <div className="space-y-6">
+      <ListViews current="manage" />
       <div className="page-intro">
-        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>ניהול רשומות — אתרי שימור</h1>
-        <p style={{ color: 'var(--navy-soft)' }}>
-          <span className="highlight-text">{buildings.length} אתרים</span> במערכת.
-          ניהול כל רשומות השימור — סטטוס תיעוד, עדיפות, והתקדמות.
-          שימור מתחיל בתיעוד שיטתי.
+        <p className="text-sm mb-1" style={{ color: 'var(--amber-dark)' }}>לניהול היחידה</p>
+        <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>ניהול רשומות</h1>
+        <p className="max-w-3xl" style={{ color: 'var(--navy-soft)' }}>
+          מעקב אחרי תיקי התיעוד של <span className="highlight-text">{buildings.length} אתרים</span>: באיזה שלב כל תיק,
+          מה הצעד הבא, ואיפה הייתה הפעולה האחרונה. הפס בצד כל אתר מסמן את העדיפות: אדום גבוהה, כתום בינונית.
         </p>
       </div>
-      <BuildingsTable buildings={buildings} />
+      <WorkflowBoard buildings={buildings} />
     </div>
   );
 }
