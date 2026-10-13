@@ -38,26 +38,10 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, [refresh]);
 
-  const signIn = useCallback(async () => {
-    setNotice(null);
-    // בדיקה מוקדמת: האם כניסה עם Google מופעלת בפרויקט
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_PUBLISHABLE_KEY } });
-      const settings = await res.json();
-      if (!settings?.external?.google) {
-        setNotice('הכניסה עם Google עדיין לא הופעלה במאגר. העריכה תיפתח מיד אחרי ההפעלה — הצפייה באתר זמינה כרגיל.');
-        return;
-      }
-    } catch {
-      setNotice('אין חיבור לשרת הכניסה. בדקי את הרשת ונסי שוב.');
-      return;
-    }
-    const { error } = await getBrowserClient().auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.href },
-    });
-    if (error) setNotice('הכניסה נכשלה: ' + error.message);
-  }, []);
+  const [dialog, setDialog] = useState(false);
+
+  /** פותח את חלון הכניסה */
+  const signIn = useCallback(async () => { setNotice(null); setDialog(true); }, []);
 
   const signOut = useCallback(async () => {
     await getBrowserClient().auth.signOut();
@@ -67,6 +51,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   return (
     <EditorContext.Provider value={{ state, isEditor: state === 'editor', email, notice, signIn, signOut }}>
       {children}
+      {dialog && <SignInDialog onClose={() => setDialog(false)} />}
     </EditorContext.Provider>
   );
 }
@@ -88,6 +73,93 @@ export function EditorGate({ children, what }: { children: React.ReactNode; what
       {state === 'guest' && (
         <button onClick={signIn} className="px-6 py-3 rounded-lg font-semibold text-white" style={{ backgroundColor: 'var(--navy)' }}>כניסה לעריכה</button>
       )}
+    </div>
+  );
+}
+
+/**
+ * חלון כניסה לעורכים: אימייל וסיסמה (זמין תמיד), או Google כשהוא מופעל במאגר.
+ * נסגר ב-X, ב-Esc, בלחיצה מחוץ לחלון, ובכפתור "חזרה לדף". הכניסה נשמרת בדפדפן עד יציאה.
+ */
+function SignInDialog({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const withPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) { setError('אימייל חסר. הזיני את כתובת האימייל של חשבון העריכה.'); return; }
+    if (!password) { setError('סיסמה חסרה. הזיני את הסיסמה של חשבון העריכה.'); return; }
+    setBusy(true); setError(null);
+    const { error: err } = await getBrowserClient().auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    if (err) {
+      setError(/invalid/i.test(err.message)
+        ? 'האימייל או הסיסמה שגויים. זו אותה סיסמה של מפת אשדוד (ASHDODMAP). נסי שוב.'
+        : 'הכניסה נכשלה: ' + err.message);
+      return;
+    }
+    onClose();
+  };
+
+  const withGoogle = async () => {
+    setError(null);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_PUBLISHABLE_KEY } });
+      const settings = await res.json();
+      if (!settings?.external?.google) {
+        setError('הכניסה עם Google עדיין לא הופעלה במאגר. בינתיים היכנסי עם אימייל וסיסמה.');
+        return;
+      }
+    } catch {
+      setError('אין חיבור לשרת הכניסה. בדקי את הרשת ונסי שוב.');
+      return;
+    }
+    const { error: err } = await getBrowserClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    if (err) setError('הכניסה עם Google נכשלה: ' + err.message);
+  };
+
+  const field = 'w-full px-3 py-2.5 rounded-lg text-sm';
+  const fieldStyle = { border: '1px solid var(--stone)', backgroundColor: 'white', color: 'var(--navy)' };
+
+  return (
+    <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(26,20,16,0.55)' }}
+      onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="signin-title" onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-sm rounded-[10px] p-6 space-y-4"
+        style={{ backgroundColor: 'var(--surface-solid)', boxShadow: 'var(--shadow-lift)', border: '1px solid var(--hairline)' }}>
+        <button onClick={onClose} aria-label="סגירה" className="absolute top-3 end-3 w-9 h-9 rounded-lg text-lg leading-none"
+          style={{ color: 'var(--navy-soft)' }}>×</button>
+        <div>
+          <h2 id="signin-title" className="font-serif font-bold text-xl" style={{ color: 'var(--navy)' }}>כניסה לעריכה</h2>
+          <p className="text-xs mt-1" style={{ color: 'var(--navy-soft)' }}>לעורכי יחידת השימור. הכניסה נשמרת בדפדפן הזה עד שלוחצים "יציאה".</p>
+        </div>
+        <form onSubmit={withPassword} className="space-y-3">
+          <label className="block text-sm" style={{ color: 'var(--navy)' }}>
+            אימייל
+            <input type="email" autoComplete="username" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} className={`${field} mt-1`} style={fieldStyle} autoFocus />
+          </label>
+          <label className="block text-sm" style={{ color: 'var(--navy)' }}>
+            סיסמה
+            <input type="password" autoComplete="current-password" dir="ltr" value={password} onChange={e => setPassword(e.target.value)} className={`${field} mt-1`} style={fieldStyle} />
+          </label>
+          <button type="submit" disabled={busy} className="w-full px-6 py-3 rounded-lg font-semibold text-white disabled:opacity-60" style={{ backgroundColor: 'var(--navy)' }}>
+            {busy ? 'נכנסת…' : 'כניסה'}
+          </button>
+        </form>
+        <button onClick={withGoogle} className="w-full px-6 py-3 rounded-lg text-sm font-semibold" style={{ border: '1px solid var(--stone)', color: 'var(--navy)', backgroundColor: 'white' }}>
+          כניסה עם חשבון Google
+        </button>
+        {error && <p role="alert" className="text-sm" style={{ color: 'var(--rust)' }}>{error}</p>}
+        <button onClick={onClose} className="text-sm underline" style={{ color: 'var(--navy-soft)' }}>חזרה לדף</button>
+      </div>
     </div>
   );
 }

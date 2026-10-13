@@ -13,6 +13,8 @@ export function getServiceRoleKey(): string | undefined {
 }
 
 export const FINDINGS_BUCKET = 'shimur-findings';
+/** תמונות אתרים שהעורכת מעלה (דלי ציבורי, כתיבה רק מהשרת) */
+export const SITE_IMAGES_BUCKET = 'shimur-site-images';
 
 export const T = {
   buildings: 'shimur_buildings',

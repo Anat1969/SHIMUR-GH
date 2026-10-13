@@ -39,6 +39,11 @@ export default function MapPage() {
   const [basemap, setBasemap] = useState<Basemap>('streets');
   const [showLabels, setShowLabels] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // קישור ישיר לאתר במפה: /map?site=7 (נקרא פעם אחת בטעינה)
+  useEffect(() => {
+    const site = new URLSearchParams(window.location.search).get('site');
+    if (site) setSelectedId(site);
+  }, []);
 
   const [maps, setMaps] = useState<HistoricalMap[]>([]);
   const [active, setActive] = useState<Record<string, number>>({});
