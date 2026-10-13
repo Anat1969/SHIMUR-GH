@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ZodError } from 'zod';
@@ -8,11 +9,23 @@ export function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-/** העורך המחובר (לפי אסימון Supabase ורשימת shimur_admins), או null */
+/** העורך המחובר (קישור כניסה אישי, או אסימון Supabase ורשימת shimur_admins), או null */
 export async function editorFromRequest(request: Request): Promise<{ email: string } | null> {
   const admin = getAdminClient();
+  if (!admin) return null;
+  // קישור כניסה אישי: המפתח שמור בדפדפן ונבדק מול הגיבוב במאגר. העורכת חייבת להיות ברשימת המורשים.
+  const key = request.headers.get('x-editor-key');
+  if (key) {
+    const hash = createHash('sha256').update(key).digest('hex');
+    const { data: k } = await admin.from(T.editorKeys).select('email').eq('key_hash', hash).is('revoked_at', null).maybeSingle();
+    const keyEmail = (k?.email as string | undefined)?.toLowerCase();
+    if (keyEmail) {
+      const { data: row } = await admin.from(T.admins).select('email').eq('email', keyEmail).maybeSingle();
+      if (row) return { email: keyEmail };
+    }
+  }
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  if (!admin || !token) return null;
+  if (!token) return null;
   const { data, error } = await admin.auth.getUser(token);
   const email = data.user?.email?.toLowerCase();
   if (error || !email) return null;
