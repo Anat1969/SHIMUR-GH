@@ -84,6 +84,8 @@ export function EditorGate({ children, what }: { children: React.ReactNode; what
 function SignInDialog({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // הסיסמה גלויה כברירת מחדל, עם כפתור הסתרה
+  const [showPassword, setShowPassword] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -146,10 +148,17 @@ function SignInDialog({ onClose }: { onClose: () => void }) {
             אימייל
             <input type="email" autoComplete="username" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} className={`${field} mt-1`} style={fieldStyle} autoFocus />
           </label>
-          <label className="block text-sm" style={{ color: 'var(--navy)' }}>
-            סיסמה
-            <input type="password" autoComplete="current-password" dir="ltr" value={password} onChange={e => setPassword(e.target.value)} className={`${field} mt-1`} style={fieldStyle} />
-          </label>
+          <div className="text-sm" style={{ color: 'var(--navy)' }}>
+            <label htmlFor="signin-password">סיסמה</label>
+            <div className="flex gap-2 mt-1">
+              <input id="signin-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" dir="ltr" value={password}
+                onChange={e => setPassword(e.target.value)} className={field} style={fieldStyle} spellCheck={false} autoCapitalize="off" />
+              <button type="button" onClick={() => setShowPassword(v => !v)} aria-pressed={showPassword}
+                className="shrink-0 px-3 rounded-lg text-xs whitespace-nowrap" style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>
+                {showPassword ? 'הסתרה' : 'הצגה'}
+              </button>
+            </div>
+          </div>
           <button type="submit" disabled={busy} className="w-full px-6 py-3 rounded-lg font-semibold text-white disabled:opacity-60" style={{ backgroundColor: 'var(--navy)' }}>
             {busy ? 'נכנסת…' : 'כניסה'}
           </button>
