@@ -80,7 +80,7 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
   useEffect(() => { setOpen(false); }, [pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--parchment)' }}>
+    <div className="min-h-screen flex flex-col">
       <a href="#main" className="skip-link">דילוג לתוכן</a>
 
       <nav className="sticky top-0 z-[1100] glass-card no-print" style={{ borderRadius: 0, borderInline: 'none', borderTop: 'none', borderBottom: '1px solid rgba(200, 184, 154, 0.3)' }}>

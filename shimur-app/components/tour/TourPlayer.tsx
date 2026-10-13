@@ -61,7 +61,7 @@ export function TourPlayer() {
       else if (e.key === 'ArrowRight' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
       else if (e.key === 'Home') setIndex(0);
       else if (e.key === 'End') setIndex(last);
-      else if (e.key === 'Escape' && !document.fullscreenElement) router.push('/overview');
+      else if (e.key === 'Escape' && !document.fullscreenElement) router.push('/map');
       else if (e.key.toLowerCase() === 'f') toggleFullscreen();
       else if (e.key.toLowerCase() === 'p') setPlaying(p => !p);
     };
@@ -130,7 +130,7 @@ export function TourPlayer() {
               <button onClick={() => { setIndex(1); setPlaying(true); }} className="px-8 py-4 rounded-xl text-lg font-semibold border border-white/60 text-white">
                 ניגון אוטומטי
               </button>
-              <Link href="/overview" className="px-8 py-4 rounded-xl text-lg font-semibold text-white underline underline-offset-4 decoration-white/50 hover:decoration-white">
+              <Link href="/map" className="px-8 py-4 rounded-xl text-lg font-semibold text-white underline underline-offset-4 decoration-white/50 hover:decoration-white">
                 כניסה לאפליקציה
               </Link>
             </div>
@@ -205,7 +205,7 @@ export function TourPlayer() {
             {basemap === 'satellite' ? 'מפת רחובות' : 'תצלום אוויר'}
           </button>
           <button onClick={toggleFullscreen} className="hidden sm:block px-3 py-3 rounded-lg text-xs" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>מסך מלא</button>
-          <Link href="/overview" className="px-3 py-3 rounded-lg text-xs whitespace-nowrap" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>לאפליקציה</Link>
+          <Link href="/map" className="px-3 py-3 rounded-lg text-xs whitespace-nowrap" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>לאפליקציה</Link>
         </div>
       </nav>
     </div>
