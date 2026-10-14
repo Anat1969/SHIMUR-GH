@@ -213,6 +213,7 @@ export const getDocuments = cache(async (): Promise<SiteDocument[]> => {
     const { data, error } = await getPublicClient()
       .from(T.documents)
       .select('id, kind, title, url, note, created_at, shimur_buildings(site_no)')
+      .is('removed_at', null)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return (data as unknown as DocumentRow[]).map(d => ({

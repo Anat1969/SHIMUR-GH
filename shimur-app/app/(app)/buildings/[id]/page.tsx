@@ -7,7 +7,7 @@ import { StatusBadge } from '@/components/buildings/StatusBadge';
 import { useSites, useGallery, useRoutes } from '@/components/providers/SiteData';
 import { useEditor } from '@/components/providers/Editor';
 import { SiteImage } from '@/components/sites/SiteImage';
-import { SiteImageUpload, MakePrimaryButton } from '@/components/sites/SiteImageUpload';
+import { SiteImageUpload, MakePrimaryButton, RemoveImageButton } from '@/components/sites/SiteImageUpload';
 import { CommitteeDetails, ListStatusBadge, VerifyTag } from '@/components/sites/ListInfo';
 import { CATEGORY_COLORS, categoryOf } from '@/lib/sites';
 
@@ -105,7 +105,12 @@ export default function BuildingDetailPage({ params }: Props) {
       {/* פתיחה קולנועית: התמונה במלוא הרוחב, השם עליה */}
       <header className="relative overflow-hidden rounded-[10px] -mt-4" style={{ boxShadow: 'var(--shadow-lift)' }}>
         {building.image_url ? (
-          <SiteImage site={building} size="hero" priority className="!h-[56vh] !min-h-[320px] !max-h-[560px] !rounded-none" />
+          <>
+            <SiteImage site={building} size="hero" priority className="!h-[56vh] !min-h-[320px] !max-h-[560px] !rounded-none" />
+            <div className="no-print absolute top-3 end-3 z-10">
+              <RemoveImageButton siteId={building.id} url={building.image_url} label="הסרת התמונה הראשית" tone="dark" />
+            </div>
+          </>
         ) : (
           <div className="panel-ink h-[44vh] min-h-[300px] max-h-[440px] !rounded-none" style={{ backgroundColor: 'var(--navy)' }} aria-hidden="true">
             <div className="absolute inset-0" style={{ backgroundColor: CATEGORY_COLORS[category], opacity: 0.35, mixBlendMode: 'multiply' }} />
@@ -187,6 +192,7 @@ export default function BuildingDetailPage({ params }: Props) {
                   <img src={g.url} alt={g.title} loading="lazy" className="h-28 w-40 object-cover photo-mono transition-transform group-hover:scale-105" />
                 </button>
                 <MakePrimaryButton siteId={building.id} url={g.url} />
+                <div className="mt-1"><RemoveImageButton siteId={building.id} url={g.url} label="הסרה" /></div>
               </div>
             ))}
           </div>
