@@ -107,7 +107,7 @@ export function SiteImageUpload({ siteId, siteName, hasImage }: { siteId: string
         className="underline underline-offset-2 hover:no-underline disabled:opacity-60" style={{ color: 'var(--navy)' }}>
         {busy ? 'מעלה…' : 'הוספת תמונה'}
       </button>
-      <span>או גרירה / הדבקה (Ctrl+V) לדף</span>
+      <span>או: לגרור קובץ תמונה מהמחשב אל התמונה שלמעלה, או להעתיק תמונה (למשל מאתר או מצילום מסך) וללחוץ Ctrl+V כשהדף הזה פתוח</span>
       <label className="inline-flex items-center gap-1.5 whitespace-nowrap">
         <input type="checkbox" checked={primary} onChange={e => setPrimary(e.target.checked)} className="w-3.5 h-3.5" />
         כתמונה ראשית

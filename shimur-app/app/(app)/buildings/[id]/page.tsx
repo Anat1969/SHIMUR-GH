@@ -116,6 +116,15 @@ export default function BuildingDetailPage({ params }: Props) {
             <div className="absolute inset-0" style={{ backgroundColor: CATEGORY_COLORS[category], opacity: 0.35, mixBlendMode: 'multiply' }} />
           </div>
         )}
+        {/* לעורכת, כשאין תמונה: המסגרת עצמה מסומנת כמקום לשחרר בו תמונה */}
+        {isEditor && !building.image_url && (
+          <div className="no-print absolute inset-3 sm:inset-4 rounded-[8px] pointer-events-none flex items-start justify-center pt-5"
+            style={{ border: '1px dashed rgba(247,240,227,0.45)' }}>
+            <span className="text-xs px-3 py-1 rounded-md" style={{ color: 'rgba(247,240,227,0.85)', backgroundColor: 'rgba(27,42,74,0.4)' }}>
+              לגרור לכאן קובץ תמונה, או להעתיק תמונה וללחוץ Ctrl+V
+            </span>
+          </div>
+        )}
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(27,42,74,0) 30%, rgba(27,42,74,0.55) 62%, rgba(27,42,74,0.9) 100%)' }} />
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 text-white tour-fade">
           <p className="text-xs sm:text-sm mb-2" style={{ color: 'var(--amber-light)' }}>
