@@ -6,7 +6,7 @@ import { adminOrError, jsonError, zodMessage } from '@/lib/api';
 
 // תמונות אתר: העלאה לדלי ציבורי, ושיבוץ כתמונה ראשית (shimur_buildings.image_url)
 // או כתמונה נוספת בגלריה (shimur_documents מסוג image). שום תמונה לא נמחקת:
-// תמונה ראשית שהוחלפה עוברת לגלריה.
+// תמונה ראשית שהוחלפה עוברת לגלריה, ותמונה שהוסרה מסומנת removed_at.
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -89,4 +89,41 @@ export async function PATCH(request: NextRequest) {
   const { error: delErr } = await admin.from(T.documents).delete().eq('building_id', site.id).eq('kind', 'image').eq('url', parsed.data.url);
   if (delErr) return jsonError('התמונה נקבעה כראשית, אך הסרתה מהגלריה נכשלה: ' + delErr.message, 500);
   return NextResponse.json({ success: true });
+}
+
+/**
+ * הסרת תמונה לא רצויה. שום דבר לא נמחק: הקובץ נשאר, והרשומה מסומנת removed_at.
+ * תמונה ראשית שהוסרה: התמונה הראשונה בגלריה תופסת את מקומה, ואם אין — משטח הצבע.
+ */
+export async function DELETE(request: NextRequest) {
+  const { admin, error: authError } = await adminOrError(request);
+  if (authError) return authError;
+  const parsed = PrimaryInput.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return jsonError(zodMessage(parsed.error), 400);
+
+  const site = await siteRow(admin, parsed.data.site);
+  if (!site) return jsonError('האתר לא נמצא במאגר. רענני את הדף ונסי שוב.', 404);
+  const now = new Date().toISOString();
+
+  if (site.image_url !== parsed.data.url) {
+    const { data, error } = await admin.from(T.documents).update({ removed_at: now })
+      .eq('building_id', site.id).eq('kind', 'image').eq('url', parsed.data.url).is('removed_at', null).select('id');
+    if (error) return jsonError('הסרת התמונה נכשלה: ' + error.message, 500);
+    if (!data?.length) return jsonError('התמונה לא נמצאה באתר. רענני את הדף ונסי שוב.', 404);
+    return NextResponse.json({ success: true });
+  }
+
+  // התמונה הראשית: נשמרת כרשומה מוסרת, כדי שאפשר יהיה לשחזר
+  const { error: keepErr } = await admin.from(T.documents)
+    .insert({ kind: 'image', title: `${site.name} — תמונה שהוסרה`, url: site.image_url, building_id: site.id, removed_at: now });
+  if (keepErr) return jsonError('הסרת התמונה נכשלה: ' + keepErr.message, 500);
+
+  const { data: next } = await admin.from(T.documents).select('id, url')
+    .eq('building_id', site.id).eq('kind', 'image').is('removed_at', null)
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  const { error: upErr } = await admin.from(T.buildings)
+    .update({ image_url: (next?.url as string | undefined) ?? null, updated_at: now }).eq('id', site.id);
+  if (upErr) return jsonError('הסרת התמונה הראשית נכשלה: ' + upErr.message, 500);
+  if (next) await admin.from(T.documents).delete().eq('id', next.id);
+  return NextResponse.json({ success: true, replacedBy: next?.url ?? null });
 }

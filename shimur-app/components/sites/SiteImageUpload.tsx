@@ -147,3 +147,50 @@ export function MakePrimaryButton({ siteId, url }: { siteId: string; url: string
     </>
   );
 }
+
+/**
+ * הסרת תמונה לא רצויה, לעורכת בלבד, עם אישור בלחיצה שנייה.
+ * התמונה לא נמחקת מהמאגר: היא מוסתרת ואפשר לשחזר אותה.
+ */
+export function RemoveImageButton({ siteId, url, label = 'הסרת התמונה', tone = 'light' }: {
+  siteId: string; url: string; label?: string; tone?: 'light' | 'dark';
+}) {
+  const { isEditor } = useEditor();
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!isEditor) return null;
+
+  const remove = async () => {
+    setBusy(true); setError(null);
+    const res = await apiFetch('/api/site-images', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ site: siteId, url }) }).catch(() => null);
+    const json = res ? await res.json().catch(() => ({})) : {};
+    setBusy(false);
+    if (!res?.ok) { setError(json.error ?? 'אין חיבור לשרת. נסי שוב.'); return; }
+    setConfirming(false);
+    router.refresh();
+  };
+
+  const dark = tone === 'dark';
+  const base = 'px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap disabled:opacity-60';
+  const quiet = dark
+    ? { backgroundColor: 'rgba(27,42,74,0.75)', color: 'white', border: '1px solid rgba(255,255,255,0.4)' }
+    : { backgroundColor: 'var(--surface-solid)', color: 'var(--rust)', border: '1px solid var(--stone)' };
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      {!confirming ? (
+        <button type="button" onClick={() => setConfirming(true)} className={base} style={quiet}>{label}</button>
+      ) : (
+        <>
+          <button type="button" onClick={remove} disabled={busy} className={base} style={{ backgroundColor: 'var(--rust)', color: 'white' }}>
+            {busy ? 'מסירה…' : 'כן, להסיר'}
+          </button>
+          <button type="button" onClick={() => setConfirming(false)} disabled={busy} className={base} style={quiet}>ביטול</button>
+        </>
+      )}
+      {error && <span role="alert" className="block w-full text-[11px]" style={{ color: dark ? 'white' : 'var(--rust)' }}>{error}</span>}
+    </span>
+  );
+}
