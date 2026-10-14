@@ -28,7 +28,15 @@ export default function BuildingDetailPage({ params }: Props) {
   const gallery = useGallery(id);
   const { isEditor, state, signIn } = useEditor();
   const [lightbox, setLightbox] = useState<{ url: string; title: string } | null>(null);
-  const [viewMode, setViewMode] = useState<'professional' | 'public'>('professional');
+  // הנתונים המקצועיים (תיק, רשימה, גוש/חלקה) גלויים כברירת מחדל. בהצגה לקהל אפשר להסתיר, וההעדפה נזכרת בין אתרים.
+  const [viewMode, setViewModeState] = useState<'professional' | 'public'>('professional');
+  useEffect(() => {
+    try { if (localStorage.getItem('shimur-site-view') === 'public') setViewModeState('public'); } catch { /* אין אחסון */ }
+  }, []);
+  const setViewMode = (m: 'professional' | 'public') => {
+    setViewModeState(m);
+    try { localStorage.setItem('shimur-site-view', m); } catch { /* אין אחסון */ }
+  };
 
   const ordered = useMemo(() => [...sites].sort((a, b) => Number(a.id) - Number(b.id)), [sites]);
   const index = ordered.findIndex(b => b.id === id);
@@ -90,15 +98,6 @@ export default function BuildingDetailPage({ params }: Props) {
         <Link href="/buildings/detail" className="text-sm whitespace-nowrap px-2 py-2 hover:underline" style={{ color: 'var(--navy)' }}><span className="sm:hidden">לרשימה</span><span className="hidden sm:inline">חזרה לפירוט האתרים</span></Link>
         <span className="hidden sm:inline text-xs font-mono ms-1" style={{ color: 'var(--navy-soft)' }}>אתר {index + 1} מתוך {ordered.length}</span>
         <span className="flex-1" />
-        <div className="flex shrink-0 rounded-lg overflow-hidden" style={{ border: '1px solid var(--stone)' }} role="group" aria-label="סוג תצוגה">
-          {(['professional', 'public'] as const).map(m => (
-            <button key={m} onClick={() => setViewMode(m)} aria-pressed={viewMode === m}
-              className="px-3 py-1.5 text-xs whitespace-nowrap"
-              style={{ backgroundColor: viewMode === m ? 'var(--navy)' : 'transparent', color: viewMode === m ? 'white' : 'var(--navy)' }}>
-              {m === 'professional' ? 'מקצועי' : 'ציבורי'}
-            </button>
-          ))}
-        </div>
         {prev && <Link href={`/buildings/${prev.id}`} className="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap" style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }} title={prev.name}>הקודם</Link>}
         {next && <Link href={`/buildings/${next.id}`} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap" style={{ backgroundColor: 'var(--navy)' }} title={next.name}>הבא</Link>}
       </nav>
@@ -108,8 +107,8 @@ export default function BuildingDetailPage({ params }: Props) {
         {building.image_url ? (
           <>
             <SiteImage site={building} size="hero" priority className="!h-[56vh] !min-h-[320px] !max-h-[560px] !rounded-none" />
-            <div className="no-print absolute top-3 end-3 z-10">
-              <RemoveImageButton siteId={building.id} url={building.image_url} label="הסרת התמונה הראשית" tone="dark" />
+            <div className="no-print absolute top-2 end-2 z-10 opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              <RemoveImageButton siteId={building.id} url={building.image_url} label="הסרת התמונה" tone="dark" />
             </div>
           </>
         ) : (
@@ -192,8 +191,10 @@ export default function BuildingDetailPage({ params }: Props) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={g.url} alt={g.title} loading="lazy" className="h-28 w-40 object-cover photo-mono transition-transform group-hover:scale-105" />
                 </button>
-                <MakePrimaryButton siteId={building.id} url={g.url} />
-                <div className="mt-1"><RemoveImageButton siteId={building.id} url={g.url} label="הסרה" /></div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <MakePrimaryButton siteId={building.id} url={g.url} />
+                  <RemoveImageButton siteId={building.id} url={g.url} />
+                </div>
               </div>
             ))}
           </div>
@@ -214,8 +215,19 @@ export default function BuildingDetailPage({ params }: Props) {
         </div>
       )}
 
+      {/* מעבר בין סיפור לנתונים: כאן, ולא בסרגל העליון, כי זה מה שהכפתור מסתיר או מציג */}
+      <div className="no-print flex flex-wrap items-center gap-x-4 gap-y-1 pt-2" style={{ borderTop: '1px solid var(--hairline)' }}>
+        <button type="button" onClick={() => setViewMode(pro ? 'public' : 'professional')} aria-expanded={pro} aria-controls="pro-data"
+          className="text-sm font-semibold underline underline-offset-4 hover:no-underline" style={{ color: 'var(--navy)' }}>
+          {pro ? 'הסתרת הנתונים המקצועיים' : 'הצגת הנתונים המקצועיים'}
+        </button>
+        <span className="text-xs" style={{ color: 'var(--navy-soft)' }}>
+          {pro ? 'מצב התיק, נתוני הרשימה וגוש/חלקה, לצוות השימור. בהצגה לקהל אפשר להסתיר אותם.' : 'מוצג רק הסיפור והתמונות, לקהל הרחב.'}
+        </span>
+      </div>
+
       {pro && (
-        <>
+        <div id="pro-data" className="space-y-8">
           {/* מצב התיק: שורה אחת, עם הצעד הבא */}
           <section aria-label="מצב תיק התיעוד" className="flex flex-wrap items-center gap-3 py-4" style={{ borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)' }}>
             <span className="text-xs font-semibold" style={{ color: 'var(--navy-soft)' }}>תיק תיעוד</span>
@@ -253,7 +265,7 @@ export default function BuildingDetailPage({ params }: Props) {
               ))}
             </p>
           )}
-        </>
+        </div>
       )}
 
       {/* מעבר לאתר הבא, כמו שקף הבא במצגת */}

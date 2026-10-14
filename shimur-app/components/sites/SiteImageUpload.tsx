@@ -79,45 +79,62 @@ export function SiteImageUpload({ siteId, siteName, hasImage }: { siteId: string
     return () => document.removeEventListener('paste', onPaste);
   }, [isEditor, upload]);
 
+  // גרירה לכל מקום בדף: שכבה עדינה מופיעה רק בזמן הגרירה
+  useEffect(() => {
+    if (!isEditor) return;
+    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
+    const onOver = (e: DragEvent) => { if (hasFiles(e)) { e.preventDefault(); setOver(true); } };
+    const onLeave = (e: DragEvent) => { if (!e.relatedTarget) setOver(false); };
+    const onDrop = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault(); setOver(false);
+      upload(Array.from(e.dataTransfer?.files ?? []));
+    };
+    window.addEventListener('dragover', onOver);
+    window.addEventListener('dragleave', onLeave);
+    window.addEventListener('drop', onDrop);
+    return () => { window.removeEventListener('dragover', onOver); window.removeEventListener('dragleave', onLeave); window.removeEventListener('drop', onDrop); };
+  }, [isEditor, upload]);
+
   if (!isEditor) return null;
   const busy = status.kind === 'busy';
+  const muted = { color: 'var(--navy-soft)' };
 
+  // כלי עבודה, לא תוכן: שורה אחת קטנה ושקטה מתחת לתמונה
   return (
-    <section aria-label="העלאת תמונות לאתר" className="no-print rounded-[10px] p-4 sm:p-5 transition-colors"
-      onDragOver={e => { e.preventDefault(); setOver(true); }}
-      onDragLeave={() => setOver(false)}
-      onDrop={e => { e.preventDefault(); setOver(false); upload(Array.from(e.dataTransfer.files)); }}
-      style={{
-        border: `1.5px dashed ${over ? 'var(--navy)' : 'var(--stone)'}`,
-        backgroundColor: over ? 'rgba(255,255,255,0.85)' : 'var(--surface)',
-      }}>
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[220px]">
-          <p className="font-semibold" style={{ color: 'var(--navy)' }}>
-            {over ? 'שחררי כאן להעלאה' : 'הוספת תמונה: גררי לכאן, הדביקי (Ctrl+V) או בחרי קובץ'}
-          </p>
-          <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--navy-soft)' }}>
-            מומלץ: צילום לרוחב ביחס 3:2, לפחות 1600 על 1067 פיקסלים, JPG. הנושא במרכז, כי בתמונות הקטנות היא נחתכת לריבוע. התמונה מוקטנת אוטומטית ונשמרת מיד במאגר הציבורי.
-          </p>
-        </div>
-        <label className="flex items-center gap-2 text-sm whitespace-nowrap" style={{ color: 'var(--navy)' }}>
-          <input type="checkbox" checked={primary} onChange={e => setPrimary(e.target.checked)} className="w-4 h-4" />
-          קביעה כתמונה ראשית
-        </label>
-        <button type="button" onClick={() => input.current?.click()} disabled={busy}
-          className="px-6 py-3 rounded-lg text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: 'var(--navy)' }}>
-          {busy ? 'מעלה…' : 'בחירת קובץ'}
-        </button>
-        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden
-          onChange={e => { upload(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
-      </div>
+    <div aria-label="הוספת תמונות לאתר" className="no-print flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={muted}>
+      <button type="button" onClick={() => input.current?.click()} disabled={busy}
+        className="underline underline-offset-2 hover:no-underline disabled:opacity-60" style={{ color: 'var(--navy)' }}>
+        {busy ? 'מעלה…' : 'הוספת תמונה'}
+      </button>
+      <span>או גרירה / הדבקה (Ctrl+V) לדף</span>
+      <label className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <input type="checkbox" checked={primary} onChange={e => setPrimary(e.target.checked)} className="w-3.5 h-3.5" />
+        כתמונה ראשית
+      </label>
+      <details className="relative">
+        <summary className="cursor-pointer select-none hover:underline">מפרט</summary>
+        <p className="absolute z-20 mt-1 w-64 p-3 rounded-[10px] leading-relaxed" style={{ backgroundColor: 'var(--surface-solid)', border: '1px solid var(--hairline)', boxShadow: 'var(--shadow-soft)', color: 'var(--ink-soft)' }}>
+          צילום לרוחב, יחס 3:2, לפחות 1600 על 1067 פיקסלים, JPG.
+          <br />הנושא במרכז, כי בתמונות הקטנות היא נחתכת לריבוע.
+          <br />מוקטנת אוטומטית ונשמרת מיד.
+        </p>
+      </details>
+      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden
+        onChange={e => { upload(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
       {status.kind !== 'idle' && (
-        <p role={status.kind === 'error' ? 'alert' : 'status'} className="text-sm mt-3"
+        <span role={status.kind === 'error' ? 'alert' : 'status'} className="w-full sm:w-auto"
           style={{ color: status.kind === 'error' ? 'var(--rust)' : status.kind === 'ok' ? 'var(--sage)' : 'var(--navy-soft)' }}>
           {status.text}
-        </p>
+        </span>
       )}
-    </section>
+      {over && (
+        <div className="fixed inset-3 z-[1400] pointer-events-none rounded-[10px] flex items-center justify-center"
+          style={{ border: '1.5px dashed var(--navy)', backgroundColor: 'rgba(247,240,227,0.75)' }}>
+          <span className="text-sm font-semibold" style={{ color: 'var(--navy)' }}>שחררי כאן כדי להוסיף את התמונה לאתר</span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -139,9 +156,9 @@ export function MakePrimaryButton({ siteId, url }: { siteId: string; url: string
           if (!res?.ok) { setError(json.error ?? 'אין חיבור לשרת. נסי שוב.'); return; }
           router.refresh();
         }}
-        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs font-semibold disabled:opacity-60"
-        style={{ border: '1px solid var(--stone)', color: 'var(--navy)', backgroundColor: 'var(--surface-solid)' }}>
-        {busy ? 'מעדכנת…' : 'קביעה כראשית'}
+        className="text-[11px] underline underline-offset-2 hover:no-underline disabled:opacity-60"
+        style={{ color: 'var(--navy-soft)' }}>
+        {busy ? 'מעדכנת…' : 'כראשית'}
       </button>
       {error && <span role="alert" className="block text-[11px] mt-1" style={{ color: 'var(--rust)' }}>{error}</span>}
     </>
@@ -152,7 +169,7 @@ export function MakePrimaryButton({ siteId, url }: { siteId: string; url: string
  * הסרת תמונה לא רצויה, לעורכת בלבד, עם אישור בלחיצה שנייה.
  * התמונה לא נמחקת מהמאגר: היא מוסתרת ואפשר לשחזר אותה.
  */
-export function RemoveImageButton({ siteId, url, label = 'הסרת התמונה', tone = 'light' }: {
+export function RemoveImageButton({ siteId, url, label = 'הסרה', tone = 'light' }: {
   siteId: string; url: string; label?: string; tone?: 'light' | 'dark';
 }) {
   const { isEditor } = useEditor();
@@ -173,10 +190,11 @@ export function RemoveImageButton({ siteId, url, label = 'הסרת התמונה'
   };
 
   const dark = tone === 'dark';
-  const base = 'px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap disabled:opacity-60';
+  // שקט עד שנוגעים: טקסט קטן, בלי מסגרת. רק שלב האישור מודגש.
+  const base = 'text-[11px] whitespace-nowrap disabled:opacity-60';
   const quiet = dark
-    ? { backgroundColor: 'rgba(27,42,74,0.75)', color: 'white', border: '1px solid rgba(255,255,255,0.4)' }
-    : { backgroundColor: 'var(--surface-solid)', color: 'var(--rust)', border: '1px solid var(--stone)' };
+    ? { color: 'rgba(255,255,255,0.85)', backgroundColor: 'rgba(27,42,74,0.45)', padding: '2px 8px', borderRadius: 6 }
+    : { color: 'var(--navy-soft)', textDecoration: 'underline', textUnderlineOffset: 2 };
 
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -184,7 +202,7 @@ export function RemoveImageButton({ siteId, url, label = 'הסרת התמונה'
         <button type="button" onClick={() => setConfirming(true)} className={base} style={quiet}>{label}</button>
       ) : (
         <>
-          <button type="button" onClick={remove} disabled={busy} className={base} style={{ backgroundColor: 'var(--rust)', color: 'white' }}>
+          <button type="button" onClick={remove} disabled={busy} className={base} style={{ backgroundColor: 'var(--rust)', color: 'white', padding: '2px 8px', borderRadius: 6 }}>
             {busy ? 'מסירה…' : 'כן, להסיר'}
           </button>
           <button type="button" onClick={() => setConfirming(false)} disabled={busy} className={base} style={quiet}>ביטול</button>
