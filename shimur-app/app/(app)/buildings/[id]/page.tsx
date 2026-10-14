@@ -10,6 +10,7 @@ import { SiteImage } from '@/components/sites/SiteImage';
 import { SiteImageUpload, MakePrimaryButton, RemoveImageButton } from '@/components/sites/SiteImageUpload';
 import { CommitteeDetails, ListStatusBadge, VerifyTag } from '@/components/sites/ListInfo';
 import { CATEGORY_COLORS, categoryOf } from '@/lib/sites';
+import { Sentences } from '@/components/sites/Sentences';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -148,13 +149,13 @@ export default function BuildingDetailPage({ params }: Props) {
       <section aria-label="על האתר" className="grid lg:grid-cols-[1fr_280px] gap-8 items-start tour-slide">
         <div className="space-y-5 max-w-3xl">
           {narrative && (
-            <p className="text-lg sm:text-xl font-medium leading-relaxed ps-4" style={{ color: 'var(--ocean-dark)', borderInlineStart: '3px solid var(--ocean)' }}>{narrative}</p>
+            <p className="text-lg sm:text-xl font-medium leading-relaxed ps-4" style={{ color: 'var(--ocean-dark)', borderInlineStart: '3px solid var(--ocean)' }}><Sentences text={narrative} /></p>
           )}
           {building.full_description && (
-            <p className="text-base sm:text-[17px] leading-[1.85]" style={{ color: 'var(--ink-soft)' }}>{building.full_description}</p>
+            <p className="text-base sm:text-[17px] leading-[1.85]" style={{ color: 'var(--ink-soft)' }}><Sentences text={building.full_description} /></p>
           )}
           {building.additional_info && (
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--navy-soft)' }}>{building.additional_info}</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--navy-soft)' }}><Sentences text={building.additional_info} /></p>
           )}
           {!narrative && !building.full_description && (
             <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>עדיין אין תיאור לאתר הזה.</p>

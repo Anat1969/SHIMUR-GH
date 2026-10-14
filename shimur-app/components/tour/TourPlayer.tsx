@@ -8,6 +8,7 @@ import { useSites, useRoutes } from '@/components/providers/SiteData';
 import type { Basemap } from '@/components/map/BuildingsMap';
 import { CATEGORIES, CATEGORY_COLORS, categoryOf } from '@/lib/sites';
 import { STATUS_LABELS } from '@/lib/types';
+import { Sentences } from '@/components/sites/Sentences';
 
 const BuildingsMap = dynamic(
   () => import('@/components/map/BuildingsMap').then(m => m.BuildingsMap),
@@ -155,9 +156,9 @@ export function TourPlayer() {
             <h2 className="text-xl sm:text-3xl font-serif font-bold leading-tight" style={{ color: 'var(--navy)' }}>{current.site.name}</h2>
             <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>{current.site.address}{current.site.neighborhood ? ` · ${current.site.neighborhood}` : ''}</p>
             {current.narrative && (
-              <p className="text-base font-medium leading-relaxed ps-3" style={{ color: 'var(--ocean-dark)', borderInlineStart: '3px solid var(--ocean)' }}>{current.narrative}</p>
+              <p className="text-base font-medium leading-relaxed ps-3" style={{ color: 'var(--ocean-dark)', borderInlineStart: '3px solid var(--ocean)' }}><Sentences text={current.narrative} /></p>
             )}
-            {current.site.full_description && <p className="text-[15px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{current.site.full_description}</p>}
+            {current.site.full_description && <p className="text-[15px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}><Sentences text={current.site.full_description} /></p>}
             {(current.site.historical_periods ?? []).length > 0 && (
               <p className="text-xs" style={{ color: 'var(--navy-soft)' }}>תקופות: {current.site.historical_periods!.join(' · ')}</p>
             )}
