@@ -11,6 +11,7 @@ import { SiteImage } from '@/components/sites/SiteImage';
 import type { Basemap, OverlayLayer } from '@/components/map/BuildingsMap';
 import { apiFetch } from '@/lib/supabase/browser';
 import { EditorGate, useEditor } from '@/components/providers/Editor';
+import { Sentences } from '@/components/sites/Sentences';
 import {
   CATEGORIES, COLOR_BY_LABELS, ColorBy, categoryOf, legendFor, markerColor, matchesQuery,
 } from '@/lib/sites';
@@ -210,7 +211,7 @@ export default function MapPage() {
                   </button>
                   {sel && (
                     <div className="px-3 pb-3 pt-1 text-xs leading-relaxed space-y-2" style={{ color: 'var(--navy-soft)' }}>
-                      {b.full_description && <p>{b.full_description}</p>}
+                      {b.full_description && <p><Sentences text={b.full_description} /></p>}
                       <div className="flex gap-2">
                         <Link href={`/buildings/${b.id}`} className="px-3 py-1.5 rounded-md font-semibold text-white" style={{ backgroundColor: 'var(--ocean)' }}>לדף האתר</Link>
                         <Link href={`/tour?site=${b.id}`} className="px-3 py-1.5 rounded-md font-semibold" style={{ border: '1px solid var(--ocean)', color: 'var(--ocean)' }}>במצגת</Link>

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSites } from '@/components/providers/SiteData';
 import { SiteImage } from '@/components/sites/SiteImage';
 import type { Building } from '@/lib/types';
+import { Sentences } from '@/components/sites/Sentences';
 
 const TIMELINE_START = -3000;
 const TIMELINE_END = 2030;
@@ -311,7 +312,7 @@ function Timeline() {
               <button onClick={() => setSelectedId(null)} className="text-sm px-3 py-1 rounded" style={{ color: 'var(--navy-soft)', border: '1px solid var(--stone-light)' }}>סגירה</button>
             </div>
             <p className="text-sm" style={{ color: 'var(--navy-soft)' }}>{selected.address}</p>
-            {selected.full_description && <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{selected.full_description}</p>}
+            {selected.full_description && <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-soft)' }}><Sentences text={selected.full_description} /></p>}
             <div className="flex flex-wrap gap-2 pt-2">
               <Link href={`/buildings/${selected.id}`} className="px-5 py-2.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: 'var(--ocean)' }}>לדף האתר</Link>
               <Link href={`/tour?site=${selected.id}`} className="px-5 py-2.5 rounded-lg text-sm font-medium" style={{ border: '1px solid var(--ocean)', color: 'var(--ocean)' }}>במצגת</Link>

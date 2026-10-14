@@ -2,6 +2,7 @@
 
 import { Route, RouteSite, Building } from '@/lib/types';
 import { SiteCard } from '@/components/buildings/SiteCard';
+import { Sentences } from '@/components/sites/Sentences';
 
 interface RouteNarrativeProps {
   route: Route;
@@ -47,7 +48,7 @@ export function RouteNarrative({ route, buildings }: RouteNarrativeProps) {
                       className="text-sm leading-relaxed italic pr-4"
                       style={{ color: 'var(--ocean-dark)' }}
                     >
-                      {site.narrative_text}
+                      <Sentences text={site.narrative_text} />
                     </p>
                   )}
                   <SiteCard building={building} variant="public" showActions={false} />
