@@ -407,3 +407,8 @@ const STATUS_COLORS = {
 - תמונות שהעורכת מעלה: דלי ציבורי `shimur-site-images` (migration 007), API `app/api/site-images`, רכיב `components/sites/SiteImageUpload.tsx`. מקום ההדבקה: דף האתר `/buildings/[id]`. נתוני הגיבוי בקוד לא מכילים את התמונות האלה (הן במאגר בלבד).
 - כניסת עורכת: Google לא הופעל ב-ASHDODMAP (אוקטובר 2026). הכניסה עובדת עם אימייל וסיסמה של ASHDODMAP. ב-13.10.2026 הסיסמה של shtanat5@gmail.com הוחלפה בלי גיבוי של הקודמת, ולכן השינוי חל על כל האפליקציות שמשתמשות ב-ASHDODMAP. מפתח השרת `ASHDODMAP_SERVICE_ROLE_KEY` מוגדר ב-Vercel לייצור.
 - שרת מקומי ישן על פורט 3100 מגיש קבצים מבנייה קודמת (שגיאות 500 על chunks). לפני בדיקה: לסגור את next-server הקודם.
+
+## A&I logo button
+The top bar holds only the app name (links home), content navigation, and ONE logo button "אד' ענת שטיבלמן A&I" (`<ai-menu>` from https://appofapp-gh.vercel.app/ai-menu.js). Every editing and development action (העתקת קישור, שיחת הפיתוח, פרויקט המחקר, התקנת האפליקציה, edit mode, add, delete) lives only inside it, never as loose buttons. Standard: https://github.com/Anat1969/AppOfApp-GH/blob/main/docs/ai-menu-standard.md
+
+In this repo: the script tag is in `shimur-app/app/layout.tsx`, the button and its sign in/out items in `shimur-app/components/layout/AppShell.tsx`.
