@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -50,21 +50,30 @@ export function AppShell(props: { children: React.ReactNode; source: DataSource 
   return <EditorProvider><Shell {...props} /></EditorProvider>;
 }
 
-function EditorButton({ compact }: { compact?: boolean }) {
-  const { state, email, signIn, signOut } = useEditor();
-  if (state === 'loading') return null;
-  if (state === 'guest') {
-    return (
-      <button onClick={signIn} className={`${compact ? 'w-full mt-2' : 'ms-1'} px-4 py-2 rounded-lg text-sm`} style={{ border: '1px solid var(--stone)', color: 'var(--navy)' }}>
-        כניסה לעריכה
-      </button>
-    );
+interface MenuItem { label: string; hint?: string; pressed?: boolean; disabled?: boolean; onSelect: () => unknown }
+
+declare module 'react' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      'ai-menu': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & { chat?: string; research?: string };
+    }
   }
-  return (
-    <button onClick={signOut} title={email ?? ''} className={`${compact ? 'w-full mt-2' : 'ms-1'} px-4 py-2 rounded-lg text-sm`} style={{ border: '1px solid var(--stone)', color: state === 'editor' ? 'var(--sage)' : 'var(--navy-soft)' }}>
-      {state === 'editor' ? 'מצב עריכה · יציאה' : 'יציאה'}
-    </button>
-  );
+}
+
+/** כפתור הלוגו A&I (ai-menu.js): העתקת קישור, התקנה, וכניסה ויציאה מהעריכה. */
+function AIMenu() {
+  const { state, email, signIn, signOut } = useEditor();
+  const ref = useRef<HTMLElement & { items: MenuItem[]; status: string }>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.items = state === 'loading' ? []
+      : state === 'guest' ? [{ label: 'כניסה לעריכה', onSelect: signIn }]
+      : [{ label: state === 'editor' ? 'יציאה ממצב עריכה' : 'יציאה', hint: email ?? undefined, onSelect: signOut }];
+    el.status = state === 'editor' ? 'מצב עריכה' : '';
+  }, [state, email, signIn, signOut]);
+  return <ai-menu ref={ref} />;
 }
 
 function EditorNotice() {
@@ -102,7 +111,6 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
             {PUBLIC_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             <div className="w-px h-6 mx-2" style={{ backgroundColor: 'var(--stone)' }} />
             {PRO_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
-            <EditorButton />
           </div>
 
           <button
@@ -114,6 +122,7 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
           >
             {open ? 'סגירה' : 'תפריט'}
           </button>
+          <AIMenu />
         </div>
 
         {open && (
@@ -129,7 +138,6 @@ function Shell({ children, source }: { children: React.ReactNode; source: DataSo
             <div className="grid grid-cols-2 gap-1">
               {PRO_LINKS.map(l => <NavLink key={l.href} {...l} pathname={pathname} />)}
             </div>
-            <EditorButton compact />
           </div>
         )}
       </nav>

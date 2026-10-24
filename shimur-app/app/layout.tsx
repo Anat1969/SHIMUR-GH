@@ -45,6 +45,9 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#1B6B7D" />
         <link rel="icon" href="/dolphin.svg" type="image/svg+xml" />
+        {/* כפתור הלוגו A&I: כל פעולות הפיתוח והעריכה (https://github.com/Anat1969/AppOfApp-GH/blob/main/docs/ai-menu-standard.md) */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="https://appofapp-gh.vercel.app/ai-menu.js" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         {children}
