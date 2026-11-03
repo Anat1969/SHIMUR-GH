@@ -406,6 +406,9 @@ const STATUS_COLORS = {
 - תמונות מהמצגת: `public/sites/committee/` (נחתכו מהשקפים עם pdfimages ו-PIL), רשומות כגלריה ב-`shimur_documents`.
 - תמונות שהעורכת מעלה: דלי ציבורי `shimur-site-images` (migration 007), API `app/api/site-images`, רכיב `components/sites/SiteImageUpload.tsx`. מקום ההדבקה: דף האתר `/buildings/[id]`. נתוני הגיבוי בקוד לא מכילים את התמונות האלה (הן במאגר בלבד).
 - כניסת עורכת: Google לא הופעל ב-ASHDODMAP (אוקטובר 2026). הכניסה עובדת עם אימייל וסיסמה של ASHDODMAP. ב-13.10.2026 הסיסמה של shtanat5@gmail.com הוחלפה בלי גיבוי של הקודמת, ולכן השינוי חל על כל האפליקציות שמשתמשות ב-ASHDODMAP. מפתח השרת `ASHDODMAP_SERVICE_ROLE_KEY` מוגדר ב-Vercel לייצור.
+- תיעוד בשטח (03.11.2026, ענת: "תמשיך עם כל ההמלצות", הכלי "סיור שטח" מבנק הכלים ב-Claude-GH): בטופס הממצא יש ארבעה כפתורי דחיפות (`URGENCY` ב-`lib/field/finding.ts`), והמיקום של הטלפון נקלט עם הצילום. שניהם נשמרים כשורות בסוף `notes` (`דחיפות:`, `מיקום:`), בלי שינוי בסכמה, ומוצגים בממצא השמור עם קישור למפה. בדף רשימת השטח ובדף האתר יש QR שפותח את אותו דף בטלפון (`components/field/PhoneQR.tsx`, רק במסך רחב). בדיקה: `npx next dev -p 3300 & node tests/field-e2e.mjs`, עם `#editor=` של בדיקה ו-`/api` מדומה.
+- טופס שנשלח כ-FormData הופך ירידות שורה ל-CRLF. בקריאת שורות: `split(/\r?\n/)`.
+- `next build` נכשל בסביבת הענן כי Google Fonts חסום. לבדיקה: `next dev`, שנופל לגופן מקומי.
 - שרת מקומי ישן על פורט 3100 מגיש קבצים מבנייה קודמת (שגיאות 500 על chunks). לפני בדיקה: לסגור את next-server הקודם.
 
 ## A&I logo button

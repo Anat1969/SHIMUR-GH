@@ -233,3 +233,6 @@ button:disabled { cursor: not-allowed; }
 /* טקסט שמופיע רק בהדפסה (למשל קרדיט מקור בראש המרשם) */
 .print-only { display: none; }
 @media print { .print-only { display: block; } }
+
+/* Field QR (2026-11-03): the svg needs an explicit height inside its wrapper */
+.phone-qr-code svg { width: 100%; height: auto; display: block; }
