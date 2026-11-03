@@ -6,6 +6,8 @@ import { Building } from '@/lib/types';
 import { useSites } from '@/components/providers/SiteData';
 import { apiFetch } from '@/lib/supabase/browser';
 import { EditorGate, useEditor } from '@/components/providers/Editor';
+import PhoneQR from '@/components/field/PhoneQR';
+import { URGENCY, locate, mapUrl, withExtras, readExtras, type Loc } from '@/lib/field/finding';
 
 interface Finding {
   id: string;
@@ -27,6 +29,8 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
   const [error, setError] = useState<string | null>(null);
   const [savedFindings, setSavedFindings] = useState<Finding[]>([]);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [urgency, setUrgency] = useState('');
+  const [loc, setLoc] = useState<Loc | null | undefined>(undefined); // undefined: not asked yet
 
   const sites = useSites();
   useEffect(() => {
@@ -49,6 +53,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     if (!original) return;
     const file = await shrinkImage(original);
     setPhoto(file);
+    if (!loc) locate().then(setLoc); // where the photo was taken
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -64,7 +69,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     formData.append('building_name', building.name);
     formData.append('building_address', building.address);
     formData.append('location_desc', locationDesc);
-    formData.append('notes', notes);
+    formData.append('notes', withExtras(notes, urgency, loc ?? null));
     if (photo) formData.append('photo', photo);
 
     const res = await apiFetch('/api/findings', { method: 'POST', body: formData }).catch(() => null);
@@ -75,7 +80,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
       setError(data.error);
     } else {
       setSuccess(data.warning ?? 'הממצא נשמר בהצלחה');
-      setLocationDesc(''); setNotes(''); setPhoto(null); setPhotoPreview(null);
+      setLocationDesc(''); setNotes(''); setPhoto(null); setPhotoPreview(null); setUrgency('');
       loadFindings(building.city_registry_id);
     }
   };
@@ -123,6 +128,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       <div className="max-w-2xl mx-auto p-4 space-y-4">
+        <PhoneQR what="תיעוד האתר" />
         {/* Building info */}
         <div className="bg-white rounded-lg border border-stone-light p-5">
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -168,6 +174,27 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
             {photoPreview && <img src={photoPreview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-md border border-stone-light" />}
           </div>
 
+          <fieldset>
+            <legend className="block text-sm font-medium text-ink mb-2">דחיפות</legend>
+            <div className="field-urgency grid grid-cols-2 gap-2" role="radiogroup" aria-label="דחיפות הממצא">
+              {URGENCY.map(u => {
+                const on = urgency === u.label;
+                return (
+                  <button key={u.key} type="button" role="radio" aria-checked={on} onClick={() => setUrgency(on ? '' : u.label)}
+                    className="min-h-14 px-3 py-2 rounded-[10px] text-start transition-transform hover:-translate-y-px active:translate-y-0"
+                    style={on ? { backgroundColor: u.color, color: 'white', boxShadow: 'var(--shadow-soft)' } : { backgroundColor: 'var(--surface-solid)', boxShadow: 'var(--shadow-soft)', borderTop: `2px solid ${u.color}` }}>
+                    <span className="block font-semibold text-sm">{u.label}</span>
+                    <span className="block text-xs" style={{ opacity: on ? 0.9 : 0.75 }}>{u.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <p className="field-loc text-xs text-ink-soft">
+            {loc === undefined ? 'המיקום נקלט עם הצילום.' : loc ? <a href={mapUrl(loc)} target="_blank" rel="noopener noreferrer" className="underline">המיקום נקלט, דיוק {loc.acc} מ&apos;</a> : 'המיקום לא נקלט (לא אושר בטלפון). הממצא יישמר בלעדיו.'}
+          </p>
+
           {error && <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(139,58,30,0.1)', color: '#8B3A1E' }}>{error}</div>}
           {success && <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(74,92,69,0.1)', color: '#4A5C45' }}>{success}</div>}
 
@@ -196,7 +223,20 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-ink text-sm">{f.location_desc}</p>
-                    {f.notes && <p className="text-ink-soft text-sm mt-1">{f.notes}</p>}
+                    {(() => {
+                      const x = readExtras(f.notes ?? '');
+                      return (
+                        <>
+                          {x.text && <p className="text-ink-soft text-sm mt-1">{x.text}</p>}
+                          {(x.urgency || x.loc) && (
+                            <p className="finding-extras text-xs mt-1 flex flex-wrap gap-x-3">
+                              {x.urgency && <span className="font-semibold whitespace-nowrap" style={{ color: x.urgency.color }}>{x.urgency.label}</span>}
+                              {x.loc && <a className="underline whitespace-nowrap" style={{ color: 'var(--navy-soft)' }} href={mapUrl(x.loc)} target="_blank" rel="noopener noreferrer">במפה, דיוק {x.loc.acc} מ&apos;</a>}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                     <p className="text-xs text-ink-soft mt-1">{new Date(f.created_at).toLocaleString('he-IL')}</p>
                   </div>
                 </div>

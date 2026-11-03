@@ -8,6 +8,7 @@ import { SiteImage } from '@/components/sites/SiteImage';
 import { ListViews } from '@/components/buildings/ListViews';
 import { CLUSTERS } from '@/lib/clusters';
 import type { Building } from '@/lib/types';
+import PhoneQR from '@/components/field/PhoneQR';
 
 // מרחק בקילומטרים בין שתי נקודות (נוסחת הוורסינוס)
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -57,6 +58,8 @@ export default function FieldListPage() {
         <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: 'var(--navy)' }}>תיעוד בשטח</h1>
         <p style={{ color: 'var(--navy-soft)' }}>מוצאים את האתר הקרוב, מנווטים אליו, ומתעדים ממצאים עם תמונה ישירות לתיק.</p>
       </div>
+
+      <PhoneQR what="תיעוד בשטח" />
 
       <div className="panel-ink p-4 flex flex-wrap items-center gap-3" style={{ backgroundColor: 'var(--sage)', color: 'white' }}>
         <button onClick={locate} disabled={loc.state === 'loading'}
