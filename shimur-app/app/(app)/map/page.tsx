@@ -39,6 +39,7 @@ export default function MapPage() {
   const [colorBy, setColorBy] = useState<ColorBy>('category');
   const [basemap, setBasemap] = useState<Basemap>('streets');
   const [showLabels, setShowLabels] = useState(false);
+  const [showStreets, setShowStreets] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // קישור ישיר לאתר במפה: /map?site=7 (נקרא פעם אחת בטעינה)
   useEffect(() => {
@@ -239,6 +240,9 @@ export default function MapPage() {
             </button>
             <button onClick={() => setShowLabels(v => !v)} aria-pressed={showLabels}
               className="px-3 py-1.5 rounded-full" style={chip(showLabels)}>שמות אתרים</button>
+            <button onClick={() => setShowStreets(v => !v)} aria-pressed={showStreets}
+              title="שכבת הרחובות של עיריית אשדוד: 2,991 קטעים, שם הרחוב והרובע בריחוף. ראשיים בקו עבה."
+              className="px-3 py-1.5 rounded-full" style={chip(showStreets)}>רחובות העיר</button>
           </div>
 
           <div className="relative h-[60vh] lg:h-[calc(100vh-240px)] min-h-[420px]">
@@ -251,6 +255,7 @@ export default function MapPage() {
               overlays={overlays}
               onViewChange={setView}
               showLabels={showLabels}
+              streets={showStreets}
               className="w-full h-full rounded-xl overflow-hidden shadow-md"
             />
             <div className="absolute bottom-8 right-3 z-[500] glass-card px-3 py-2 text-xs space-y-1 pointer-events-none">

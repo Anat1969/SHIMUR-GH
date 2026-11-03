@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Building, HistoricalMap } from '@/lib/types';
 import { ColorBy, markerColor, escapeHtml } from '@/lib/sites';
+import { loadStreets } from '@/lib/map/streets';
 
 export type Basemap = 'streets' | 'satellite';
 
@@ -30,6 +31,8 @@ interface BuildingsMapProps {
   popups?: boolean;
   /** הזזת נקודת המיקוד בפיקסלים [x, y] — כדי שהאתר לא יוסתר מאחורי כרטיס */
   focusOffset?: [number, number];
+  /** שכבת רחובות העיר (מקובץ העירייה), נטענת רק כשמדליקים */
+  streets?: boolean;
 }
 
 const ASHDOD_CENTER: L.LatLngTuple = [31.8, 34.65];
@@ -61,13 +64,14 @@ function popupHtml(b: Building): string {
 
 export function BuildingsMap({
   buildings, colorBy = 'category', selectedId, onSelect, overlays = [], basemap = 'streets',
-  focusZoom = 16, className, onViewChange, showLabels = false, popups = true, focusOffset,
+  focusZoom = 16, className, onViewChange, showLabels = false, popups = true, focusOffset, streets = false,
 }: BuildingsMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const tiles = useRef<L.TileLayer | null>(null);
   const markers = useRef<Map<string, L.CircleMarker>>(new Map());
   const overlayLayers = useRef<Map<string, L.ImageOverlay>>(new Map());
+  const streetsLayer = useRef<L.GeoJSON | null>(null);
   const onSelectRef = useRef(onSelect);
   const onViewRef = useRef(onViewChange);
   onSelectRef.current = onSelect;
@@ -177,6 +181,26 @@ export function BuildingsMap({
     });
     markers.current.forEach(mk => mk.bringToFront());
   }, [overlays]);
+
+  // רחובות העיר: קו דק בצבע האבן, שם הרחוב והרובע בריחוף. הסמנים נשארים מעל
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    if (!streets) { streetsLayer.current?.remove(); streetsLayer.current = null; return; }
+    let live = true;
+    loadStreets().then(geo => {
+      if (!live || !map.current || streetsLayer.current) return;
+      streetsLayer.current = L.geoJSON(geo as unknown as GeoJSON.GeoJsonObject, {
+        style: f => ({ color: '#8B7355', weight: f?.properties?.tier === 1 ? 3 : 1.6, opacity: 0.7 }),
+        onEachFeature: (f, layer) => {
+          const p = f.properties as { name?: string; quarter?: string };
+          if (p.name) layer.bindTooltip(`${escapeHtml(p.name)}${p.quarter ? ` · ${escapeHtml(p.quarter)}` : ''}`, { sticky: true, className: 'site-tooltip' });
+        },
+      }).addTo(map.current);
+      markers.current.forEach(mk => mk.bringToFront());
+    }).catch(() => {});
+    return () => { live = false; };
+  }, [streets]);
 
   return (
     <div

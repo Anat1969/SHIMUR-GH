@@ -25,10 +25,11 @@ export function locate(timeout = 10000): Promise<Loc | null> {
 
 export const mapUrl = (l: Pick<Loc, 'lat' | 'lng'>) => `https://www.google.com/maps?q=${l.lat},${l.lng}`;
 
-export function withExtras(notes: string, urgency: string, loc: Loc | null): string {
+export function withExtras(notes: string, urgency: string, loc: Loc | null, street = ''): string {
   return [
     notes.trim(),
     urgency ? `דחיפות: ${urgency}` : '',
+    street ? `רחוב: ${street}` : '',
     loc ? `מיקום: ${loc.lat.toFixed(5)},${loc.lng.toFixed(5)} (דיוק ${loc.acc} מ')` : '',
   ].filter(Boolean).join('\n');
 }
@@ -38,7 +39,8 @@ export function readExtras(notes = '') {
   const get = (p: string) => lines.find(l => l.startsWith(p))?.slice(p.length).trim() ?? '';
   const m = get('מיקום:').match(/^(-?\d+\.\d+),(-?\d+\.\d+) \(דיוק (\d+)/);
   return {
-    text: lines.filter(l => !l.startsWith('דחיפות:') && !l.startsWith('מיקום:')).join('\n').trim(),
+    text: lines.filter(l => !l.startsWith('דחיפות:') && !l.startsWith('מיקום:') && !l.startsWith('רחוב:')).join('\n').trim(),
+    street: get('רחוב:'),
     urgency: URGENCY.find(u => u.label === get('דחיפות:')),
     loc: m ? { lat: +m[1], lng: +m[2], acc: +m[3] } : null,
   };

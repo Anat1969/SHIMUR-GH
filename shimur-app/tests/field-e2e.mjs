@@ -12,7 +12,7 @@ const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail
 
 const findings = [];
 async function setup(context, posts) {
-  await context.route(/fonts\.(googleapis|gstatic)\.com|appofapp-gh\.vercel\.app|tile\.openstreetmap|supabase\.co/, r => r.abort());
+  await context.route(/fonts\.(googleapis|gstatic)\.com|appofapp-gh\.vercel\.app|supabase\.co/, r => r.abort());
   await context.route(/\/api\/me/, r => r.fulfill({ json: { editor: true, email: 'shtanat5@gmail.com' } }));
   await context.route(/\/api\/findings/, async r => {
     if (r.request().method() === 'POST') {
@@ -29,7 +29,7 @@ async function setup(context, posts) {
 const browser = await chromium.launch();
 {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
-    geolocation: { latitude: 31.80611, longitude: 34.63721, accuracy: 7 }, permissions: ['geolocation'] });
+    geolocation: { latitude: 31.812281, longitude: 34.644832, accuracy: 7 }, permissions: ['geolocation'] });
   const posts = [];
   await setup(context, posts);
   const page = await context.newPage();
@@ -44,14 +44,16 @@ const browser = await chromium.launch();
   await page.locator('#photo-input').setInputFiles({ name: 'p.png', mimeType: 'image/png', buffer: photo });
   await page.waitForSelector('.field-loc a', { timeout: 10000 });
   ok((await page.locator('.field-loc').textContent()).includes('דיוק 7'), 'phone: the location is taken with the photo');
+  await page.waitForSelector('.field-street', { timeout: 15000 }).catch(() => {});
+  ok((await page.locator('.field-loc').textContent()).includes("ז'בוטינסקי"), 'phone: the street is named from the municipality layer');
   await page.locator('.field-urgency button', { hasText: 'נדרש תיקון' }).click();
   await page.waitForTimeout(350);
   await page.screenshot({ path: SHOTS + 'field-phone.png', fullPage: true });
   await page.locator('button', { hasText: 'שמור ממצא' }).click();
   await page.waitForSelector('.finding-extras', { timeout: 10000 });
-  ok(posts[0]?.includes('דחיפות: נדרש תיקון') && posts[0]?.includes('31.80611,34.63721'), `phone: urgency and place go with the finding (${JSON.stringify(posts[0])})`);
+  ok(posts[0]?.includes('דחיפות: נדרש תיקון') && posts[0]?.includes('31.81228,34.64483') && posts[0]?.includes("רחוב: ז'בוטינסקי, רובע א"), `phone: urgency and place go with the finding (${JSON.stringify(posts[0])})`);
   ok((await page.locator('.finding-extras').first().textContent()).includes('נדרש תיקון'), 'phone: the saved finding shows its urgency');
-  ok((await page.locator('.finding-extras a').first().getAttribute('href'))?.includes('google.com/maps?q=31.80611'), 'phone: the saved finding links to the map');
+  ok((await page.locator('.finding-extras a').first().getAttribute('href'))?.includes('google.com/maps?q=31.81228'), 'phone: the saved finding links to the map');
   ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'phone: no horizontal scroll');
   ok(errs.length === 0, `phone: no page errors (${errs.join(' | ')})`);
   await context.close();
@@ -65,6 +67,13 @@ const browser = await chromium.launch();
   ok(await page.locator('.phone-qr').isVisible(), 'desktop: the field list offers a QR to the phone');
   await page.waitForTimeout(300);
   await page.screenshot({ path: SHOTS + 'field-desktop.png' });
+  // the streets layer on the map
+  await page.goto(BASE + '/map', { waitUntil: 'networkidle', timeout: 120000 });
+  await page.locator('button', { hasText: 'רחובות העיר' }).click();
+  await page.waitForFunction(() => document.querySelectorAll('path.leaflet-interactive').length > 1000, null, { timeout: 30000 }).catch(() => {});
+  ok((await page.locator('path.leaflet-interactive').count()) > 1000, `map: the city streets layer draws (${await page.locator('path.leaflet-interactive').count()} paths)`);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: SHOTS + 'map-streets.png' });
   await context.close();
 }
 await browser.close();

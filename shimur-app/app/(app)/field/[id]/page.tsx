@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/supabase/browser';
 import { EditorGate, useEditor } from '@/components/providers/Editor';
 import PhoneQR from '@/components/field/PhoneQR';
 import { URGENCY, locate, mapUrl, withExtras, readExtras, type Loc } from '@/lib/field/finding';
+import { nearestStreet } from '@/lib/map/streets';
 
 interface Finding {
   id: string;
@@ -31,6 +32,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [urgency, setUrgency] = useState('');
   const [loc, setLoc] = useState<Loc | null | undefined>(undefined); // undefined: not asked yet
+  const [street, setStreet] = useState(''); // the street at the photo location, from the municipality layer
 
   const sites = useSites();
   useEffect(() => {
@@ -53,7 +55,10 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     if (!original) return;
     const file = await shrinkImage(original);
     setPhoto(file);
-    if (!loc) locate().then(setLoc); // where the photo was taken
+    if (!loc) locate().then(l => { // where the photo was taken, and on which street
+      setLoc(l);
+      if (l) nearestStreet(l.lat, l.lng).then(s => s && setStreet(`${s.name}${s.quarter ? `, ${s.quarter}` : ''}`)).catch(() => {});
+    });
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -69,7 +74,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     formData.append('building_name', building.name);
     formData.append('building_address', building.address);
     formData.append('location_desc', locationDesc);
-    formData.append('notes', withExtras(notes, urgency, loc ?? null));
+    formData.append('notes', withExtras(notes, urgency, loc ?? null, street));
     if (photo) formData.append('photo', photo);
 
     const res = await apiFetch('/api/findings', { method: 'POST', body: formData }).catch(() => null);
@@ -192,7 +197,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
           </fieldset>
 
           <p className="field-loc text-xs text-ink-soft">
-            {loc === undefined ? 'המיקום נקלט עם הצילום.' : loc ? <a href={mapUrl(loc)} target="_blank" rel="noopener noreferrer" className="underline">המיקום נקלט, דיוק {loc.acc} מ&apos;</a> : 'המיקום לא נקלט (לא אושר בטלפון). הממצא יישמר בלעדיו.'}
+            {loc === undefined ? 'המיקום נקלט עם הצילום.' : loc ? <><a href={mapUrl(loc)} target="_blank" rel="noopener noreferrer" className="underline">המיקום נקלט, דיוק {loc.acc} מ&apos;</a>{street && <span className="field-street"> · {street}</span>}</> : 'המיקום לא נקלט (לא אושר בטלפון). הממצא יישמר בלעדיו.'}
           </p>
 
           {error && <div className="p-3 rounded-md text-sm" style={{ backgroundColor: 'rgba(139,58,30,0.1)', color: '#8B3A1E' }}>{error}</div>}
@@ -228,9 +233,10 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
                       return (
                         <>
                           {x.text && <p className="text-ink-soft text-sm mt-1">{x.text}</p>}
-                          {(x.urgency || x.loc) && (
+                          {(x.urgency || x.loc || x.street) && (
                             <p className="finding-extras text-xs mt-1 flex flex-wrap gap-x-3">
                               {x.urgency && <span className="font-semibold whitespace-nowrap" style={{ color: x.urgency.color }}>{x.urgency.label}</span>}
+                              {x.street && <span className="whitespace-nowrap" style={{ color: 'var(--navy)' }}>{x.street}</span>}
                               {x.loc && <a className="underline whitespace-nowrap" style={{ color: 'var(--navy-soft)' }} href={mapUrl(x.loc)} target="_blank" rel="noopener noreferrer">במפה, דיוק {x.loc.acc} מ&apos;</a>}
                             </p>
                           )}
