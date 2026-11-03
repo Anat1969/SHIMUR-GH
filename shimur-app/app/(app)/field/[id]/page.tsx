@@ -7,7 +7,8 @@ import { useSites } from '@/components/providers/SiteData';
 import { apiFetch } from '@/lib/supabase/browser';
 import { EditorGate, useEditor } from '@/components/providers/Editor';
 import PhoneQR from '@/components/field/PhoneQR';
-import { URGENCY, locate, mapUrl, withExtras, readExtras, type Loc } from '@/lib/field/finding';
+import { URGENCY, locate, mapUrl, withExtras, readExtras, metresBetween, type Loc, type Repeat } from '@/lib/field/finding';
+import Rephoto from '@/components/field/Rephoto';
 import { nearestStreet } from '@/lib/map/streets';
 
 interface Finding {
@@ -33,6 +34,9 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
   const [urgency, setUrgency] = useState('');
   const [loc, setLoc] = useState<Loc | null | undefined>(undefined); // undefined: not asked yet
   const [street, setStreet] = useState(''); // the street at the photo location, from the municipality layer
+  const [rephotoOf, setRephotoOf] = useState<Finding | null>(null); // the camera over this earlier photo is open
+  const [repeat, setRepeat] = useState<(Repeat & { loc?: Loc | null; photo: string }) | null>(null); // the new finding repeats it
+  const { isEditor } = useEditor();
 
   const sites = useSites();
   useEffect(() => {
@@ -53,6 +57,11 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const original = e.target.files?.[0];
     if (!original) return;
+    setRepeat(null); // a regular photo is not a repeat
+    await takePhoto(original);
+  };
+
+  const takePhoto = async (original: File) => {
     const file = await shrinkImage(original);
     setPhoto(file);
     if (!loc) locate().then(l => { // where the photo was taken, and on which street
@@ -74,7 +83,8 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
     formData.append('building_name', building.name);
     formData.append('building_address', building.address);
     formData.append('location_desc', locationDesc);
-    formData.append('notes', withExtras(notes, urgency, loc ?? null, street));
+    const rep = repeat ? { id: repeat.id, date: repeat.date, metres: repeat.loc && loc ? metresBetween(repeat.loc, loc) : undefined } : undefined;
+    formData.append('notes', withExtras(notes, urgency, loc ?? null, street, rep));
     if (photo) formData.append('photo', photo);
 
     const res = await apiFetch('/api/findings', { method: 'POST', body: formData }).catch(() => null);
@@ -85,7 +95,7 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
       setError(data.error);
     } else {
       setSuccess(data.warning ?? 'הממצא נשמר בהצלחה');
-      setLocationDesc(''); setNotes(''); setPhoto(null); setPhotoPreview(null); setUrgency('');
+      setLocationDesc(''); setNotes(''); setPhoto(null); setPhotoPreview(null); setUrgency(''); setRepeat(null);
       loadFindings(building.city_registry_id);
     }
   };
@@ -121,6 +131,22 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
             <img src={lightboxUrl} alt="ממצא" className="w-full rounded-lg shadow-2xl object-contain max-h-[80vh]" />
           </div>
         </div>
+      )}
+
+      {rephotoOf?.photo_url && (
+        <Rephoto
+          ghost={rephotoOf.photo_url}
+          date={new Date(rephotoOf.created_at).toLocaleDateString('he-IL')}
+          onClose={() => setRephotoOf(null)}
+          onShot={async (file) => {
+            const prev = rephotoOf;
+            setRephotoOf(null);
+            setRepeat({ id: prev.id, date: new Date(prev.created_at).toLocaleDateString('he-IL'), loc: readExtras(prev.notes ?? '').loc, photo: prev.photo_url! });
+            if (!locationDesc.trim()) setLocationDesc(prev.location_desc);
+            await takePhoto(file);
+            document.querySelector('.field-urgency')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
+        />
       )}
 
       {/* Header */}
@@ -176,7 +202,13 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
               </label>
               <p className="text-xs text-ink-soft mt-2">{photo ? photo.name : 'לא נבחרה תמונה'}</p>
             </div>
-            {photoPreview && <img src={photoPreview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-md border border-stone-light" />}
+            {photoPreview && !repeat && <img src={photoPreview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-md border border-stone-light" />}
+            {photoPreview && repeat && (
+              <div className="rephoto-pair mt-3 grid grid-cols-2 gap-2">
+                <figure><img src={repeat.photo} alt="הצילום הקודם" className="w-full h-40 object-cover rounded-md" /><figcaption className="text-xs text-ink-soft mt-1">לפני · {repeat.date}</figcaption></figure>
+                <figure><img src={photoPreview} alt="הצילום החוזר" className="w-full h-40 object-cover rounded-md" /><figcaption className="text-xs text-ink-soft mt-1">עכשיו · צילום חוזר</figcaption></figure>
+              </div>
+            )}
           </div>
 
           <fieldset>
@@ -243,7 +275,30 @@ export default function FieldPage({ params }: { params: Promise<{ id: string }> 
                         </>
                       );
                     })()}
+                    {(() => {
+                      const r = readExtras(f.notes ?? '').repeat;
+                      const before = r ? savedFindings.find(x => x.id === r.id) : undefined;
+                      return r ? (
+                        <div className="finding-repeat mt-2">
+                          <p className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>
+                            צילום חוזר של ממצא מ-{r.date}
+                            {r.metres != null && <span className="font-normal" style={{ color: 'var(--navy-soft)' }}> · {r.metres} מ&apos; מנקודת הצילום הקודמת</span>}
+                          </p>
+                          {before?.photo_url && f.photo_url && (
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              <img src={before.photo_url} alt="לפני" className="w-full h-24 object-cover rounded-md" />
+                              <img src={f.photo_url} alt="אחרי" className="w-full h-24 object-cover rounded-md" />
+                            </div>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
                     <p className="text-xs text-ink-soft mt-1">{new Date(f.created_at).toLocaleString('he-IL')}</p>
+                    {isEditor && f.photo_url && (
+                      <button onClick={() => setRephotoOf(f)} className="rephoto-open text-xs underline mt-1" style={{ color: 'var(--sage)' }}>
+                        צילום חוזר מאותה נקודה
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -76,6 +76,49 @@ const browser = await chromium.launch();
   await page.screenshot({ path: SHOTS + 'map-streets.png' });
   await context.close();
 }
+// ---------- rephotography: the earlier photo over the live camera ----------
+{
+  const cam = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
+  const context = await cam.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
+    geolocation: { latitude: 31.81231, longitude: 34.64487, accuracy: 6 }, permissions: ['geolocation', 'camera'] });
+  const posts = [];
+  findings.length = 0;
+  findings.push({ id: 'old1', location_desc: 'חזית מערבית', notes: "דחיפות: מעקב\nמיקום: 31.81228,34.64483 (דיוק 7 מ')", created_at: '2026-06-01T09:00:00Z', photo_url: '/before.png' });
+  await setup(context, posts);
+  await context.route(/\/before\.png$/, r => r.fulfill({ contentType: 'image/png', body: photo }));
+  const page = await context.newPage();
+  const errs = [];
+  page.on('pageerror', e => errs.push(e.message));
+  await page.goto(BASE + '/field/1#editor=test_key_for_e2e_only_000', { waitUntil: 'networkidle', timeout: 120000 });
+  await page.waitForSelector('.rephoto-open', { timeout: 60000 });
+  await page.locator('.rephoto-open').click();
+  await page.waitForSelector('.rephoto video');
+  await page.waitForFunction(() => document.querySelector('.rephoto video')?.videoWidth > 0, null, { timeout: 15000 });
+  ok(await page.locator('.rephoto-ghost').isVisible(), 'rephoto: the earlier photo lies over the live camera');
+  await page.locator('.rephoto input[type=range]').fill('70');
+  ok((await page.locator('.rephoto-ghost').evaluate(e => getComputedStyle(e).opacity)) === '0.7', 'rephoto: the slider sets how see-through it is');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: SHOTS + 'rephoto-camera.png' });
+  await page.locator('.rephoto-shoot').click();
+  await page.waitForSelector('.rephoto-pair', { timeout: 10000 });
+  ok((await page.locator('.rephoto').count()) === 0, 'rephoto: the camera closes after the shot');
+  ok((await page.locator('input[placeholder^="חזית"]').inputValue()) === 'חזית מערבית', 'rephoto: the place carries over from the earlier finding');
+  await page.waitForSelector('.field-loc a', { timeout: 10000 });
+  await page.screenshot({ path: SHOTS + 'rephoto-pair.png', fullPage: true });
+  await page.locator('button', { hasText: 'שמור ממצא' }).click();
+  await page.waitForSelector('.finding-repeat', { timeout: 10000 });
+  ok(/צילום חוזר של: old1 · [^\r\n]+ · \d+ מ' מהצילום הקודם/.test(posts[0] ?? ''), `rephoto: the finding names the one it repeats and the distance (${JSON.stringify(posts[0])})`);
+  ok((await page.locator('.finding-repeat').first().textContent()).includes("מ' מנקודת הצילום הקודמת"), 'rephoto: the saved pair says how far apart the two shots were');
+  // Esc closes the camera
+  await page.locator('.rephoto-open').first().click();
+  await page.waitForSelector('.rephoto');
+  await page.keyboard.press('Escape');
+  ok((await page.locator('.rephoto').count()) === 0, 'rephoto: Esc closes it');
+  ok(errs.length === 0, `rephoto: no page errors (${errs.join(' | ')})`);
+  await context.close();
+  await cam.close();
+}
+
 await browser.close();
 console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');
 process.exit(failures ? 1 : 0);
