@@ -25,9 +25,20 @@ export function locate(timeout = 10000): Promise<Loc | null> {
 
 export const mapUrl = (l: Pick<Loc, 'lat' | 'lng'>) => `https://www.google.com/maps?q=${l.lat},${l.lng}`;
 
-export function withExtras(notes: string, urgency: string, loc: Loc | null, street = ''): string {
+/** Metres between two points (haversine). */
+export function metresBetween(a: Pick<Loc, 'lat' | 'lng'>, b: Pick<Loc, 'lat' | 'lng'>): number {
+  const R = 6371000, rad = (d: number) => (d * Math.PI) / 180;
+  const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+}
+
+/** A rephotograph: which earlier finding it repeats, and how far apart the two were taken (when both have a location). */
+export interface Repeat { id: string; date: string; metres?: number }
+
+export function withExtras(notes: string, urgency: string, loc: Loc | null, street = '', repeat?: Repeat): string {
   return [
     notes.trim(),
+    repeat ? `צילום חוזר של: ${repeat.id} · ${repeat.date}${repeat.metres != null ? ` · ${repeat.metres} מ' מהצילום הקודם` : ''}` : '',
     urgency ? `דחיפות: ${urgency}` : '',
     street ? `רחוב: ${street}` : '',
     loc ? `מיקום: ${loc.lat.toFixed(5)},${loc.lng.toFixed(5)} (דיוק ${loc.acc} מ')` : '',
@@ -39,7 +50,11 @@ export function readExtras(notes = '') {
   const get = (p: string) => lines.find(l => l.startsWith(p))?.slice(p.length).trim() ?? '';
   const m = get('מיקום:').match(/^(-?\d+\.\d+),(-?\d+\.\d+) \(דיוק (\d+)/);
   return {
-    text: lines.filter(l => !l.startsWith('דחיפות:') && !l.startsWith('מיקום:') && !l.startsWith('רחוב:')).join('\n').trim(),
+    text: lines.filter(l => !['דחיפות:', 'מיקום:', 'רחוב:', 'צילום חוזר של:'].some(p => l.startsWith(p))).join('\n').trim(),
+    repeat: (() => {
+      const r = get('צילום חוזר של:').match(/^(\S+) · ([^·]+?)(?: · (\d+) מ'.*)?$/);
+      return r ? { id: r[1], date: r[2].trim(), metres: r[3] != null ? +r[3] : undefined } : null;
+    })(),
     street: get('רחוב:'),
     urgency: URGENCY.find(u => u.label === get('דחיפות:')),
     loc: m ? { lat: +m[1], lng: +m[2], acc: +m[3] } : null,
